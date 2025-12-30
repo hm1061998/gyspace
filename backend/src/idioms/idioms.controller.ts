@@ -25,8 +25,10 @@ export class IdiomsController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 12,
     @Query('filter') filter: string = '',
+    @Query('sort') sort: string = 'createdAt',
+    @Query('order') order: 'ASC' | 'DESC' = 'DESC'
   ) {
-    return this.idiomsService.findAll(Number(page), Number(limit), filter);
+    return this.idiomsService.findAll(Number(page), Number(limit), filter, sort, order);
   }
 
   @Get('search')

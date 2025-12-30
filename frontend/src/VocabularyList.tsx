@@ -11,6 +11,7 @@ import {
 import { fetchStoredIdioms, deleteIdiom } from "../services/idiomService";
 import { Idiom } from "../types";
 import { useNavigate } from "react-router";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 
 interface VocabularyListProps {
   onBack: () => void;
@@ -33,7 +34,17 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-
+  // Modal State
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    id: string;
+    hanzi: string;
+  }>({
+    isOpen: false,
+    id: "",
+    hanzi: "",
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
   // Filter State
   const [filter, setFilter] = useState("");
   const [debouncedFilter, setDebouncedFilter] = useState("");
@@ -70,13 +81,27 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
     hanzi: string
   ) => {
     e.stopPropagation();
-    if (window.confirm(`Bạn có chắc chắn muốn xóa từ "${hanzi}" không?`)) {
-      try {
-        await deleteIdiom(id);
-        loadIdioms(); // Reload list after deletion
-      } catch (err: any) {
-        alert("Lỗi khi xóa: " + err.message);
-      }
+    // if (window.confirm(`Bạn có chắc chắn muốn xóa từ "${hanzi}" không?`)) {
+    //   try {
+    //     await deleteIdiom(id);
+    //     loadIdioms(); // Reload list after deletion
+    //   } catch (err: any) {
+    //     alert("Lỗi khi xóa: " + err.message);
+    //   }
+    // }
+    setDeleteModal({ isOpen: true, id, hanzi });
+  };
+
+  const confirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteIdiom(deleteModal.id);
+      setDeleteModal({ ...deleteModal, isOpen: false });
+      loadIdioms(); // Reload list after deletion
+    } catch (err: any) {
+      alert("Lỗi khi xóa: " + err.message);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -95,6 +120,15 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
 
   return (
     <div className="max-w-6xl w-full mx-auto animate-pop">
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        idiomHanzi={deleteModal.hanzi}
+        isDeleting={isDeleting}
+        onClose={() =>
+          !isDeleting && setDeleteModal({ ...deleteModal, isOpen: false })
+        }
+        onConfirm={confirmDelete}
+      />
       <div className="flex flex-row justify-between items-center gap-4">
         <div className="flex items-center w-auto">
           <h1 className="text-2xl font-hanzi font-bold text-slate-800">

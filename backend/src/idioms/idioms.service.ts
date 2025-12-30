@@ -33,10 +33,14 @@ export class IdiomsService {
     }
   }
 
-  async findAll(page: number = 1, limit: number = 12, filter: string = '') {
+  async findAll(
+    page: number = 1,
+    limit: number = 12,
+    filter: string = '',
+    sort: string = 'createdAt',
+    order: 'ASC' | 'DESC' = 'DESC',
+  ) {
     const skip = (page - 1) * limit;
-
-    // Xây dựng điều kiện tìm kiếm nếu có filter
     const whereCondition = filter
       ? [
           { hanzi: ILike(`%${filter}%`) },
@@ -45,31 +49,37 @@ export class IdiomsService {
         ]
       : {};
 
-    const [data, total] = await this.idiomRepository.findAndCount({
-      where: whereCondition,
-      order: { createdAt: 'DESC' },
-      select: [
-        'id',
-        'hanzi',
-        'pinyin',
-        'vietnameseMeaning',
-        'type',
-        'level',
-        'source',
-      ],
-      take: limit,
-      skip: skip,
-    });
+    try {
+      const [data, total] = await this.idiomRepository.findAndCount({
+        where: whereCondition,
+        order: { [sort]: order },
+        select: [
+          'id',
+          'hanzi',
+          'pinyin',
+          'vietnameseMeaning',
+          'type',
+          'level',
+          'source',
+          'createdAt',
+        ],
+        take: limit,
+        skip: skip,
+      });
 
-    return {
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        lastPage: Math.ceil(total / limit),
-      },
-    };
+      return {
+        data: data || [],
+        meta: {
+          total,
+          page,
+          limit,
+          lastPage: Math.ceil(total / limit) || 1,
+        },
+      };
+    } catch (error) {
+      console.error('Database find error:', error);
+      throw new HttpException('Lỗi khi truy xuất dữ liệu từ database.', 400);
+    }
   }
 
   async findById(id: string) {
@@ -114,7 +124,6 @@ export class IdiomsService {
       this.idiomRepository.merge(existing, createIdiomDto);
       return await this.idiomRepository.save(existing);
     }
-    createIdiomDto.createdAt = `${new Date().getTime() / 1000}`;
     const newIdiom = this.idiomRepository.create(createIdiomDto);
     return await this.idiomRepository.save(newIdiom);
   }
@@ -151,28 +160,28 @@ export class IdiomsService {
   async update(id: string, updateIdiomDto: CreateIdiomDto) {
     // 1. Tìm bản ghi hiện tại kèm các quan hệ
     const idiom = await this.findById(id);
-    
+
     const { analysis, examples, ...basicData } = updateIdiomDto;
-    
+
     // 2. Cập nhật các trường thông tin cơ bản
     Object.assign(idiom, basicData);
-    
+
     // 3. Cập nhật mảng quan hệ
     // Nhờ orphanedRowAction: 'delete' trong Entity, việc gán mảng mới sẽ kích hoạt xóa bản ghi cũ
     if (analysis !== undefined) {
-        idiom.analysis = analysis.map(a => this.analysisRepository.create(a));
+      idiom.analysis = analysis.map((a) => this.analysisRepository.create(a));
     }
-    
+
     if (examples !== undefined) {
-        idiom.examples = examples.map(e => this.examplesRepository.create(e));
+      idiom.examples = examples.map((e) => this.examplesRepository.create(e));
     }
-    
+
     try {
       // 4. Lưu lại toàn bộ entity. TypeORM sẽ tự động handle transaction cho cascade
       return await this.idiomRepository.save(idiom);
     } catch (error) {
-      console.error("Update idiom error:", error);
-      throw new HttpException("Lỗi khi cập nhật từ vựng.",400);
+      console.error('Update idiom error:', error);
+      throw new HttpException('Lỗi khi cập nhật từ vựng.', 400);
     }
   }
 
