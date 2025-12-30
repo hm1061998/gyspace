@@ -127,7 +127,7 @@ export const fetchIdiomDetails = async (
       return localResult;
     }
 
-    throw new Error(`Không tìm thấy "${query}" trong thư viện.`);
+    throw new Error(error);
   }
 };
 

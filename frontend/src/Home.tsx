@@ -69,6 +69,11 @@ const Home: React.FC = () => {
     }
   };
 
+  const handleChangeMode = (mode: string) => {
+    setSearchMode(mode);
+    setError(null);
+  };
+
   const isCenteredMode = !currentIdiom && !isLoading;
 
   return (
@@ -96,7 +101,7 @@ const Home: React.FC = () => {
         <div className="flex justify-center mb-6">
           <div className="bg-white p-1 rounded-full border border-slate-200 shadow-sm flex items-center">
             <button
-              onClick={() => setSearchMode("database")}
+              onClick={() => handleChangeMode("database")}
               className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
                 searchMode === "database"
                   ? "bg-slate-800 text-white shadow-md"
@@ -106,7 +111,7 @@ const Home: React.FC = () => {
               <HistoryIcon className="w-3.5 h-3.5" /> Thư viện chuẩn
             </button>
             <button
-              onClick={() => setSearchMode("ai")}
+              onClick={() => handleChangeMode("ai")}
               className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
                 searchMode === "ai"
                   ? "bg-gradient-to-r from-purple-600 to-red-600 text-white shadow-md"
