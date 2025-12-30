@@ -1,13 +1,26 @@
-import React, { useState } from "react";
-import { ArrowLeftIcon, PlusIcon, TrashIcon, SpinnerIcon } from "./icons";
-import { createIdiom } from "../services/idiomService";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  ArrowLeftIcon,
+  PlusIcon,
+  TrashIcon,
+  SpinnerIcon,
+  ListBulletIcon,
+} from "./icons";
+import {
+  bulkCreateIdioms,
+  createIdiom,
+  fetchIdiomById,
+  updateIdiom,
+} from "../services/idiomService";
+import * as XLSX from "xlsx";
 
 interface AdminInsertProps {
   onBack: () => void;
 }
 
-const AdminInsert: React.FC<AdminInsertProps> = ({ onBack }) => {
+const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
@@ -32,6 +45,41 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack }) => {
   const [examples, setExamples] = useState([
     { chinese: "", pinyin: "", vietnamese: "" },
   ]);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (idiomId) {
+      loadIdiomData(idiomId);
+    }
+  }, [idiomId]);
+
+  const loadIdiomData = async (id: string) => {
+    setFetching(true);
+    try {
+      const data = await fetchIdiomById(id);
+      setForm({
+        hanzi: data.hanzi || "",
+        pinyin: data.pinyin || "",
+        type: data.type || "Quán dụng ngữ",
+        level: data.level || "Trung cấp",
+        source: data.source || "",
+        vietnameseMeaning: data.vietnameseMeaning || "",
+        literalMeaning: data.literalMeaning || "",
+        figurativeMeaning: data.figurativeMeaning || "",
+        chineseDefinition: data.chineseDefinition || "",
+        origin: data.origin || "",
+        grammar: data.grammar || "",
+        imageUrl: data.imageUrl || "",
+      });
+      if (data.analysis && data.analysis.length > 0) setAnalysis(data.analysis);
+      if (data.examples && data.examples.length > 0) setExamples(data.examples);
+    } catch (err: any) {
+      setError("Không thể tải dữ liệu để sửa.");
+    } finally {
+      setFetching(false);
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -62,6 +110,74 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack }) => {
   const removeAnalysis = (index: number) =>
     setAnalysis(analysis.filter((_, i) => i !== index));
 
+  const handleExcelImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: "binary" });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data: any[] = XLSX.utils.sheet_to_json(ws);
+
+        if (data.length === 0)
+          throw new Error("File trống hoặc sai định dạng.");
+
+        // Mapping logic dựa trên các cột trong ảnh người dùng cung cấp
+        const mappedData = data
+          .map((row) => {
+            const hanzi = row["QUÁN DỤNG TỪ"] || row["CHỮ HÁN"] || row["hanzi"];
+            if (!hanzi) return null;
+
+            return {
+              hanzi: String(hanzi).trim(),
+              pinyin: String(row["PINYIN"] || "").trim(),
+              vietnameseMeaning: String(
+                row["NGHĨA TIẾNG VIỆT"] || row["NGHĨA"] || ""
+              ).trim(),
+              chineseDefinition: String(row["NGHĨA TIẾNG TRUNG"] || "").trim(),
+              source: String(row["VỊ TRÍ XUẤT HIỆN"] || "").trim(),
+              level: String(row["CẤP ĐỘ"] || "Trung cấp").trim(),
+              origin: String(row["NGUỒN GỐC (NẾU CÓ)"] || "").trim(),
+              type: "Quán dụng ngữ",
+              figurativeMeaning: String(row["NGHĨA TIẾNG VIỆT"] || "").trim(), // Fallback nếu không có nghĩa bóng riêng
+              examples: row["VÍ DỤ"]
+                ? [
+                    {
+                      chinese: String(row["VÍ DỤ"]),
+                      pinyin: "",
+                      vietnamese: "",
+                    },
+                  ]
+                : [],
+            };
+          })
+          .filter(Boolean);
+
+        if (mappedData.length === 0)
+          throw new Error("Không tìm thấy dữ liệu hợp lệ trong các cột.");
+
+        await bulkCreateIdioms(mappedData);
+        setSuccess(`Đã import thành công ${mappedData.length} từ vựng!`);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      } catch (err: any) {
+        setError(
+          "Lỗi khi đọc file: " + (err.message || "Định dạng không hợp lệ.")
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   const addExample = () =>
     setExamples([...examples, { chinese: "", pinyin: "", vietnamese: "" }]);
   const removeExample = (index: number) =>
@@ -84,25 +200,30 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack }) => {
         examples: cleanExamples,
       };
 
-      await createIdiom(payload);
-      setSuccess("Đã thêm từ mới thành công!");
-      // Reset form
-      setForm({
-        hanzi: "",
-        pinyin: "",
-        type: "Thành ngữ",
-        level: "Trung cấp",
-        source: "",
-        vietnameseMeaning: "",
-        literalMeaning: "",
-        figurativeMeaning: "",
-        chineseDefinition: "",
-        origin: "",
-        grammar: "",
-        imageUrl: "",
-      });
-      setAnalysis([{ character: "", pinyin: "", meaning: "" }]);
-      setExamples([{ chinese: "", pinyin: "", vietnamese: "" }]);
+      if (idiomId) {
+        await updateIdiom(idiomId, payload);
+        setSuccess("Đã cập nhật từ vựng thành công!");
+      } else {
+        await createIdiom(payload);
+        setSuccess("Đã thêm từ mới thành công!");
+        // Reset form if creating
+        setForm({
+          hanzi: "",
+          pinyin: "",
+          type: "Quán dụng ngữ",
+          level: "Trung cấp",
+          source: "",
+          vietnameseMeaning: "",
+          literalMeaning: "",
+          figurativeMeaning: "",
+          chineseDefinition: "",
+          origin: "",
+          grammar: "",
+          imageUrl: "",
+        });
+        setAnalysis([{ character: "", pinyin: "", meaning: "" }]);
+        setExamples([{ chinese: "", pinyin: "", vietnamese: "" }]);
+      }
       window.scrollTo(0, 0);
     } catch (err: any) {
       setError(err.message || "Có lỗi xảy ra khi lưu.");
@@ -111,23 +232,59 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack }) => {
     }
   };
 
+  if (fetching) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <SpinnerIcon className="w-10 h-10 text-red-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 animate-pop">
-      <button
-        onClick={onBack}
-        className="flex items-center space-x-2 text-slate-500 hover:text-red-600 transition-colors mb-6"
-      >
-        <ArrowLeftIcon className="w-5 h-5" />
-        <span className="font-bold">Quay lại trang chủ</span>
-      </button>
+      <div className="flex justify-between items-center mb-6">
+        <button
+          onClick={onBack}
+          className="flex items-center space-x-2 text-slate-500 hover:text-red-600 transition-colors"
+        >
+          <ArrowLeftIcon className="w-5 h-5" />
+          <span className="font-bold">Quay lại trang chủ</span>
+        </button>
+
+        {!idiomId && (
+          <div className="relative">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleExcelImport}
+              accept=".xlsx, .xls"
+              className="hidden"
+              id="excel-upload"
+            />
+            <label
+              htmlFor="excel-upload"
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg cursor-pointer hover:bg-emerald-700 transition-all text-sm font-bold shadow-md"
+            >
+              {loading ? (
+                <SpinnerIcon className="w-4 h-4" />
+              ) : (
+                <ListBulletIcon className="w-4 h-4" />
+              )}
+              Import Excel
+            </label>
+          </div>
+        )}
+      </div>
 
       <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
         <div className="bg-red-700 p-6 text-white">
           <h2 className="text-2xl font-hanzi font-bold">
-            Thêm từ mới vào từ điển
+            {idiomId ? "Sửa dữ liệu" : "Thêm dữ liệu"}
           </h2>
           <p className="text-red-100 text-sm mt-1">
-            Nhập thông tin chi tiết để làm giàu kho dữ liệu
+            {idiomId
+              ? `Đang chỉnh sửa từ: ${form.hanzi}`
+              : "Nhập thủ công hoặc sử dụng chức năng Import Excel"}
           </p>
         </div>
 

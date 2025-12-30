@@ -24,11 +24,11 @@ const isProd = process.env.NODE_ENV === 'production';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get('DB_HOST') || 'ballast.proxy.rlwy.net',
-        port: parseInt(process.env.DB_PORT || '52331'),
-        username: process.env.DB_USER || 'postgres',
-        password: process.env.DB_PASSWORD || 'yzboxmbzJXGmzXyrblpeKTiyMdWAqaTF',
-        database: process.env.DB_NAME || 'railway',
+        host: configService.get('DB_HOST'),
+        port: parseInt(configService.get('DB_PORT') || '5432'),
+        username: configService.get('DB_USER'),
+        password: configService.get('DB_PASSWORD'),
+        database: configService.get('DB_NAME'),
         entities: [IdiomEntity, CharacterAnalysisEntity, ExampleSentenceEntity],
         synchronize: true, // Lưu ý: Chỉ dùng true cho môi trường Dev để tự tạo bảng
       }),

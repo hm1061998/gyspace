@@ -6,13 +6,14 @@ import {
   ChevronRightIcon,
   PencilIcon,
   TrashIcon,
-} from "./icons";
-import { deleteIdiom, fetchStoredIdioms } from "../services/idiomService";
-import type { Idiom } from "../types";
+} from "../components/icons";
+import { fetchStoredIdioms, deleteIdiom } from "../services/idiomService";
+import { Idiom } from "../types";
 
 interface VocabularyListProps {
   onBack: () => void;
   onSelect: (idiomHanzi: string) => void;
+  onEdit: (id: string) => void;
 }
 
 const VocabularyList: React.FC<VocabularyListProps> = ({
@@ -33,17 +34,14 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
   const [filter, setFilter] = useState("");
   const [debouncedFilter, setDebouncedFilter] = useState("");
 
-  // Debounce logic cho filter
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedFilter(filter);
-      setPage(1); // Reset về trang 1 khi tìm kiếm mới
-    }, 500); // Đợi 500ms sau khi ngừng gõ
-
+      setPage(1);
+    }, 500);
     return () => clearTimeout(timer);
   }, [filter]);
 
-  // Fetch data khi page hoặc filter thay đổi
   useEffect(() => {
     loadIdioms();
   }, [page, debouncedFilter]);
@@ -60,14 +58,6 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
     } finally {
       setLoading(false);
     }
-  };
-
-  const handlePrevPage = () => {
-    if (page > 1) setPage((p) => p - 1);
-  };
-
-  const handleNextPage = () => {
-    if (page < totalPages) setPage((p) => p + 1);
   };
 
   const handleDelete = async (
@@ -89,6 +79,14 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
   const handleEdit = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     onEdit(id);
+  };
+
+  const handlePrevPage = () => {
+    if (page > 1) setPage((p) => p - 1);
+  };
+
+  const handleNextPage = () => {
+    if (page < totalPages) setPage((p) => p + 1);
   };
 
   return (
@@ -135,15 +133,12 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
               <div
                 key={item.id}
                 onClick={() => onSelect(item.hanzi)}
-                className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-red-200 cursor-pointer transition-all group"
+                className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-red-200 cursor-pointer transition-all group relative overflow-hidden"
               >
                 <div className="flex justify-between items-start mb-2">
                   <h2 className="text-2xl font-hanzi font-bold text-slate-800 group-hover:text-red-700">
                     {item.hanzi}
                   </h2>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 uppercase font-bold">
-                    {item.type}
-                  </span>
                   <div className="flex items-center space-x-1">
                     <button
                       onClick={(e) => handleEdit(e, item.id)}
@@ -177,7 +172,6 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
             ))}
           </div>
 
-          {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="flex justify-center items-center space-x-4 pt-4 border-t border-slate-100">
               <button

@@ -2,8 +2,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, ILike } from 'typeorm';
-import { IdiomEntity } from './entities/idiom.entity';
+import { Repository, ILike, DataSource } from 'typeorm';
+import {
+  CharacterAnalysisEntity,
+  ExampleSentenceEntity,
+  IdiomEntity,
+} from './entities/idiom.entity';
 import { GoogleGenAI, Type } from '@google/genai';
 import { CreateIdiomDto } from './dto/create-idiom.dto';
 import { SearchMode } from './idioms.controller';
@@ -15,6 +19,11 @@ export class IdiomsService {
   constructor(
     @InjectRepository(IdiomEntity)
     private readonly idiomRepository: Repository<IdiomEntity>,
+    @InjectRepository(CharacterAnalysisEntity)
+    private analysisRepository: Repository<CharacterAnalysisEntity>,
+    @InjectRepository(ExampleSentenceEntity)
+    private examplesRepository: Repository<ExampleSentenceEntity>,
+    private dataSource: DataSource,
   ) {
     if (process.env.API_KEY) {
       this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -63,6 +72,15 @@ export class IdiomsService {
     };
   }
 
+  async findById(id: string) {
+    const idiom = await this.idiomRepository.findOne({
+      where: { id },
+      relations: ['analysis', 'examples'],
+    });
+    if (!idiom) throw new HttpException('Không tìm thấy từ vựng.', 400);
+    return idiom;
+  }
+
   async search(query: string, mode: SearchMode) {
     if (mode === 'ai') {
       return this.callGeminiAI(query);
@@ -87,29 +105,81 @@ export class IdiomsService {
   }
 
   async create(createIdiomDto: CreateIdiomDto) {
-    // 1. Kiểm tra xem từ đã tồn tại chưa
     const existing = await this.idiomRepository.findOne({
       where: { hanzi: createIdiomDto.hanzi },
-      relations: ['analysis', 'examples'], // Load quan hệ để orphanRemoval hoạt động đúng
+      relations: ['analysis', 'examples'],
     });
 
     if (existing) {
-      // 2. Nếu TỒN TẠI: Cập nhật (Update)
-      // Merge thông tin cơ bản
       this.idiomRepository.merge(existing, createIdiomDto);
-
-      // Gán lại mảng quan hệ để kích hoạt orphanRemoval (xóa cũ, thêm mới)
-      // Dùng 'as any' để bypass check type strict của TypeORM khi gán DTO object vào Entity relation
-      existing.analysis = (createIdiomDto.analysis || []) as any;
-      existing.examples = (createIdiomDto.examples || []) as any;
-
       return await this.idiomRepository.save(existing);
     }
-
     createIdiomDto.createdAt = `${new Date().getTime() / 1000}`;
-    // 3. Nếu CHƯA TỒN TẠI: Tạo mới (Insert)
     const newIdiom = this.idiomRepository.create(createIdiomDto);
     return await this.idiomRepository.save(newIdiom);
+  }
+
+  async bulkCreate(idioms: CreateIdiomDto[]) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const results: IdiomEntity[] = [];
+      for (const dto of idioms) {
+        let idiom = await queryRunner.manager.findOne(IdiomEntity, {
+          where: { hanzi: dto.hanzi },
+        });
+        if (idiom) {
+          queryRunner.manager.merge(IdiomEntity, idiom, dto);
+        } else {
+          idiom = queryRunner.manager.create(IdiomEntity, dto);
+        }
+
+        await queryRunner.manager.save(idiom);
+        results.push(idiom);
+      }
+      await queryRunner.commitTransaction();
+      return results;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async update(id: string, updateIdiomDto: CreateIdiomDto) {
+    // 1. Tìm bản ghi hiện tại kèm các quan hệ
+    const idiom = await this.findById(id);
+    
+    const { analysis, examples, ...basicData } = updateIdiomDto;
+    
+    // 2. Cập nhật các trường thông tin cơ bản
+    Object.assign(idiom, basicData);
+    
+    // 3. Cập nhật mảng quan hệ
+    // Nhờ orphanedRowAction: 'delete' trong Entity, việc gán mảng mới sẽ kích hoạt xóa bản ghi cũ
+    if (analysis !== undefined) {
+        idiom.analysis = analysis.map(a => this.analysisRepository.create(a));
+    }
+    
+    if (examples !== undefined) {
+        idiom.examples = examples.map(e => this.examplesRepository.create(e));
+    }
+    
+    try {
+      // 4. Lưu lại toàn bộ entity. TypeORM sẽ tự động handle transaction cho cascade
+      return await this.idiomRepository.save(idiom);
+    } catch (error) {
+      console.error("Update idiom error:", error);
+      throw new HttpException("Lỗi khi cập nhật từ vựng.",400);
+    }
+  }
+
+  async remove(id: string) {
+    const idiom = await this.findById(id);
+    await this.idiomRepository.remove(idiom);
+    return { success: true };
   }
 
   private async callGeminiAI(query: string) {

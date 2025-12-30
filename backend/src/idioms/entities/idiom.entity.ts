@@ -58,11 +58,13 @@ export class IdiomEntity {
 
   @OneToMany(() => CharacterAnalysisEntity, (analysis) => analysis.idiom, {
     cascade: true,
+    orphanedRowAction: 'delete',
   })
   analysis: CharacterAnalysisEntity[];
 
   @OneToMany(() => ExampleSentenceEntity, (example) => example.idiom, {
     cascade: true,
+    orphanedRowAction: 'delete',
   })
   examples: ExampleSentenceEntity[];
 }

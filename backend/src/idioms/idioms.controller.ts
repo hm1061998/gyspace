@@ -1,5 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { Controller, Get, Post, Body, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Query,
+  Param,
+  Put,
+  Delete,
+} from '@nestjs/common';
 import { IdiomsService } from './idioms.service';
 import { CreateIdiomDto } from './dto/create-idiom.dto';
 
@@ -23,8 +32,31 @@ export class IdiomsController {
     return this.idiomsService.search(query, mode);
   }
 
+  @Get(':id')
+  async findById(@Param('id') id: string) {
+    return this.idiomsService.findById(id);
+  }
+
   @Post()
   async create(@Body() createIdiomDto: CreateIdiomDto) {
     return this.idiomsService.create(createIdiomDto);
+  }
+
+  @Put(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() updateIdiomDto: CreateIdiomDto,
+  ) {
+    return this.idiomsService.update(id, updateIdiomDto);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    return this.idiomsService.remove(id);
+  }
+
+  @Post('bulk')
+  async bulkCreate(@Body() idioms: CreateIdiomDto[]) {
+    return this.idiomsService.bulkCreate(idioms);
   }
 }

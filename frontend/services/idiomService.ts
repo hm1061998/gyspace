@@ -18,7 +18,7 @@ const getEnv = (key: string) => {
 };
 
 // const API_BASE_URL = getEnv("VITE_API_URL") || getEnv("REACT_APP_API_URL");
-const API_BASE_URL = '/api'
+const API_BASE_URL = "/api";
 // Khởi tạo Gemini Client-side cho chế độ Fallback
 
 // Hàm giả lập tìm kiếm trong Database (Client-side Fallback)
@@ -119,6 +119,17 @@ export const fetchIdiomDetails = async (
   }
 };
 
+export const fetchIdiomById = async (id: string): Promise<Idiom> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/idioms/${id}`);
+    if (!response.ok) throw new Error("Không thể tải thông tin từ vựng.");
+    return await response.json();
+  } catch (error: any) {
+    console.error("Fetch ID error:", error);
+    throw error;
+  }
+};
+
 export const createIdiom = async (data: any) => {
   // Ưu tiên gọi Backend, nhưng có timeout để tránh bị treo (Pending)
   try {
@@ -172,6 +183,42 @@ export const createIdiom = async (data: any) => {
       throw new Error(localError.message || "Không thể lưu dữ liệu.");
     }
   }
+};
+
+export const bulkCreateIdioms = async (data: any[]) => {
+  const response = await fetch(`${API_BASE_URL}/idioms/bulk`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Lỗi khi import hàng loạt.");
+  return await response.json();
+};
+
+export const updateIdiom = async (id: string, data: any) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/idioms/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "Lỗi khi cập nhật.");
+    }
+    return await response.json();
+  } catch (error: any) {
+    console.error("Update error:", error);
+    throw error;
+  }
+};
+
+export const deleteIdiom = async (id: string) => {
+  const response = await fetch(`${API_BASE_URL}/idioms/${id}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) throw new Error("Lỗi khi xóa từ vựng.");
+  return await response.json();
 };
 
 // Cập nhật để trả về dạng phân trang
