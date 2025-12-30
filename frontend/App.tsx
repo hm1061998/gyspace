@@ -27,6 +27,7 @@ const App: React.FC = () => {
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
     sessionStorage.setItem("isLoggedIn", "true");
+    navigate('/')
   };
 
   // Xử lý đăng xuất
@@ -37,6 +38,7 @@ const App: React.FC = () => {
     setIsLoggedIn(false);
     // 3. Reset về trang chủ để đảm bảo an toàn
     setIsSidebarOpen(false);
+    navigate('/')
   }, []);
 
   return (

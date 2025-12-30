@@ -4,6 +4,7 @@ import {
   TABLE_CHARACTER_ANALYSIS,
   TABLE_EXAMPLES,
 } from "../data/database";
+import { getAuthToken } from "./authService";
 
 const getEnv = (key: string) => {
   // Cách 1: Chuẩn Vite (import.meta.env)
@@ -15,6 +16,17 @@ const getEnv = (key: string) => {
     return process.env[key];
   }
   return null;
+};
+
+const getHeaders = (isJson = true) => {
+  const headers: any = {};
+  if (isJson) headers['Content-Type'] = 'application/json';
+  
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
 };
 
 // const API_BASE_URL = getEnv("VITE_API_URL") || getEnv("REACT_APP_API_URL");
@@ -138,9 +150,7 @@ export const createIdiom = async (data: any) => {
 
     const response = await fetch(`${API_BASE_URL}/idioms`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getHeaders(),
       body: JSON.stringify(data),
       signal: controller.signal,
     });
@@ -188,7 +198,7 @@ export const createIdiom = async (data: any) => {
 export const bulkCreateIdioms = async (data: any[]) => {
   const response = await fetch(`${API_BASE_URL}/idioms/bulk`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getHeaders(),
     body: JSON.stringify(data),
   });
   if (!response.ok) throw new Error("Lỗi khi import hàng loạt.");
@@ -199,7 +209,7 @@ export const updateIdiom = async (id: string, data: any) => {
   try {
     const response = await fetch(`${API_BASE_URL}/idioms/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: getHeaders(),
       body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -216,6 +226,7 @@ export const updateIdiom = async (id: string, data: any) => {
 export const deleteIdiom = async (id: string) => {
   const response = await fetch(`${API_BASE_URL}/idioms/${id}`, {
     method: "DELETE",
+    headers: getHeaders(false),
   });
   if (!response.ok) throw new Error("Lỗi khi xóa từ vựng.");
   return await response.json();

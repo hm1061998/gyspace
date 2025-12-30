@@ -25,6 +25,7 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const topRef = useRef<HTMLDivElement>(null); // Ref để cuộn lên đầu trang
 
   const [form, setForm] = useState({
     hanzi: "",
@@ -151,6 +152,16 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
     reader.readAsBinaryString(file);
   };
 
+  const scrollToTop = () => {
+    // const root = document.querySelector("#root");
+    // console.log('scrollToTop', root);
+
+    // if (root) {
+    //   root.scrollIntoView({ behavior: "smooth", block: "start" });
+    // }
+    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -186,7 +197,8 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
         setAnalysis([{ character: "", pinyin: "", meaning: "" }]);
         setExamples([{ chinese: "", pinyin: "", vietnamese: "" }]);
       }
-      window.scrollTo(0, 0);
+
+      scrollToTop();
     } catch (err: any) {
       setError(err.message || "Có lỗi xảy ra.");
     } finally {
@@ -213,7 +225,7 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
   }
 
   return (
-    <div className="max-w-4xl w-full mx-auto animate-pop">
+    <div ref={topRef} className="max-w-4xl w-full mx-auto animate-pop">
       {!idiomId && (
         <div className="flex justify-end items-center mb-6">
           <div className="relative">
