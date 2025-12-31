@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { confirmService, ConfirmState } from "@/services/confirmService";
+import { confirmService, ConfirmState } from "@/services/ui/confirmService";
 import { SpinnerIcon, ExclamationIcon, QuestionMarkIcon } from "./icons";
 
 const ConfirmModal: React.FC = () => {

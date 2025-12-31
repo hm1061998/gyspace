@@ -4,8 +4,8 @@ import {
   createIdiom,
   updateIdiom,
   fetchIdiomById,
-} from "@/services/idiomService";
-import { toast } from "@/services/toastService";
+} from "@/services/api/idiomService";
+import { toast } from "@/services/ui/toastService";
 import { useOutletContext } from "react-router";
 import { AdminOutletContext } from "@/layouts/AdminLayout";
 

@@ -7,14 +7,14 @@ import {
   PlusIcon,
   SpinnerIcon,
 } from "@/components/icons";
-import { fetchStoredIdioms } from "@/services/idiomService";
+import { fetchStoredIdioms } from "@/services/api/idiomService";
 import {
   fetchSavedIdioms,
   fetchSRSData,
   updateSRSProgress,
-} from "@/services/userDataService";
+} from "@/services/api/userDataService";
 import type { Idiom } from "@/types";
-import { toast } from "@/services/toastService";
+import { toast } from "@/services/ui/toastService";
 import { useOutletContext } from "react-router-dom";
 
 interface FlashcardReviewProps {

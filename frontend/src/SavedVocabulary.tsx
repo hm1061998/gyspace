@@ -9,9 +9,11 @@ import {
   ChevronRightIcon,
 } from "@/components/icons";
 import type { Idiom } from "@/types";
-import { fetchSavedIdioms } from "@/services/userDataService";
-import { toast } from "@/services/toastService";
-import { toggleSaveIdiom } from "@/services/userDataService";
+import {
+  fetchSavedIdioms,
+  toggleSaveIdiom,
+} from "@/services/api/userDataService";
+import { toast } from "@/services/ui/toastService";
 
 interface SavedVocabularyProps {
   onBack: () => void;

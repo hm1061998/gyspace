@@ -14,11 +14,11 @@ import {
   fetchStoredIdioms,
   deleteIdiom,
   bulkCreateIdioms,
-} from "@/services/idiomService";
+} from "@/services/api/idiomService";
 import { Idiom } from "@/types";
 import { useNavigate } from "react-router";
-import { confirmService } from "@/services/confirmService";
-import { toast } from "@/services/toastService";
+import { confirmService } from "@/services/ui/confirmService";
+import { toast } from "@/services/ui/toastService";
 
 interface VocabularyListProps {
   onBack: () => void;

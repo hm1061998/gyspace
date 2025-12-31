@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ArrowLeftIcon, SpinnerIcon } from "@/components/icons";
-import { loginAdmin } from "@/services/authService";
+import { loginAdmin } from "@/services/api/authService";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/redux/authSlice";
 

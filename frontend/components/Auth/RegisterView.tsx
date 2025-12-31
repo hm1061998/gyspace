@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ArrowLeftIcon, SpinnerIcon, UserIcon } from "@/components/icons";
-import { registerUser } from "@/services/authService";
+import { registerUser } from "@/services/api/authService";
 
 interface RegisterViewProps {
   onBackToLogin: () => void;

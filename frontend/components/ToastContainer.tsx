@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { toast, ToastMessage } from "@/services/toastService";
+import { toast, ToastMessage } from "@/services/ui/toastService";
 
 const ToastContainer: React.FC = () => {
   const [activeToasts, setActiveToasts] = useState<ToastMessage[]>([]);

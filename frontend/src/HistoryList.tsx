@@ -8,9 +8,9 @@ import {
   SpinnerIcon,
 } from "@/components/icons";
 import type { Idiom } from "@/types";
-import { fetchHistory, clearAllHistory } from "@/services/userDataService";
-import { confirmService } from "@/services/confirmService";
-import { toast } from "@/services/toastService";
+import { fetchHistory, clearAllHistory } from "@/services/api/userDataService";
+import { confirmService } from "@/services/ui/confirmService";
+import { toast } from "@/services/ui/toastService";
 
 interface HistoryListProps {
   onBack: () => void;

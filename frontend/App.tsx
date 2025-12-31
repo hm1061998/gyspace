@@ -14,7 +14,7 @@ import FlashcardReview from "./src/FlashcardReview";
 import WordSearchGame from "./src/WordSearchGame";
 import HistoryList from "./src/HistoryList";
 import Dashboard from "./src/Admin/Dashboard";
-import { addToHistory } from "./services/idiomService";
+import { addToHistory } from "./services/api/idiomService";
 import Auth from "./src/Auth";
 import RequireAuth from "./context/RequireAuth";
 import AdminLayout from "./layouts/AdminLayout";

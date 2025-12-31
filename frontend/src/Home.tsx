@@ -5,7 +5,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { fetchIdiomDetails } from "@/services/idiomService";
+import { fetchIdiomDetails } from "@/services/api/idiomService";
 import type { Idiom, SearchMode } from "@/types";
 import IdiomDetail from "@/components/IdiomDetail";
 import HandwritingPad from "@/components/HandwritingPad";
@@ -18,7 +18,7 @@ import {
   PuzzlePieceIcon,
   ArrowLeftIcon,
 } from "@/components/icons";
-import { addToHistory } from "@/services/userDataService";
+import { addToHistory } from "@/services/api/userDataService";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();

@@ -17,7 +17,7 @@ import {
 } from "./icons";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import { toast } from "@/services/toastService";
+import { toast } from "@/services/ui/toastService";
 
 interface UserSidebarProps {
   isOpen: boolean;
