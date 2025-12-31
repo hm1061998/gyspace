@@ -40,10 +40,10 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           )}
 
           <Link to="/" className="flex items-center space-x-2 group">
-            <div className="w-8 h-8 bg-red-700 rounded flex items-center justify-center text-white font-hanzi font-bold shadow-lg group-hover:bg-red-800 transition-all">
-              词
+            <div className="w-8 h-8 bg-gradient-to-br from-red-600 to-red-800 rounded-lg flex items-center justify-center text-white font-hanzi font-bold shadow-md group-hover:scale-110 transition-transform">
+              GY
             </div>
-            <h1 className="text-lg font-bold text-slate-800 font-hanzi">
+            <h1 className="text-xl font-bold text-slate-800 font-hanzi tracking-tight">
               GYSpace
             </h1>
           </Link>
