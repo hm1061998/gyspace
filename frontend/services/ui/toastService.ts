@@ -38,8 +38,12 @@ class ToastService {
   success(message: string) {
     this.show(message, "success");
   }
-  error(message: string) {
-    this.show(message, "error");
+  error(message: string | string[]) {
+    if (Array.isArray(message)) {
+      message.forEach((msg) => this.show(msg, "error"));
+    } else {
+      this.show(message, "error");
+    }
   }
   info(message: string) {
     this.show(message, "info");

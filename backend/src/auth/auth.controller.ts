@@ -13,6 +13,7 @@ import {
 import { AuthService } from './auth.service';
 import type { Response } from 'express';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { LoginDto, RegisterDto } from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -27,7 +28,7 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
-    @Body() body: { username: string; pass: string },
+    @Body() body: LoginDto,
     @Res({ passthrough: true }) response: Response,
   ) {
     const data = await this.authService.login(body.username, body.pass);
@@ -90,7 +91,7 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(HttpStatus.OK)
-  async register(@Body() body: { username: string; pass: string }) {
+  async register(@Body() body: RegisterDto) {
     return this.authService.register(body.username, body.pass);
   }
 }

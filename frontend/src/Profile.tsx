@@ -125,7 +125,15 @@ const Profile: React.FC = () => {
               <input
                 type="text"
                 {...registerProfile("displayName", {
-                  minLength: { value: 2, message: "Tên hiển thị quá ngắn" },
+                  required: "Tên hiển thị không được để trống",
+                  minLength: {
+                    value: 1,
+                    message: "Tên hiển thị không được để trống",
+                  },
+                  maxLength: {
+                    value: 50,
+                    message: "Tên hiển thị không quá 50 ký tự",
+                  },
                 })}
                 placeholder="Nhập tên hiển thị của bạn"
                 className={`w-full px-5 py-4 bg-white border ${
@@ -201,6 +209,10 @@ const Profile: React.FC = () => {
                   minLength: {
                     value: 6,
                     message: "Mật khẩu mới phải có ít nhất 6 ký tự",
+                  },
+                  maxLength: {
+                    value: 100,
+                    message: "Mật khẩu mới không được quá 100 ký tự",
                   },
                 })}
                 placeholder="••••••••"

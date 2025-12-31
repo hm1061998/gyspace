@@ -9,9 +9,10 @@ import {
   Put,
   Delete,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { IdiomsService } from './idioms.service';
-import { CreateIdiomDto } from './dto/create-idiom.dto';
+import { CreateIdiomDto, BulkCreateIdiomDto } from './dto/create-idiom.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 export type SearchMode = 'database' | 'ai';
@@ -76,7 +77,11 @@ export class IdiomsController {
 
   @UseGuards(JwtAuthGuard)
   @Post('bulk')
-  async bulkCreate(@Body() idioms: CreateIdiomDto[]) {
+  async bulkCreate(@Body() body: any) {
+    const idioms = Array.isArray(body) ? body : body.idioms;
+    if (!idioms || !Array.isArray(idioms)) {
+      throw new BadRequestException('Dữ liệu không hợp lệ. Phải là một mảng.');
+    }
     return this.idiomsService.bulkCreate(idioms);
   }
 }

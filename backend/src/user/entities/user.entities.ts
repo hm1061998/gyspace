@@ -15,13 +15,13 @@ export class UserEntity {
   @PrimaryGeneratedColumn()
   id: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, length: 20 })
   username: string;
 
-  @Column()
+  @Column({ length: 255 }) // Pass can be long after hashing
   password: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, length: 50 })
   displayName: string;
 
   @Column({ default: false })

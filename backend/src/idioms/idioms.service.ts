@@ -27,9 +27,6 @@ export class IdiomsService {
   ) {
     if (process.env.API_KEY) {
       this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    } else {
-      console.warn('API_KEY is not set in environment variables');
-      // throw new Error('API_KEY is not set in environment variables');
     }
   }
 

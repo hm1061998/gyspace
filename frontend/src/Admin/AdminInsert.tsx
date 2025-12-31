@@ -181,7 +181,13 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                     Hán tự *
                   </label>
                   <input
-                    {...register("hanzi", { required: "Vui lòng nhập Hán tự" })}
+                    {...register("hanzi", {
+                      required: "Vui lòng nhập Hán tự",
+                      maxLength: {
+                        value: 100,
+                        message: "Hán tự tối đa 100 ký tự",
+                      },
+                    })}
                     className={`w-full border ${
                       errors.hanzi ? "border-red-500" : "border-slate-200"
                     } rounded-xl p-3 font-hanzi text-lg focus:ring-2 focus:ring-red-500/10 focus:border-red-500 transition-all outline-none bg-slate-50/50`}
@@ -199,7 +205,10 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                   </label>
                   <input
                     {...register("pinyin", {
-                      required: "Vui lòng nhập Pinyin",
+                      maxLength: {
+                        value: 200,
+                        message: "Pinyin tối đa 200 ký tự",
+                      },
                     })}
                     className={`w-full border ${
                       errors.pinyin ? "border-red-500" : "border-slate-200"
@@ -219,7 +228,10 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                 </label>
                 <input
                   {...register("vietnameseMeaning", {
-                    required: "Vui lòng nhập ý nghĩa",
+                    maxLength: {
+                      value: 2000,
+                      message: "Nghĩa tối đa 2000 ký tự",
+                    },
                   })}
                   className={`w-full border ${
                     errors.vietnameseMeaning
@@ -240,7 +252,9 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                     Phân loại
                   </label>
                   <select
-                    {...register("type")}
+                    {...register("type", {
+                      maxLength: { value: 50, message: "Tối đa 50 ký tự" },
+                    })}
                     className="w-full border border-slate-200 rounded-xl p-3 appearance-none bg-slate-50/50 outline-none focus:border-slate-400 transition-all"
                   >
                     <option>Quán dụng ngữ</option>
@@ -254,7 +268,9 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                     Cấp độ
                   </label>
                   <select
-                    {...register("level")}
+                    {...register("level", {
+                      maxLength: { value: 20, message: "Tối đa 20 ký tự" },
+                    })}
                     className="w-full border border-slate-200 rounded-xl p-3 appearance-none bg-slate-50/50 outline-none focus:border-slate-400 transition-all"
                   >
                     <option>Sơ cấp</option>
@@ -267,7 +283,9 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                     Nguồn (Giáo trình)
                   </label>
                   <input
-                    {...register("source")}
+                    {...register("source", {
+                      maxLength: { value: 100, message: "Tối đa 100 ký tự" },
+                    })}
                     className="w-full border border-slate-200 rounded-xl p-3 bg-slate-50/50 outline-none"
                     placeholder="VD: Qiaoliang"
                   />
@@ -309,20 +327,48 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                     Ảnh minh họa
                   </label>
                   <input
-                    {...register("imageUrl")}
+                    {...register("imageUrl", {
+                      maxLength: {
+                        value: 1000,
+                        message: "URL tối đa 1000 ký tự",
+                      },
+                      pattern: {
+                        value: /^https?:\/\/.+/,
+                        message: "Phải là URL hợp lệ (http/https)",
+                      },
+                    })}
                     className="w-full border border-slate-200 rounded-xl p-3 bg-slate-50/50 outline-none focus:border-slate-400 transition-all"
                     placeholder="https://anh.png"
                   />
+                  {errors.imageUrl && (
+                    <p className="text-red-500 text-[10px] mt-1 font-bold ml-1">
+                      {errors.imageUrl.message}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
                     Video (URL)
                   </label>
                   <input
-                    {...register("videoUrl")}
+                    {...register("videoUrl", {
+                      maxLength: {
+                        value: 1000,
+                        message: "URL tối đa 1000 ký tự",
+                      },
+                      pattern: {
+                        value: /^https?:\/\/.+/,
+                        message: "Phải là URL hợp lệ (http/https)",
+                      },
+                    })}
                     className="w-full border border-slate-200 rounded-xl p-3 bg-slate-50/50 outline-none focus:border-slate-400 transition-all"
                     placeholder="https://video.mp4"
                   />
+                  {errors.videoUrl && (
+                    <p className="text-red-500 text-[10px] mt-1 font-bold ml-1">
+                      {errors.videoUrl.message}
+                    </p>
+                  )}
                 </div>
               </div>
               <div>
@@ -349,7 +395,9 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                     Nguồn gốc
                   </label>
                   <textarea
-                    {...register("origin")}
+                    {...register("origin", {
+                      maxLength: { value: 2000, message: "Tối đa 2000 ký tự" },
+                    })}
                     className="w-full border border-slate-200 rounded-xl p-3 h-24 bg-slate-50/50 outline-none"
                   />
                 </div>
@@ -358,7 +406,9 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                     Cách dùng/Ngữ pháp
                   </label>
                   <textarea
-                    {...register("grammar")}
+                    {...register("grammar", {
+                      maxLength: { value: 2000, message: "Tối đa 2000 ký tự" },
+                    })}
                     className="w-full border border-slate-200 rounded-xl p-3 h-24 bg-slate-50/50 outline-none"
                   />
                 </div>
@@ -393,21 +443,36 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                     <div className="flex-1 grid grid-cols-3 gap-3">
                       <div>
                         <input
-                          {...register(`analysis.${idx}.character`)}
+                          {...register(`analysis.${idx}.character`, {
+                            maxLength: {
+                              value: 10,
+                              message: "Tối đa 10 ký tự",
+                            },
+                          })}
                           className="w-full border border-slate-200 rounded-lg p-2 font-hanzi bg-white focus:border-red-400 outline-none"
                           placeholder="Chữ"
                         />
                       </div>
                       <div>
                         <input
-                          {...register(`analysis.${idx}.pinyin`)}
+                          {...register(`analysis.${idx}.pinyin`, {
+                            maxLength: {
+                              value: 100,
+                              message: "Tối đa 100 ký tự",
+                            },
+                          })}
                           className="w-full border border-slate-200 rounded-lg p-2 bg-white focus:border-red-400 outline-none"
                           placeholder="Pinyin"
                         />
                       </div>
                       <div>
                         <input
-                          {...register(`analysis.${idx}.meaning`)}
+                          {...register(`analysis.${idx}.meaning`, {
+                            maxLength: {
+                              value: 500,
+                              message: "Tối đa 500 ký tự",
+                            },
+                          })}
                           className="w-full border border-slate-200 rounded-lg p-2 bg-white focus:border-red-400 outline-none"
                           placeholder="Nghĩa"
                         />
@@ -458,7 +523,12 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                           Tiếng Trung
                         </label>
                         <input
-                          {...register(`examples.${idx}.chinese`)}
+                          {...register(`examples.${idx}.chinese`, {
+                            maxLength: {
+                              value: 1000,
+                              message: "Tối đa 1000 ký tự",
+                            },
+                          })}
                           className="w-full border border-slate-200 rounded-xl p-3 font-hanzi bg-slate-50/50 outline-none"
                         />
                       </div>
@@ -467,7 +537,12 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                           Pinyin
                         </label>
                         <input
-                          {...register(`examples.${idx}.pinyin`)}
+                          {...register(`examples.${idx}.pinyin`, {
+                            maxLength: {
+                              value: 1000,
+                              message: "Tối đa 1000 ký tự",
+                            },
+                          })}
                           className="w-full border border-slate-200 rounded-xl p-3 bg-slate-50/50 outline-none"
                         />
                       </div>
@@ -477,7 +552,12 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                         Nghĩa tiếng Việt
                       </label>
                       <input
-                        {...register(`examples.${idx}.vietnamese`)}
+                        {...register(`examples.${idx}.vietnamese`, {
+                          maxLength: {
+                            value: 1000,
+                            message: "Tối đa 1000 ký tự",
+                          },
+                        })}
                         className="w-full border border-slate-200 rounded-xl p-3 bg-slate-50/50 outline-none"
                       />
                     </div>

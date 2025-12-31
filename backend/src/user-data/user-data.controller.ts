@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserDataService } from './user-data.service';
+import { UpdateSRSDto } from './dto/user-data.dto';
 
 @Controller('user-data')
 @UseGuards(JwtAuthGuard)
@@ -41,7 +42,7 @@ export class UserDataController {
   }
 
   @Post('srs')
-  updateSRS(@Request() req, @Body() body: any) {
+  updateSRS(@Request() req, @Body() body: UpdateSRSDto) {
     return this.userDataService.updateSRS(req.user.id, body.idiomId, body);
   }
 

@@ -14,31 +14,31 @@ export class IdiomEntity {
   id: string;
 
   @Index() // Index cho tìm kiếm chính xác
-  @Column({ unique: true })
+  @Column({ unique: true, length: 100 })
   hanzi: string;
 
   @Index() // Index cho tìm kiếm pinyin
-  @Column()
+  @Column({ length: 200, nullable: true })
   pinyin: string;
 
-  @Column()
+  @Column({ length: 50, nullable: true })
   type: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, length: 20 })
   level: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, length: 100 })
   source: string;
 
   // Chuyển sang text vì nghĩa có thể dài
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   vietnameseMeaning: string; //nghĩa tiếng Việt
 
   // Chuyển sang text
   @Column({ type: 'text', nullable: true })
   literalMeaning: string; //nghĩa đen
 
-  @Column('text')
+  @Column({ type: 'text', nullable: true })
   figurativeMeaning: string; //nghĩa bóng/thực tế
 
   @Column({ type: 'text', nullable: true })
@@ -50,13 +50,13 @@ export class IdiomEntity {
   @Column({ type: 'text', nullable: true })
   grammar: string; //ngữ pháp
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, length: 1000 })
   imageUrl: string; //hình ảnh
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, length: 1000 })
   videoUrl: string; //video
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'text' })
   usageContext: string; //bối cảnh sử dụng
 
   @CreateDateColumn()
@@ -80,13 +80,13 @@ export class CharacterAnalysisEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ length: 10, nullable: true })
   character: string;
 
-  @Column()
+  @Column({ length: 100, nullable: true })
   pinyin: string;
 
-  @Column()
+  @Column({ length: 500, nullable: true })
   meaning: string;
 
   @ManyToOne(() => IdiomEntity, (idiom) => idiom.analysis, {
@@ -100,13 +100,13 @@ export class ExampleSentenceEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column('text')
+  @Column({ type: 'text', nullable: true })
   chinese: string;
 
-  @Column()
+  @Column({ type: 'text', nullable: true })
   pinyin: string;
 
-  @Column('text')
+  @Column({ type: 'text', nullable: true })
   vietnamese: string;
 
   @ManyToOne(() => IdiomEntity, (idiom) => idiom.examples, {

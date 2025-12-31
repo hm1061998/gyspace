@@ -80,6 +80,14 @@ const LoginView: React.FC<LoginViewProps> = ({
                     value: 4,
                     message: "Tên đăng nhập phải có ít nhất 4 ký tự",
                   },
+                  maxLength: {
+                    value: 20,
+                    message: "Tên đăng nhập không được quá 20 ký tự",
+                  },
+                  pattern: {
+                    value: /^[a-zA-Z0-9_-]+$/,
+                    message: "Tên đăng nhập chỉ chứa chữ cái, số, - và _",
+                  },
                 })}
                 type="text"
                 className={`w-full px-4 py-3 bg-slate-50 border ${
@@ -103,6 +111,10 @@ const LoginView: React.FC<LoginViewProps> = ({
                   minLength: {
                     value: 6,
                     message: "Mật khẩu phải có ít nhất 6 ký tự",
+                  },
+                  maxLength: {
+                    value: 100,
+                    message: "Mật khẩu không được quá 100 ký tự",
                   },
                 })}
                 type="password"
