@@ -5,8 +5,11 @@ import {
   HistoryIcon,
   SearchIcon,
   ChevronRightIcon,
+  SpinnerIcon,
 } from "../components/icons";
 import type { Idiom } from "../types";
+import { fetchHistory, clearAllHistory } from "../services/userDataService";
+import { toast } from "../services/toastService";
 
 interface HistoryListProps {
   onBack: () => void;
@@ -15,35 +18,42 @@ interface HistoryListProps {
 
 const HistoryList: React.FC<HistoryListProps> = ({ onBack, onSelect }) => {
   const [historyItems, setHistoryItems] = useState<Idiom[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
 
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+
   useEffect(() => {
-    loadHistory();
-  }, []);
+    loadHistoryData();
+  }, [page]);
 
-  const loadHistory = () => {
+  const loadHistoryData = async () => {
+    setLoading(true);
     try {
-      const data = localStorage.getItem("search_history");
-      if (data) {
-        setHistoryItems(JSON.parse(data));
-      }
+      const response = await fetchHistory(page, 20);
+      setHistoryItems(response.data);
+      setTotalPages(response.meta.lastPage);
+      setTotalItems(response.meta.total);
     } catch (e) {
-      console.error("Failed to load history", e);
+      toast.error("Không thể tải lịch sử.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (window.confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử tra cứu?")) {
-      localStorage.removeItem("search_history");
-      setHistoryItems([]);
+      try {
+        await clearAllHistory();
+        setHistoryItems([]);
+        toast.info("Đã xóa lịch sử.");
+      } catch (e) {
+        toast.error("Lỗi khi xóa lịch sử.");
+      }
     }
-  };
-
-  const handleRemoveItem = (e: React.MouseEvent, hanzi: string) => {
-    e.stopPropagation();
-    const newList = historyItems.filter((item) => item.hanzi !== hanzi);
-    setHistoryItems(newList);
-    localStorage.setItem("search_history", JSON.stringify(newList));
   };
 
   const filteredItems = historyItems.filter(
@@ -85,58 +95,88 @@ const HistoryList: React.FC<HistoryListProps> = ({ onBack, onSelect }) => {
         </div>
       </div>
 
-      {historyItems.length === 0 ? (
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <SpinnerIcon className="w-10 h-10 text-red-600" />
+        </div>
+      ) : historyItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white/40 rounded-3xl border border-slate-100">
           <HistoryIcon className="w-16 h-16 mb-4 opacity-20" />
           <p className="text-lg font-medium">Lịch sử trống</p>
           <p className="text-sm">Các từ bạn tra cứu sẽ xuất hiện tại đây.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          {filteredItems.map((item, index) => (
-            <div
-              key={`${item.hanzi}-${index}`}
-              onClick={() => onSelect(item)}
-              className="p-4 border-b border-slate-100 last:border-0 hover:bg-slate-50 cursor-pointer transition-colors flex items-center justify-between group"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs">
-                  {index + 1}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl font-hanzi font-bold text-slate-800">
-                      {item.hanzi}
-                    </span>
-                    <span className="text-sm text-red-600 font-medium">
-                      {item.pinyin}
-                    </span>
+        <>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            {filteredItems.map((item, index) => (
+              <div
+                key={`${item.id}-${index}`}
+                onClick={() => onSelect(item)}
+                className="p-4 border-b border-slate-100 last:border-0 hover:bg-slate-50 cursor-pointer transition-colors flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs">
+                    {index + 1}
                   </div>
-                  <p className="text-sm text-slate-500 line-clamp-1">
-                    {item.vietnameseMeaning}
-                  </p>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-hanzi font-bold text-slate-800">
+                        {item.hanzi}
+                      </span>
+                      <span className="text-sm text-red-600 font-medium">
+                        {item.pinyin}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-500 line-clamp-1">
+                      {item.vietnameseMeaning}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <ChevronRightIcon className="w-5 h-5 text-slate-300" />
                 </div>
               </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={(e) => handleRemoveItem(e, item.hanzi)}
-                  className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
-                  title="Xóa khỏi lịch sử"
-                >
-                  <TrashIcon className="w-4 h-4" />
-                </button>
-                <ChevronRightIcon className="w-5 h-5 text-slate-300" />
+            ))}
+            {filteredItems.length === 0 && filter && (
+              <div className="p-8 text-center text-slate-500">
+                Không tìm thấy kết quả nào trong lịch sử.
               </div>
-            </div>
-          ))}
+            )}
+          </div>
 
-          {filteredItems.length === 0 && filter && (
-            <div className="p-8 text-center text-slate-500">
-              Không tìm thấy kết quả nào trong lịch sử.
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center space-x-4">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className={`flex items-center px-4 py-2 rounded-full border text-sm font-bold transition-all ${
+                  page === 1
+                    ? "border-slate-100 text-slate-300 cursor-not-allowed"
+                    : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-red-300"
+                }`}
+              >
+                <ArrowLeftIcon className="w-4 h-4 mr-2" />
+                Trước
+              </button>
+              <span className="text-slate-500 font-bold text-sm">
+                Trang {page} / {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className={`flex items-center px-4 py-2 rounded-full border text-sm font-bold transition-all ${
+                  page === totalPages
+                    ? "border-slate-100 text-slate-300 cursor-not-allowed"
+                    : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-red-300"
+                }`}
+              >
+                Sau
+                <ChevronRightIcon className="w-4 h-4 ml-2" />
+              </button>
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );

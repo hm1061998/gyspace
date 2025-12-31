@@ -8,7 +8,7 @@ import {
   Param,
   Put,
   Delete,
-  UseGuards
+  UseGuards,
 } from '@nestjs/common';
 import { IdiomsService } from './idioms.service';
 import { CreateIdiomDto } from './dto/create-idiom.dto';
@@ -20,15 +20,27 @@ export type SearchMode = 'database' | 'ai';
 export class IdiomsController {
   constructor(private readonly idiomsService: IdiomsService) {}
 
+  @UseGuards(JwtAuthGuard)
+  @Get('admin/stats')
+  async getAdminStats() {
+    return this.idiomsService.getAdminStats();
+  }
+
   @Get()
   async findAll(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 12,
     @Query('filter') filter: string = '',
     @Query('sort') sort: string = 'createdAt',
-    @Query('order') order: 'ASC' | 'DESC' = 'DESC'
+    @Query('order') order: 'ASC' | 'DESC' = 'DESC',
   ) {
-    return this.idiomsService.findAll(Number(page), Number(limit), filter, sort, order);
+    return this.idiomsService.findAll(
+      Number(page),
+      Number(limit),
+      filter,
+      sort,
+      order,
+    );
   }
 
   @Get('search')

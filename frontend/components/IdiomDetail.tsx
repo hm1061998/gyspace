@@ -8,8 +8,15 @@ import {
   RefreshIcon,
   PencilIcon,
   SpeakerWaveIcon,
+  SpinnerIcon,
 } from "./icons";
 import IdiomComments from "./IdiomComments";
+import { toast } from "@/services/toastService";
+import {
+  checkSavedStatus,
+  fetchSavedIdioms,
+  toggleSaveIdiom,
+} from "@/services/userDataService";
 
 interface IdiomDetailProps {
   idiom: Idiom;
@@ -48,181 +55,49 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
   isLoggedIn,
   isPremium,
 }) => {
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
   const [isSaved, setIsSaved] = useState(false);
-  const [userNote, setUserNote] = useState("");
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  // Helper for safe storage access
-  const safeGetStorage = (key: string) => {
-    try {
-      const data = localStorage.getItem(key);
-      if (!data) return [];
-      const parsed = JSON.parse(data);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      console.error(`Error reading ${key} from localStorage:`, e);
-      return [];
+  useEffect(() => {
+    if (isLoggedIn && idiom.id) {
+      checkStatus();
+    } else {
+      setIsSaved(false);
     }
+  }, [idiom.id, isLoggedIn]);
+
+  const checkStatus = async () => {
+    if (!idiom.id) return;
+    const saved = await checkSavedStatus(idiom.id);
+    setIsSaved(saved);
   };
 
-  const safeSetStorage = (key: string, data: any[]) => {
+  const handleToggleSave = async () => {
+    if (!isLoggedIn) {
+      toast.error("Vui lòng đăng nhập để lưu từ.");
+      return;
+    }
+
+    if (!idiom.id) {
+      toast.info(
+        "Không thể lưu từ chưa có trong hệ thống. Hãy thử tìm từ khác hoặc liên hệ admin."
+      );
+      return;
+    }
+
+    setIsSyncing(true);
     try {
-      localStorage.setItem(key, JSON.stringify(data));
-      return true;
-    } catch (e: any) {
-      console.error(`Error writing ${key} to localStorage:`, e);
-      if (
-        e.name === "QuotaExceededError" ||
-        e.name === "NS_ERROR_DOM_QUOTA_REACHED"
-      ) {
-        setToastMessage("Bộ nhớ đầy. Vui lòng xóa bớt dữ liệu cũ.");
+      const result = await toggleSaveIdiom(idiom.id);
+      setIsSaved(result.saved);
+      if (result.saved) {
+        toast.success(`Đã lưu "${idiom.hanzi}" vào thư viện cá nhân!`);
       } else {
-        setToastMessage("Lỗi lưu trữ dữ liệu.");
+        toast.info(`Đã bỏ lưu "${idiom.hanzi}"`);
       }
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
-      return false;
-    }
-  };
-
-  useEffect(() => {
-    const savedList = safeGetStorage("saved_words");
-    setIsSaved(savedList.some((item: any) => item.hanzi === idiom.hanzi));
-  }, [idiom]);
-
-  // Load user note
-  useEffect(() => {
-    if (isLoggedIn) {
-      const notes = safeGetStorage("user_notes");
-      const found = notes.find((n: any) => n.hanzi === idiom.hanzi);
-      setUserNote(found ? found.content : "");
-    } else {
-      setUserNote("");
-    }
-  }, [idiom, isLoggedIn]);
-
-  const getStorageSafeIdiom = (idiomData: Idiom) => {
-    // Create a copy and remove the imageUrl to save space in localStorage
-    const { imageUrl, ...rest } = idiomData;
-    return rest;
-  };
-
-  const handleToggleSave = () => {
-    if (!isLoggedIn) {
-      setToastMessage("Vui lòng đăng nhập để lưu từ.");
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
-      return;
-    }
-
-    const savedList = safeGetStorage("saved_words");
-    let newList;
-
-    if (isSaved) {
-      newList = savedList.filter((item: any) => item.hanzi !== idiom.hanzi);
-      setToastMessage("Đã bỏ lưu từ này.");
-    } else {
-      const safeIdiom = getStorageSafeIdiom(idiom);
-      newList = [safeIdiom, ...savedList];
-      setToastMessage("Đã lưu từ thành công!");
-    }
-
-    if (safeSetStorage("saved_words", newList)) {
-      setIsSaved(!isSaved);
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
-    }
-  };
-
-  const handleAddToFlashcard = () => {
-    if (!isLoggedIn) {
-      setToastMessage("Vui lòng đăng nhập để tạo Flashcard.");
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
-      return;
-    }
-
-    const flashcards = safeGetStorage("flashcards");
-    if (flashcards.some((item: any) => item.hanzi === idiom.hanzi)) {
-      setToastMessage("Từ này đã có trong Flashcards.");
-    } else {
-      const safeIdiom = getStorageSafeIdiom(idiom);
-      const newList = [safeIdiom, ...flashcards];
-      if (safeSetStorage("flashcards", newList)) {
-        setToastMessage("Đã thêm vào Flashcards!");
-      }
-    }
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
-  };
-
-  const handleStudyAgain = () => {
-    if (!isLoggedIn) {
-      setToastMessage("Vui lòng đăng nhập để sử dụng tính năng này.");
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
-      return;
-    }
-
-    let flashcards = safeGetStorage("flashcards");
-    const existingIndex = flashcards.findIndex(
-      (item: any) => item.hanzi === idiom.hanzi
-    );
-
-    if (existingIndex !== -1) {
-      // Update existing item with review flag
-      flashcards[existingIndex] = {
-        ...flashcards[existingIndex],
-        reviewNeeded: true,
-        lastReviewed: Date.now(),
-      };
-      setToastMessage("Đã đánh dấu cần ôn tập lại!");
-    } else {
-      // Add new item with review flag
-      const safeIdiom = getStorageSafeIdiom(idiom);
-      flashcards = [
-        { ...safeIdiom, reviewNeeded: true, addedAt: Date.now() },
-        ...flashcards,
-      ];
-      setToastMessage("Đã thêm vào danh sách ôn tập!");
-    }
-
-    if (safeSetStorage("flashcards", flashcards)) {
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
-    }
-  };
-
-  const handleSaveNote = () => {
-    if (!isLoggedIn) {
-      setToastMessage("Vui lòng đăng nhập để lưu ghi chú.");
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
-      return;
-    }
-
-    const notes = safeGetStorage("user_notes");
-    const index = notes.findIndex((n: any) => n.hanzi === idiom.hanzi);
-
-    const newNoteEntry = {
-      hanzi: idiom.hanzi,
-      content: userNote,
-      updatedAt: Date.now(),
-    };
-
-    let newNotesList;
-    if (index !== -1) {
-      newNotesList = [...notes];
-      newNotesList[index] = newNoteEntry;
-    } else {
-      newNotesList = [...notes, newNoteEntry];
-    }
-
-    if (safeSetStorage("user_notes", newNotesList)) {
-      setToastMessage("Đã lưu ghi chú thành công!");
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
+    } catch (e) {
+      toast.error("Lỗi đồng bộ dữ liệu. Vui lòng thử lại.");
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -242,21 +117,15 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
 
       window.speechSynthesis.speak(utterance);
     } else {
-      setToastMessage("Trình duyệt không hỗ trợ đọc văn bản.");
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
+      toast.error("Trình duyệt không hỗ trợ đọc văn bản.");
     }
   };
 
+  const handleAddToFlashcard = () => {};
+  const handleStudyAgain = () => {};
+
   return (
     <div className="max-w-4xl mx-auto pb-12 animate-[fadeInUp_0.4s_ease-out]">
-      {/* Toast */}
-      {showToast && (
-        <div className="fixed top-20 right-4 z-50 bg-slate-800 text-white px-4 py-2 rounded-lg shadow-lg text-sm animate-[fadeInUp_0.2s_ease-out]">
-          {toastMessage}
-        </div>
-      )}
-
       {/* Header Section */}
       <div className="bg-white/60 backdrop-blur-md p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200 mb-6 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-1 h-full bg-red-600"></div>
@@ -294,16 +163,20 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
           <div className="flex flex-wrap gap-2">
             <button
               onClick={handleToggleSave}
-              className={`p-2 rounded-full border transition-all ${
+              disabled={isSyncing}
+              className={`p-3 rounded-xl border shadow-sm transition-all group ${
                 isSaved
-                  ? "bg-white border-red-200 text-red-600"
+                  ? "bg-red-50 border-red-200 text-red-600"
                   : "bg-white border-slate-200 text-slate-400 hover:text-red-500"
               }`}
-              title={isSaved ? "Bỏ lưu" : "Lưu từ"}
             >
-              <BookmarkIcon
-                className={`w-6 h-6 ${isSaved ? "fill-current" : ""}`}
-              />
+              {isSyncing ? (
+                <SpinnerIcon className="w-6 h-6" />
+              ) : (
+                <BookmarkIcon
+                  className={`w-6 h-6 ${isSaved ? "fill-current" : ""}`}
+                />
+              )}
             </button>
           </div>
         </div>

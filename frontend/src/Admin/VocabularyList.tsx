@@ -7,11 +7,11 @@ import {
   PencilIcon,
   TrashIcon,
   PlusIcon,
-} from "../components/icons";
-import { fetchStoredIdioms, deleteIdiom } from "../services/idiomService";
-import { Idiom } from "../types";
+} from "../../components/icons";
+import { fetchStoredIdioms, deleteIdiom } from "../../services/idiomService";
+import { Idiom } from "../../types";
 import { useNavigate } from "react-router";
-import DeleteConfirmModal from "@/components/DeleteConfirmModal";
+import DeleteConfirmModal from "../../components/DeleteConfirmModal";
 
 interface VocabularyListProps {
   onBack: () => void;
@@ -138,7 +138,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
 
         <button
           onClick={() => {
-            navigate("/admin/insert");
+            navigate("/admin/idiom/insert");
           }}
           className="flex items-center justify-between p-3.5 bg-red-50 hover:bg-red-100 rounded-xl transition-all group border border-red-100"
         >

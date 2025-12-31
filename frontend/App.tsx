@@ -2,16 +2,19 @@ import React, { useState, useCallback } from "react";
 import { Routes, Route, useNavigate, useParams } from "react-router-dom";
 import Header from "./components/Header";
 import Home from "./src/Home";
-import AdminInsert from "./src/AdminInsert";
-import VocabularyList from "./src/VocabularyList";
+import AdminInsert from "./src/Admin/AdminInsert";
+import VocabularyList from "./src/Admin/VocabularyList";
 import UserSidebar from "./components/UserSidebar";
 import SavedVocabulary from "./src/SavedVocabulary";
 import FlashcardReview from "./src/FlashcardReview";
-import LoginView from "./src/LoginView";
-import { isAuthenticated, logoutAdmin } from "./services/authService";
+import { isAdmin, isAuthenticated, logoutAdmin } from "./services/authService";
 import WordSearchGame from "./src/WordSearchGame";
 import HistoryList from "./src/HistoryList";
+import Dashboard from "./src/Admin/Dashboard";
 import { addToHistory } from "./services/idiomService";
+import Auth from "./src/Auth";
+import ToastContainer from "./components/ToastContainer";
+import RequireAuth from "./context/RequireAuth";
 
 // Wrapper component cho trang Edit để trích xuất ID từ URL params
 const AdminInsertWrapper: React.FC<{ navigate: (path: string) => void }> = ({
@@ -26,10 +29,11 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // Kiểm tra trạng thái đăng nhập thực tế từ token
   const [isLoggedIn, setIsLoggedIn] = useState(() => isAuthenticated());
+  const [isUserAdmin, setIsUserAdmin] = useState(() => isAdmin());
 
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
-    sessionStorage.setItem("isLoggedIn", "true");
+    setIsUserAdmin(isAdmin());
     navigate("/");
   };
 
@@ -39,6 +43,7 @@ const App: React.FC = () => {
     logoutAdmin();
     // 2. Cập nhật state để UI ẩn các tính năng Admin
     setIsLoggedIn(false);
+    setIsUserAdmin(false);
     // 3. Reset về trang chủ để đảm bảo an toàn
     setIsSidebarOpen(false);
     navigate("/");
@@ -46,31 +51,12 @@ const App: React.FC = () => {
 
   return (
     <div className="h-full relative">
+      <ToastContainer />
       <Header onMenuClick={() => setIsSidebarOpen(true)} />
 
       <main className="p-3 md:p-4 h-auto w-full">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route
-            path="/admin/insert"
-            element={<AdminInsert onBack={() => navigate("/admin")} />}
-          />
-          <Route
-            path="/admin/detail/:idiomId"
-            element={<AdminInsertWrapper navigate={navigate} />}
-          />
-          <Route
-            path="/admin"
-            element={
-              <VocabularyList
-                onBack={() => navigate("/")}
-                onSelect={(hanzi) =>
-                  navigate(`/?query=${encodeURIComponent(hanzi)}`)
-                }
-                onEdit={(id) => navigate(`/admin/detail/${id}`)}
-              />
-            }
-          />
           <Route
             path="/saved"
             element={<SavedVocabulary onBack={() => navigate("/")} />}
@@ -96,15 +82,42 @@ const App: React.FC = () => {
               />
             }
           />
-          <Route
-            path="/login"
-            element={
-              <LoginView
-                onLoginSuccess={handleLoginSuccess}
-                onBack={() => navigate(-1)}
-              />
-            }
-          />
+          {!isLoggedIn && (
+            <Route
+              path="/auth"
+              element={
+                <Auth
+                  onLoginSuccess={handleLoginSuccess}
+                  onBack={() => navigate(-1)}
+                />
+              }
+            />
+          )}
+
+          <Route path="admin" element={<RequireAuth />}>
+            <Route index element={<Dashboard />} />{" "}
+            {/* Index route for the parent URL (/dashboard) */}
+            <Route
+              path="idiom/list"
+              element={
+                <VocabularyList
+                  onBack={() => navigate("/")}
+                  onSelect={(hanzi) =>
+                    navigate(`/?query=${encodeURIComponent(hanzi)}`)
+                  }
+                  onEdit={(id) => navigate(`/admin/detail/${id}`)}
+                />
+              }
+            />
+            <Route
+              path="idiom/detail/:idiomId"
+              element={<AdminInsertWrapper navigate={navigate} />}
+            />
+            <Route
+              path="idiom/insert"
+              element={<AdminInsert onBack={() => navigate("/admin")} />}
+            />
+          </Route>
           {/* Mặc định quay về Home nếu không khớp route */}
           <Route path="*" element={<Home />} />
         </Routes>
@@ -114,19 +127,21 @@ const App: React.FC = () => {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         isLoggedIn={isLoggedIn}
+        isAdmin={isUserAdmin}
         isPremium={true}
         onViewChange={(view) => {
-          if (view === "insert") navigate("/admin/insert");
-          else if (view === "list") navigate("/admin");
-          else if (view === "saved") navigate("/saved");
-          else if (view === "flashcards") navigate("/flashcards");
-          else if (view === "word_search") navigate("/word_search");
-          else if (view === "history") navigate("/history");
-          else navigate("/");
+          if (view === "list") navigate("/admin", { replace: true });
+          else if (view === "saved") navigate("/saved", { replace: true });
+          else if (view === "flashcards")
+            navigate("/flashcards", { replace: true });
+          else if (view === "word_search")
+            navigate("/word_search", { replace: true });
+          else if (view === "history") navigate("/history", { replace: true });
+          else navigate("/", { replace: true });
         }}
         onLogin={() => {
           setIsSidebarOpen(false);
-          navigate("/login");
+          navigate("/auth", { replace: true });
         }}
         onLogout={handleLogout}
         onTogglePremium={() => {}}

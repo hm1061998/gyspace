@@ -82,6 +82,19 @@ const searchLocalDatabase = (query: string) => {
   return result;
 };
 
+export const fetchAdminStats = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/idioms/admin/stats`, {
+      headers: getHeaders(),
+    });
+    if (!response.ok) throw new Error("Không thể tải thống kê.");
+    return await response.json();
+  } catch (error) {
+    console.error("Stats error:", error);
+    throw error;
+  }
+};
+
 export const fetchIdiomDetails = async (
   query: string,
   mode: SearchMode = "database"

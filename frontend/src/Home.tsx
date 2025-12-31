@@ -1,21 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { addToHistory, fetchIdiomDetails } from "../services/idiomService";
+import { fetchIdiomDetails } from "../services/idiomService";
 import type { Idiom, SearchMode } from "../types";
 import IdiomDetail from "../components/IdiomDetail";
 import HandwritingPad from "../components/HandwritingPad";
 import FeaturedComments from "../components/FeaturedComments";
 import {
   SearchIcon,
-  HistoryIcon,
-  PencilIcon,
-  SpinnerIcon,
   BrainIcon,
   CloseIcon,
   CardIcon,
   PuzzlePieceIcon,
   ArrowLeftIcon,
 } from "../components/icons";
+import { addToHistory } from "@/services/userDataService";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -55,7 +53,9 @@ const Home: React.FC = () => {
     try {
       const result = await fetchIdiomDetails(searchTerm, modeToUse);
       setCurrentIdiom(result);
-      addToHistory(result);
+      if (result?.id) {
+        addToHistory(result.id);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -248,7 +248,7 @@ const Home: React.FC = () => {
         )} */}
       </div>
 
-      {isLoading && (
+      {isLoading ? (
         <div className="flex flex-col items-center mt-12 text-slate-400 animate-pulse">
           <div
             className={`w-12 h-12 border-4 rounded-full border-t-transparent animate-spin mb-4 ${
@@ -261,9 +261,7 @@ const Home: React.FC = () => {
               : "Đang lục lại thư viện..."}
           </p>
         </div>
-      )}
-
-      {error && (
+      ) : error ? (
         <div className="max-w-md mx-auto mt-8 bg-red-50 border border-red-100 p-8 rounded-2xl text-center animate-shake">
           <p className="text-red-600 mb-6 font-bold">{error}</p>
           {searchMode === "database" && (
@@ -275,30 +273,7 @@ const Home: React.FC = () => {
             </button>
           )}
         </div>
-      )}
-
-      {!isLoading && currentIdiom && (
-        <div className="relative mt-4 animate-pop">
-          <div
-            className={`absolute top-0 right-0 z-10 px-4 py-1.5 rounded-bl-2xl rounded-tr-2xl text-[10px] font-bold text-white shadow-lg ${
-              currentIdiom.dataSource === "ai"
-                ? "bg-gradient-to-r from-purple-600 to-indigo-600"
-                : "bg-slate-800"
-            }`}
-          >
-            {currentIdiom.dataSource === "ai"
-              ? "✨ PHÂN TÍCH BỞI AI"
-              : "📚 DỮ LIỆU CHUẨN"}
-          </div>
-          <IdiomDetail
-            idiom={currentIdiom}
-            isLoggedIn={true}
-            isPremium={true}
-          />
-        </div>
-      )}
-
-      {isCenteredMode && (
+      ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full max-w-2xl px-4 animate-pop delay-100 mt-10">
           <button
             onClick={() => navigate("flashcards")}
@@ -348,6 +323,7 @@ const Home: React.FC = () => {
           </button>
         </div>
       )}
+
       <HandwritingPad
         isOpen={isHandwritingPadOpen}
         onClose={() => setIsHandwritingPadOpen(false)}

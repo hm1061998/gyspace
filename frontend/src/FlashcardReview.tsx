@@ -1,25 +1,30 @@
 import React, { useState, useEffect } from "react";
 import {
-  ArrowLeftIcon,
   HistoryIcon,
   BookmarkIconFilled,
   SpeakerWaveIcon,
   BrainIcon,
   PlusIcon,
+  SpinnerIcon,
 } from "../components/icons";
 import { fetchStoredIdioms } from "../services/idiomService";
+import {
+  fetchSavedIdioms,
+  fetchSRSData,
+  updateSRSProgress,
+} from "../services/userDataService";
 import type { Idiom } from "../types";
+import { toast } from "../services/toastService";
 
 interface FlashcardReviewProps {
   onBack: () => void;
 }
 
-// Cấu trúc dữ liệu cho tiến độ học tập (Lưu trong localStorage)
 interface SRSProgress {
-  interval: number; // Số ngày cho lần ôn tiếp theo
-  repetition: number; // Số lần ôn tập thành công liên tiếp
-  efactor: number; // Hệ số dễ (Ease Factor), mặc định 2.5
-  nextReviewDate: number; // Timestamp của lần ôn tới
+  interval: number;
+  repetition: number;
+  efactor: number;
+  nextReviewDate: number;
 }
 
 interface SRSDataMap {
@@ -34,110 +39,83 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
   const [source, setSource] = useState<"all" | "saved">("all");
   const [srsData, setSrsData] = useState<SRSDataMap>({});
   const [totalAvailableCards, setTotalAvailableCards] = useState(0);
-
-  // Trạng thái để tắt animation khi chuyển thẻ (tránh lộ đáp án)
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  // Tải dữ liệu khi thay đổi nguồn hoặc mount
   useEffect(() => {
     loadData();
   }, [source]);
 
-  // Cập nhật thẻ hiện tại khi hàng đợi thay đổi
   useEffect(() => {
-    // 1. Tắt animation và reset về mặt trước ngay lập tức
     setIsTransitioning(true);
     setIsFlipped(false);
-
-    // 2. Cập nhật nội dung thẻ
     if (reviewQueue.length > 0) {
       setCurrentCard(reviewQueue[0]);
     } else {
       setCurrentCard(null);
     }
-
-    // 3. Bật lại animation sau khi DOM đã cập nhật (tránh chớp nhoáng)
     const timer = setTimeout(() => {
       setIsTransitioning(false);
     }, 100);
-
     return () => clearTimeout(timer);
   }, [reviewQueue]);
 
   const loadData = async (forceReview = false) => {
     setLoading(true);
-
-    // 1. Tải tiến độ học tập từ localStorage
-    let progressMap: SRSDataMap = {};
     try {
-      const storedProgress = localStorage.getItem("srs_progress");
-      if (storedProgress) {
-        progressMap = JSON.parse(storedProgress);
-      }
-    } catch (e) {
-      console.error("Lỗi đọc SRS progress", e);
-    }
-    setSrsData(progressMap);
+      // 1. Tải tiến độ SRS từ server (lấy tối đa 500 bản ghi để chuẩn bị ôn tập)
+      const srsResponse = await fetchSRSData(1, 500);
+      const progressMap: SRSDataMap = {};
+      srsResponse.data.forEach((item: any) => {
+        progressMap[item.idiom.hanzi] = {
+          interval: item.interval,
+          repetition: item.repetition,
+          efactor: item.efactor,
+          nextReviewDate: Number(item.nextReviewDate),
+        };
+      });
 
-    // 2. Tải danh sách từ vựng gốc
-    let allCards: Idiom[] = [];
-    if (source === "saved") {
-      const data = localStorage.getItem("saved_words");
-      allCards = data ? JSON.parse(data) : [];
-    } else {
-      try {
-        const response = await fetchStoredIdioms(1, 1000); // Lấy số lượng lớn để lọc
+      setSrsData(progressMap);
+
+      // 2. Tải danh sách từ
+      let allCards: Idiom[] = [];
+      if (source === "saved") {
+        const savedRes = await fetchSavedIdioms(1, 1000);
+        allCards = savedRes.data;
+      } else {
+        const response = await fetchStoredIdioms(1, 1000);
         allCards = response.data;
-      } catch (err) {
-        console.error(err);
       }
+      setTotalAvailableCards(allCards.length);
+
+      // 3. Lọc hàng đợi
+      let queue: Idiom[] = [];
+      if (forceReview) {
+        queue = allCards.sort(() => 0.5 - Math.random()).slice(0, 20);
+      } else {
+        const now = Date.now();
+        const dueCards = allCards.filter((card) => {
+          const progress = progressMap[card.hanzi];
+          if (!progress) return true;
+          return progress.nextReviewDate <= now;
+        });
+        dueCards.sort((a, b) => {
+          const progA = progressMap[a.hanzi]?.nextReviewDate || 0;
+          const progB = progressMap[b.hanzi]?.nextReviewDate || 0;
+          return progA - progB;
+        });
+        queue = dueCards.slice(0, 20);
+      }
+      setReviewQueue(queue);
+    } catch (e) {
+      toast.error("Không thể tải dữ liệu học tập.");
+    } finally {
+      setLoading(false);
     }
-
-    setTotalAvailableCards(allCards.length);
-
-    // 3. Lọc thẻ
-    let queue: Idiom[] = [];
-
-    if (forceReview) {
-      // Nếu chọn ôn tập cưỡng ép: Lấy ngẫu nhiên 20 thẻ bất kể tiến độ
-      queue = allCards.sort(() => 0.5 - Math.random()).slice(0, 20);
-    } else {
-      // Mặc định: Lọc ra các thẻ cần học (Due cards) hoặc thẻ mới (New cards)
-      const now = Date.now();
-      const dueCards = allCards.filter((card) => {
-        const progress = progressMap[card.hanzi];
-        // Nếu chưa học bao giờ (New) -> Học
-        if (!progress) return true;
-        // Nếu đã đến hạn ôn tập (Due) -> Học
-        return progress.nextReviewDate <= now;
-      });
-
-      // Sắp xếp: Thẻ cần ôn gấp lên trước
-      dueCards.sort((a, b) => {
-        const progA = progressMap[a.hanzi]?.nextReviewDate || 0;
-        const progB = progressMap[b.hanzi]?.nextReviewDate || 0;
-        return progA - progB;
-      });
-
-      // Giới hạn phiên học (ví dụ: 20 từ mỗi lần)
-      queue = dueCards.slice(0, 20);
-    }
-
-    setReviewQueue(queue);
-    setLoading(false);
   };
 
-  const saveProgress = (hanzi: string, progress: SRSProgress) => {
-    const newMap = { ...srsData, [hanzi]: progress };
-    setSrsData(newMap);
-    localStorage.setItem("srs_progress", JSON.stringify(newMap));
-  };
-
-  // Thuật toán SRS (SuperMemo-2 Simplied)
-  // rating: 1 = Học lại (Again), 2 = Dễ (Good), 3 = Đơn giản (Easy)
-  const handleRate = (e: React.MouseEvent, rating: 1 | 2 | 3) => {
+  const handleRate = async (e: React.MouseEvent, rating: 1 | 2 | 3) => {
     e.stopPropagation();
-    if (!currentCard) return;
+    if (!currentCard || !currentCard.id) return;
 
     const existing = srsData[currentCard.hanzi] || {
       interval: 0,
@@ -149,57 +127,52 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
     let nextReviewDate = Date.now();
 
     if (rating === 1) {
-      // Học lại: Reset interval, giữ nguyên hoặc giảm nhẹ EFactor
       repetition = 0;
       interval = 0;
-
-      // Lưu trạng thái "quên" ngay lập tức
-      saveProgress(currentCard.hanzi, {
+      // Update server
+      await updateSRSProgress(currentCard.id, {
         interval,
         repetition,
         efactor,
         nextReviewDate,
       });
 
-      // Logic đặc biệt: Đẩy xuống cuối hàng đợi hiện tại để ôn lại ngay trong phiên này
-      setReviewQueue((prev) => {
-        const remaining = prev.slice(1);
-        return [...remaining, currentCard];
-      });
+      setSrsData((prev) => ({
+        ...prev,
+        [currentCard.hanzi]: { interval, repetition, efactor, nextReviewDate },
+      }));
+      setReviewQueue((prev) => [...prev.slice(1), currentCard]);
       return;
     }
 
-    // Dễ hoặc Đơn giản: Tăng EFactor và Interval
-    if (repetition === 0) {
-      interval = 1;
-    } else if (repetition === 1) {
-      interval = 6;
-    } else {
-      interval = Math.round(interval * efactor);
-    }
+    if (repetition === 0) interval = 1;
+    else if (repetition === 1) interval = 6;
+    else interval = Math.round(interval * efactor);
 
-    // Điều chỉnh EFactor & Interval Bonus
     if (rating === 3) {
-      efactor += 0.15; // Thưởng cho Easy
-      interval = Math.round(interval * 1.3); // Bonus ngày
+      efactor += 0.15;
+      interval = Math.round(interval * 1.3);
     }
-
-    // Đảm bảo EFactor không quá thấp
     if (efactor < 1.3) efactor = 1.3;
-
     repetition += 1;
-
-    // Tính thời gian review tiếp theo
     nextReviewDate += interval * 24 * 60 * 60 * 1000;
 
-    saveProgress(currentCard.hanzi, {
-      interval,
-      repetition,
-      efactor,
-      nextReviewDate,
-    });
+    // Sync to backend
+    try {
+      await updateSRSProgress(currentCard.id, {
+        interval,
+        repetition,
+        efactor,
+        nextReviewDate,
+      });
+      setSrsData((prev) => ({
+        ...prev,
+        [currentCard.hanzi]: { interval, repetition, efactor, nextReviewDate },
+      }));
+    } catch (err) {
+      console.error("SRS sync error", err);
+    }
 
-    // Chuyển sang thẻ tiếp theo
     setReviewQueue((prev) => prev.slice(1));
   };
 
@@ -217,39 +190,25 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
       repetition: 0,
       efactor: 2.5,
     };
-
     if (rating === 1) return "< 1m";
-
     let interval = 1;
-    let efactor = existing.efactor;
-
     if (existing.repetition === 0) interval = 1;
     else if (existing.repetition === 1) interval = 6;
-    else interval = Math.round(existing.interval * efactor);
-
-    if (rating === 3) interval = Math.round(interval * 1.5); // Ước lượng bonus cho Easy
-
-    if (interval === 1) return "1 ngày";
-    return `${interval} ngày`;
-  };
-
-  const handleForceReview = () => {
-    loadData(true);
+    else interval = Math.round(existing.interval * existing.efactor);
+    if (rating === 3) interval = Math.round(interval * 1.5);
+    return interval === 1 ? "1 ngày" : `${interval} ngày`;
   };
 
   if (loading)
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-red-600 border-t-transparent animate-spin rounded-full" />
+        <SpinnerIcon className="w-10 h-10 text-red-600" />
       </div>
     );
 
   return (
     <div className="max-w-2xl mx-auto w-full flex flex-col h-full animate-pop">
       <div className="flex justify-between items-center mb-6">
-        <div className="px-4 py-1.5" />
-
-        {/* Toggle Source */}
         <div className="flex bg-white p-1 rounded-full border shadow-sm">
           <button
             onClick={() => setSource("all")}
@@ -272,7 +231,6 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
             <BookmarkIconFilled className="w-3.5 h-3.5" /> Đã lưu
           </button>
         </div>
-
         <div className="w-10 flex justify-end">
           <div className="flex items-center gap-1 text-slate-400 text-xs font-bold bg-white px-2 py-1 rounded-lg border">
             <BrainIcon className="w-3 h-3" />
@@ -284,7 +242,6 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
       {!currentCard ? (
         <div className="flex-1 flex flex-col items-center justify-center text-slate-400 bg-white/50 rounded-3xl border border-slate-200 m-4 p-8 text-center">
           {totalAvailableCards === 0 ? (
-            // Trường hợp 1: Không có từ nào trong kho (Source trống)
             <>
               <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6">
                 <BookmarkIconFilled className="w-8 h-8 text-slate-300" />
@@ -305,7 +262,6 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
               </button>
             </>
           ) : (
-            // Trường hợp 2: Có từ, nhưng đã học hết theo SRS (Finish)
             <>
               <BrainIcon className="w-20 h-20 mb-6 text-emerald-500 animate-bounce" />
               <h2 className="text-2xl font-hanzi font-bold text-slate-800 mb-2">
@@ -317,10 +273,9 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
               <p className="text-sm text-slate-400 mb-8">
                 Hãy quay lại vào ngày mai để tối ưu khả năng ghi nhớ.
               </p>
-
               <div className="flex flex-col gap-3 w-full max-w-xs">
                 <button
-                  onClick={handleForceReview}
+                  onClick={() => loadData(true)}
                   className="w-full px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:border-red-300 hover:text-red-600 transition-all shadow-sm"
                 >
                   Ôn tập thêm 20 từ (Ngẫu nhiên)
@@ -346,7 +301,6 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
                 isFlipped ? "rotate-y-180" : ""
               }`}
             >
-              {/* Mặt trước */}
               <div className="absolute inset-0 backface-hidden bg-white rounded-3xl shadow-2xl border-2 border-slate-100 flex flex-col items-center justify-center p-8">
                 <span className="text-6xl md:text-8xl font-hanzi font-bold text-slate-800 mb-6 text-center">
                   {currentCard.hanzi}
@@ -361,12 +315,10 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
                   <SpeakerWaveIcon className="w-6 h-6" />
                 </button>
               </div>
-
-              {/* Mặt sau */}
-              <div
-                className={`absolute inset-0 backface-hidden rotate-y-180 bg-slate-800 rounded-3xl shadow-2xl flex flex-col items-center justify-center p-8 text-white text-center overflow-y-auto`}
-              >
-                {!isTransitioning && (
+              <div className="absolute inset-0 backface-hidden rotate-y-180 bg-slate-800 rounded-3xl shadow-2xl flex flex-col items-center justify-center p-8 text-white text-center overflow-y-auto">
+                {isTransitioning ? (
+                  <SpinnerIcon className="w-10 h-10 text-red-600" />
+                ) : (
                   <React.Fragment>
                     <p className="text-2xl md:text-3xl font-medium mb-2 text-red-400">
                       {currentCard.pinyin}
@@ -393,8 +345,6 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
               </div>
             </div>
           </div>
-
-          {/* Action Buttons */}
           <div className="w-full max-w-md h-20">
             {isFlipped ? (
               <div className="grid grid-cols-3 gap-3 h-full animate-pop">
@@ -407,7 +357,6 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
                     {getNextIntervalLabel(1)}
                   </span>
                 </button>
-
                 <button
                   onClick={(e) => handleRate(e, 2)}
                   className="flex flex-col items-center justify-center bg-sky-100 hover:bg-sky-200 text-sky-700 rounded-2xl transition-all active:scale-95 border border-sky-200"
@@ -417,7 +366,6 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
                     {getNextIntervalLabel(2)}
                   </span>
                 </button>
-
                 <button
                   onClick={(e) => handleRate(e, 3)}
                   className="flex flex-col items-center justify-center bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-2xl transition-all active:scale-95 border border-emerald-200"

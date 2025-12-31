@@ -6,13 +6,13 @@ import {
   TrashIcon,
   SpinnerIcon,
   ListBulletIcon,
-} from "../components/icons";
+} from "../../components/icons";
 import {
   createIdiom,
   updateIdiom,
   bulkCreateIdioms,
   fetchIdiomById,
-} from "../services/idiomService";
+} from "../../services/idiomService";
 
 interface AdminInsertProps {
   onBack: () => void;

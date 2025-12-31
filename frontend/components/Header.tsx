@@ -17,6 +17,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     location.pathname === "/index.html" ||
     location.pathname === "";
 
+  const isDashboard = location.pathname.includes("/admin");
   return (
     <header
       className={`py-4 px-6 sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b transition-all ${
@@ -49,13 +50,15 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           </Link>
         </div>
 
-        <button
-          onClick={onMenuClick}
-          className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-          aria-label="Mở menu"
-        >
-          <MenuIcon className="w-6 h-6 text-slate-600" />
-        </button>
+        {!isDashboard && (
+          <button
+            onClick={onMenuClick}
+            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+            aria-label="Mở menu"
+          >
+            <MenuIcon className="w-6 h-6 text-slate-600" />
+          </button>
+        )}
       </div>
     </header>
   );

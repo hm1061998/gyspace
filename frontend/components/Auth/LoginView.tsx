@@ -1,13 +1,18 @@
 import React, { useState } from "react";
-import { ArrowLeftIcon, SpinnerIcon } from "../components/icons";
+import { ArrowLeftIcon, SpinnerIcon } from "../icons";
 import { loginAdmin } from "@/services/authService";
 
 interface LoginViewProps {
   onLoginSuccess: () => void;
   onBack: () => void;
+  onGoToRegister: () => void;
 }
 
-const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onBack }) => {
+const LoginView: React.FC<LoginViewProps> = ({
+  onLoginSuccess,
+  onBack,
+  onGoToRegister,
+}) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +27,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onBack }) => {
       await loginAdmin(username, password);
       onLoginSuccess();
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Tên đăng nhập hoặc mật khẩu không đúng.");
     } finally {
       setIsLoading(false);
     }
@@ -33,11 +38,11 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onBack }) => {
       <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden animate-pop">
         <div className="bg-red-700 p-8 text-center">
           <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-white text-3xl font-hanzi font-bold shadow-inner mx-auto mb-4 backdrop-blur-md">
-            词
+            GY
           </div>
-          <h2 className="text-2xl font-bold text-white">Chào mừng trở lại</h2>
+          <h2 className="text-2xl font-bold text-white">Đăng nhập GYSpace</h2>
           <p className="text-red-100/80 text-sm mt-1">
-            Đăng nhập để quản lý kho từ vựng
+            Học tập hiệu quả với hệ thống thông minh
           </p>
         </div>
 
@@ -84,6 +89,16 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onBack }) => {
           >
             {isLoading ? <SpinnerIcon className="w-5 h-5" /> : "Đăng nhập"}
           </button>
+
+          <div className="text-center pt-2">
+            <button
+              type="button"
+              onClick={onGoToRegister}
+              className="text-slate-500 text-sm hover:text-red-600 font-medium transition-colors"
+            >
+              Chưa có tài khoản? Đăng ký tại đây
+            </button>
+          </div>
 
           <button
             type="button"

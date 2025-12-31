@@ -15,6 +15,7 @@ import {
   PuzzlePieceIcon,
   HistoryIcon,
 } from "./icons";
+import { getCurrentUser } from "@/services/authService";
 
 interface UserSidebarProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
   onViewChange,
   isPremium,
   onTogglePremium,
+  isAdmin,
 }) => {
   return (
     <>
@@ -67,15 +69,15 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
         <div className="flex-1 overflow-y-auto p-6 space-y-8">
           {!isLoggedIn ? (
             <div className="space-y-3">
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest ml-1">
                 Tài khoản
               </p>
               <button
                 onClick={onLogin}
-                className="w-full flex items-center justify-center space-x-3 py-3 bg-red-700 text-white rounded-xl hover:bg-red-800 transition-all shadow-lg shadow-red-100 active:scale-[0.98]"
+                className="w-full flex items-center justify-center space-x-3 py-4 bg-slate-800 text-white rounded-2xl hover:bg-black transition-all shadow-lg active:scale-[0.98]"
               >
                 <UserIcon className="w-5 h-5" />
-                <span className="font-bold">Đăng nhập Admin</span>
+                <span className="font-bold">Đăng nhập / Đăng ký</span>
               </button>
             </div>
           ) : (
@@ -84,9 +86,11 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
                 A
               </div>
               <div>
-                <h3 className="font-bold text-slate-800">Administrator</h3>
+                <h3 className="font-bold text-slate-800">
+                  {getCurrentUser().username}
+                </h3>
                 <p className="text-[10px] text-red-600 font-bold uppercase tracking-tight">
-                  Quyền quản trị viên
+                  {isAdmin ? "Quyền quản trị viên" : "Quyền người dùng"}
                 </p>
               </div>
             </div>
@@ -103,7 +107,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
               }}
               className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-all group"
             >
-              <div className="flex items-center space-x-3 text-slate-600 font-bold group-hover:text-red-600">
+              <div className="flex items-center space-x-3 text-slate-600 group-hover:text-red-600">
                 <ListBulletIcon className="w-5 h-5" /> <span>Trang chủ</span>
               </div>
               <ChevronRightIcon className="w-4 h-4 text-slate-300" />
@@ -128,7 +132,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
               }}
               className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-all group"
             >
-              <div className="flex items-center space-x-3 text-slate-600 font-bold group-hover:text-red-600">
+              <div className="flex items-center space-x-3 text-slate-600 group-hover:text-red-600">
                 <CardIcon className="w-5 h-5" /> <span>Thẻ từ học tập</span>
               </div>
               <ChevronRightIcon className="w-4 h-4 text-slate-300" />
@@ -140,7 +144,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
               }}
               className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-all group"
             >
-              <div className="flex items-center space-x-3 text-slate-600 font-bold group-hover:text-red-600">
+              <div className="flex items-center space-x-3 text-slate-600 group-hover:text-red-600">
                 <BookmarkIcon className="w-5 h-5" /> <span>Từ vựng đã lưu</span>
               </div>
               <ChevronRightIcon className="w-4 h-4 text-slate-300" />
@@ -160,7 +164,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
             </button>
           </div>
 
-          {isLoggedIn && (
+          {isLoggedIn && isAdmin && (
             <div className="space-y-2">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-3 mb-2">
                 Quản trị hệ thống (Admin)
@@ -172,9 +176,9 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
                 }}
                 className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-all group"
               >
-                <div className="flex items-center space-x-3 text-slate-600 font-bold group-hover:text-red-600">
+                <div className="flex items-center space-x-3 text-slate-600 group-hover:text-red-600">
                   <ListBulletIcon className="w-5 h-5" />{" "}
-                  <span>Kho dữ liệu gốc</span>
+                  <span>Trang quản trị</span>
                 </div>
                 <ChevronRightIcon className="w-4 h-4 text-slate-300" />
               </button>
