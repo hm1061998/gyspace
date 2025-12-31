@@ -6,7 +6,7 @@ import {
   PlusIcon,
   LogoutIcon,
   UserIcon,
-} from "../../components/icons";
+} from "../components/icons";
 
 interface NavItemProps {
   to: string;

@@ -18,8 +18,9 @@ import { addToHistory } from "./services/idiomService";
 import { isAdmin, isAuthenticated } from "./services/authService";
 import Auth from "./src/Auth";
 import RequireAuth from "./context/RequireAuth";
-import AdminLayout from "./src/layouts/AdminLayout";
-import MainLayout from "./src/layouts/MainLayout";
+import AdminLayout from "./layouts/AdminLayout";
+import MainLayout from "./layouts/MainLayout";
+import ToastContainer from "./components/ToastContainer";
 
 // Wrapper component cho trang Edit để trích xuất ID từ URL params và xử lý Back
 const AdminInsertWrapper: React.FC<{ navigate: (path: string) => void }> = ({
@@ -62,68 +63,71 @@ const App: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <Routes>
-      {/* User Routes - Sử dụng MainLayout chung */}
-      <Route element={<MainLayout />}>
-        <Route path="/" element={<Home />} />
-        <Route
-          path="/saved"
-          element={<SavedVocabulary onBack={() => navigate("/")} />}
-        />
-        <Route
-          path="/flashcards"
-          element={<FlashcardReview onBack={() => navigate("/")} />}
-        />
-        <Route
-          path="/word_search"
-          element={<WordSearchGame onBack={() => navigate("/")} />}
-        />
-        <Route
-          path="/history"
-          element={
-            <HistoryList
-              onBack={() => navigate("/")}
-              onSelect={(idiom) => {
-                addToHistory(idiom);
-                navigate(`/?query=${encodeURIComponent(idiom.hanzi)}`);
-              }}
-            />
-          }
-        />
-        <Route path="/auth" element={<AuthWrapper />} />
-        {/* Fallback cho các route không khớp trong User scope */}
-        <Route path="*" element={<Home />} />
-      </Route>
-
-      {/* Admin Routes - Tách biệt với AdminLayout */}
-      <Route element={<RequireAuth />}>
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Dashboard />} />
+    <>
+      <ToastContainer />
+      <Routes>
+        {/* User Routes - Sử dụng MainLayout chung */}
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<Home />} />
           <Route
-            path="idiom/list"
+            path="/saved"
+            element={<SavedVocabulary onBack={() => navigate("/")} />}
+          />
+          <Route
+            path="/flashcards"
+            element={<FlashcardReview onBack={() => navigate("/")} />}
+          />
+          <Route
+            path="/word_search"
+            element={<WordSearchGame onBack={() => navigate("/")} />}
+          />
+          <Route
+            path="/history"
             element={
-              <VocabularyList
-                onBack={() => navigate("/admin")}
-                onSelect={(hanzi) =>
-                  navigate(`/?query=${encodeURIComponent(hanzi)}`)
-                }
-                onEdit={(id) => navigate(`/admin/idiom/detail/${id}`)}
+              <HistoryList
+                onBack={() => navigate("/")}
+                onSelect={(idiom) => {
+                  addToHistory(idiom);
+                  navigate(`/?query=${encodeURIComponent(idiom.hanzi)}`);
+                }}
               />
             }
           />
-          <Route
-            path="idiom/detail/:idiomId"
-            element={<AdminInsertWrapper navigate={navigate} />}
-          />
-          <Route
-            path="idiom/insert"
-            element={
-              <AdminInsert onBack={() => navigate("/admin/idiom/list")} />
-            }
-          />
+          <Route path="/auth" element={<AuthWrapper />} />
+          {/* Fallback cho các route không khớp trong User scope */}
+          <Route path="*" element={<Home />} />
         </Route>
-      </Route>
-    </Routes>
+
+        {/* Admin Routes - Tách biệt với AdminLayout */}
+        <Route element={<RequireAuth />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route
+              path="idiom/list"
+              element={
+                <VocabularyList
+                  onBack={() => navigate("/admin")}
+                  onSelect={(hanzi) =>
+                    navigate(`/?query=${encodeURIComponent(hanzi)}`)
+                  }
+                  onEdit={(id) => navigate(`/admin/idiom/detail/${id}`)}
+                />
+              }
+            />
+            <Route
+              path="idiom/detail/:idiomId"
+              element={<AdminInsertWrapper navigate={navigate} />}
+            />
+            <Route
+              path="idiom/insert"
+              element={
+                <AdminInsert onBack={() => navigate("/admin/idiom/list")} />
+              }
+            />
+          </Route>
+        </Route>
+      </Routes>
+    </>
   );
 };
 

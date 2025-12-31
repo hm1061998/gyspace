@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import * as XLSX from "xlsx";
 import {
   ArrowLeftIcon,
   SpinnerIcon,
@@ -7,11 +8,17 @@ import {
   PencilIcon,
   TrashIcon,
   PlusIcon,
+  UploadIcon,
 } from "../../components/icons";
-import { fetchStoredIdioms, deleteIdiom } from "../../services/idiomService";
+import {
+  fetchStoredIdioms,
+  deleteIdiom,
+  bulkCreateIdioms,
+} from "../../services/idiomService";
 import { Idiom } from "../../types";
 import { useNavigate } from "react-router";
 import DeleteConfirmModal from "../../components/DeleteConfirmModal";
+import { toast } from "../../services/toastService";
 
 interface VocabularyListProps {
   onBack: () => void;
@@ -28,7 +35,9 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
 
   const [idioms, setIdioms] = useState<Idiom[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Pagination State
   const [page, setPage] = useState(1);
@@ -75,20 +84,81 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
     }
   };
 
+  const handleExcelImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: "binary" });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data: any[] = XLSX.utils.sheet_to_json(ws);
+
+        if (data.length === 0)
+          throw new Error("File trống hoặc sai định dạng.");
+        const mappedData = data
+          .map((row) => {
+            const hanzi = row["QUÁN DỤNG TỪ"] || row["CHỮ HÁN"] || row["hanzi"];
+            if (!hanzi) return null;
+
+            return {
+              hanzi: String(hanzi).trim(),
+              pinyin: String(row["PINYIN"] || "").trim(),
+              vietnameseMeaning: String(
+                row["NGHĨA TIẾNG VIỆT"] || row["NGHĨA"] || ""
+              ).trim(),
+              chineseDefinition: String(row["NGHĨA TIẾNG TRUNG"] || "").trim(),
+              source: String(row["VỊ TRÍ XUẤT HIỆN"] || "").trim(),
+              level: String(row["CẤP ĐỘ"] || "Trung cấp").trim(),
+              origin: String(row["NGUỒN GỐC (NẾU CÓ)"] || "").trim(),
+              type: "Quán dụng ngữ",
+              figurativeMeaning: "",
+              literalMeaning: "",
+              examples: row["VÍ DỤ"]
+                ? [
+                    {
+                      chinese: String(row["VÍ DỤ"]),
+                      pinyin: "",
+                      vietnamese: "",
+                    },
+                  ]
+                : [],
+              imageUrl: String(row["HÌNH ẢNH"] || "").trim(),
+              videoUrl: String(row["LINK BÁO/VIDEO"] || "").trim(),
+              usageContext: "",
+            };
+          })
+          .filter(Boolean);
+
+        if (mappedData.length === 0)
+          throw new Error("Không tìm thấy dữ liệu hợp lệ.");
+
+        await bulkCreateIdioms(mappedData);
+        toast.success(`Đã import thành công ${mappedData.length} từ vựng!`);
+        loadIdioms();
+      } catch (err: any) {
+        toast.error(
+          "Lỗi khi đọc file: " + (err.message || "Định dạng không hợp lệ.")
+        );
+      } finally {
+        setIsImporting(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   const handleDelete = async (
     e: React.MouseEvent,
     id: string,
     hanzi: string
   ) => {
     e.stopPropagation();
-    // if (window.confirm(`Bạn có chắc chắn muốn xóa từ "${hanzi}" không?`)) {
-    //   try {
-    //     await deleteIdiom(id);
-    //     loadIdioms(); // Reload list after deletion
-    //   } catch (err: any) {
-    //     alert("Lỗi khi xóa: " + err.message);
-    //   }
-    // }
     setDeleteModal({ isOpen: true, id, hanzi });
   };
 
@@ -97,9 +167,10 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
     try {
       await deleteIdiom(deleteModal.id);
       setDeleteModal({ ...deleteModal, isOpen: false });
-      loadIdioms(); // Reload list after deletion
+      toast.success("Đã xóa thành công!");
+      loadIdioms();
     } catch (err: any) {
-      alert("Lỗi khi xóa: " + err.message);
+      toast.error("Lỗi khi xóa: " + err.message);
     } finally {
       setIsDeleting(false);
     }
@@ -129,32 +200,58 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
         }
         onConfirm={confirmDelete}
       />
-      <div className="flex flex-row justify-between items-center gap-4">
+      <div className="flex flex-row justify-between items-center gap-4 mb-6">
         <div className="flex items-center w-auto">
           <h1 className="text-2xl font-hanzi font-bold text-slate-800">
             Kho từ vựng ({totalItems})
           </h1>
         </div>
 
-        <button
-          onClick={() => {
-            navigate("/admin/idiom/insert");
-          }}
-          className="flex items-center justify-between p-3.5 bg-red-50 hover:bg-red-100 rounded-xl transition-all group border border-red-100"
-        >
-          <div className="flex items-center space-x-3 text-red-700 font-bold">
-            <PlusIcon className="w-5 h-5" /> <span>Thêm mới</span>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleExcelImport}
+              accept=".xlsx, .xls"
+              className="hidden"
+              id="excel-upload-list"
+            />
+            <label
+              htmlFor="excel-upload-list"
+              className={`flex items-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all cursor-pointer shadow-md font-bold text-sm ${
+                isImporting ? "opacity-75 cursor-not-allowed" : ""
+              }`}
+            >
+              {isImporting ? (
+                <SpinnerIcon className="w-5 h-5" />
+              ) : (
+                <UploadIcon className="w-5 h-5" />
+              )}
+              <span>Import Excel</span>
+            </label>
           </div>
-        </button>
+
+          <button
+            onClick={() => {
+              navigate("/admin/idiom/insert");
+            }}
+            className="flex items-center justify-between px-4 py-3 bg-red-700 hover:bg-red-800 text-white rounded-xl transition-all shadow-md font-bold text-sm"
+          >
+            <div className="flex items-center space-x-2">
+              <PlusIcon className="w-5 h-5" /> <span>Thêm mới</span>
+            </div>
+          </button>
+        </div>
       </div>
 
-      <div className="relative w-full md:w-80 my-5">
+      <div className="relative w-full md:w-80 mb-6">
         <input
           type="text"
           placeholder="Tìm từ vựng..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-red-200"
+          className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition-all"
         />
         <SearchIcon className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" />
       </div>
@@ -205,12 +302,6 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
                 <p className="text-slate-600 text-sm line-clamp-2">
                   {item.vietnameseMeaning}
                 </p>
-                {/* {item.level && (
-                  <div className="mt-3 pt-3 border-t border-slate-50 flex justify-between items-center text-xs text-slate-400">
-                    <span>{item.level}</span>
-                    <span>{item.source}</span>
-                  </div>
-                )} */}
               </div>
             ))}
           </div>

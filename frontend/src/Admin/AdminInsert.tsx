@@ -1,16 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
-import * as XLSX from "xlsx";
-import {
-  ArrowLeftIcon,
-  PlusIcon,
-  TrashIcon,
-  SpinnerIcon,
-  ListBulletIcon,
-} from "../../components/icons";
+import { PlusIcon, TrashIcon, SpinnerIcon } from "../../components/icons";
 import {
   createIdiom,
   updateIdiom,
-  bulkCreateIdioms,
   fetchIdiomById,
 } from "../../services/idiomService";
 
@@ -24,7 +16,6 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
   const [fetching, setFetching] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null); // Ref để cuộn lên đầu trang
 
   const [form, setForm] = useState({
@@ -87,83 +78,7 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
     }
   };
 
-  const handleExcelImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setLoading(true);
-    setError("");
-    setSuccess("");
-
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      try {
-        const bstr = evt.target?.result;
-        const wb = XLSX.read(bstr, { type: "binary" });
-        const wsname = wb.SheetNames[0];
-        const ws = wb.Sheets[wsname];
-        const data: any[] = XLSX.utils.sheet_to_json(ws);
-
-        if (data.length === 0)
-          throw new Error("File trống hoặc sai định dạng.");
-        const mappedData = data
-          .map((row) => {
-            const hanzi = row["QUÁN DỤNG TỪ"] || row["CHỮ HÁN"] || row["hanzi"];
-            if (!hanzi) return null;
-
-            return {
-              hanzi: String(hanzi).trim(),
-              pinyin: String(row["PINYIN"] || "").trim(),
-              vietnameseMeaning: String(
-                row["NGHĨA TIẾNG VIỆT"] || row["NGHĨA"] || ""
-              ).trim(),
-              chineseDefinition: String(row["NGHĨA TIẾNG TRUNG"] || "").trim(),
-              source: String(row["VỊ TRÍ XUẤT HIỆN"] || "").trim(),
-              level: String(row["CẤP ĐỘ"] || "Trung cấp").trim(),
-              origin: String(row["NGUỒN GỐC (NẾU CÓ)"] || "").trim(),
-              type: "Quán dụng ngữ",
-              figurativeMeaning: "",
-              literalMeaning: "",
-              examples: row["VÍ DỤ"]
-                ? [
-                    {
-                      chinese: String(row["VÍ DỤ"]),
-                      pinyin: "",
-                      vietnamese: "",
-                    },
-                  ]
-                : [],
-              imageUrl: String(row["HÌNH ẢNH"] || "").trim(),
-              videoUrl: String(row["LINK BÁO/VIDEO"] || "").trim(),
-              usageContext: "",
-            };
-          })
-          .filter(Boolean);
-
-        if (mappedData.length === 0)
-          throw new Error("Không tìm thấy dữ liệu hợp lệ.");
-
-        await bulkCreateIdioms(mappedData);
-        setSuccess(`Đã import thành công ${mappedData.length} từ vựng!`);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      } catch (err: any) {
-        setError(
-          "Lỗi khi đọc file: " + (err.message || "Định dạng không hợp lệ.")
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    reader.readAsBinaryString(file);
-  };
-
   const scrollToTop = () => {
-    // const root = document.querySelector("#root");
-    // console.log('scrollToTop', root);
-
-    // if (root) {
-    //   root.scrollIntoView({ behavior: "smooth", block: "start" });
-    // }
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -232,32 +147,6 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
 
   return (
     <div ref={topRef} className="max-w-4xl w-full mx-auto animate-pop">
-      {!idiomId && (
-        <div className="flex justify-end items-center mb-6">
-          <div className="relative">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleExcelImport}
-              accept=".xlsx, .xls"
-              className="hidden"
-              id="excel-upload"
-            />
-            <label
-              htmlFor="excel-upload"
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg cursor-pointer hover:bg-emerald-700 transition-all text-sm font-bold shadow-md"
-            >
-              {loading ? (
-                <SpinnerIcon className="w-4 h-4" />
-              ) : (
-                <ListBulletIcon className="w-4 h-4" />
-              )}
-              Import Excel
-            </label>
-          </div>
-        </div>
-      )}
-
       <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
         <div className="bg-red-700 p-6 text-white">
           <h2 className="text-2xl font-hanzi font-bold">
@@ -266,7 +155,7 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
           <p className="text-red-100 text-sm mt-1">
             {idiomId
               ? `Đang chỉnh sửa từ: ${form.hanzi}`
-              : "Nhập thủ công hoặc sử dụng chức năng Import Excel"}
+              : "Nhập thông tin từ vựng mới"}
           </p>
         </div>
 
@@ -411,17 +300,6 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                 onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
                 className="w-full border rounded-lg p-2"
                 placeholder="Nhập đường dẫn ảnh, VD: https://anh.png"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                Link Video
-              </label>
-              <input
-                value={form.videoUrl}
-                onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
-                className="w-full border rounded-lg p-2"
-                placeholder="Nhập đường dẫn video, VD: https://video.mp4"
               />
             </div>
             <div>

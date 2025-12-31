@@ -1,13 +1,9 @@
 import React, { useState, useCallback } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import Header from "../../components/Header";
-import UserSidebar from "../../components/UserSidebar";
-import ToastContainer from "../../components/ToastContainer";
-import {
-  isAuthenticated,
-  isAdmin,
-  logoutAdmin,
-} from "../../services/authService";
+import Header from "../components/Header";
+import UserSidebar from "../components/UserSidebar";
+import ToastContainer from "../components/ToastContainer";
+import { isAuthenticated, isAdmin, logoutAdmin } from "../services/authService";
 
 const MainLayout: React.FC = () => {
   const navigate = useNavigate();

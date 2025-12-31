@@ -1,17 +1,15 @@
 import React from "react";
-import { Navigate, useOutlet } from "react-router-dom";
-import { useAuth } from "./AuthProvider";
+import { Navigate, Outlet } from "react-router-dom";
+import { isAdmin } from "../services/authService";
 
 const RequireAuth = () => {
-  const { user } = useAuth();
-  const outlet = useOutlet();
-
-  if (!user?.isAdmin) {
-    return <Navigate to="/" />;
+  // Check trực tiếp từ localStorage để đảm bảo tính thời gian thực ngay sau khi login
+  // Tránh việc phụ thuộc vào Context State chưa được cập nhật kịp
+  if (!isAdmin()) {
+    return <Navigate to="/" replace />;
   }
 
-  // Otherwise, render the child routes/components (Outlet)
-  return outlet;
+  return <Outlet />;
 };
 
 export default RequireAuth;
