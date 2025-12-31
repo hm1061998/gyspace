@@ -102,7 +102,7 @@ const Home: React.FC = () => {
           </button>
         </div>
         <div className="relative mt-4 animate-pop">
-          <div
+          {/* <div
             className={`absolute top-0 right-0 z-10 px-4 py-1.5 rounded-bl-2xl rounded-tr-2xl text-[10px] font-bold text-white shadow-lg ${
               currentIdiom.dataSource === "ai"
                 ? "bg-gradient-to-r from-purple-600 to-indigo-600"
@@ -112,7 +112,7 @@ const Home: React.FC = () => {
             {currentIdiom.dataSource === "ai"
               ? "✨ PHÂN TÍCH BỞI AI"
               : "📚 DỮ LIỆU CHUẨN"}
-          </div>
+          </div> */}
           <IdiomDetail
             idiom={currentIdiom}
             isLoggedIn={true}

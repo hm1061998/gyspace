@@ -10,7 +10,6 @@ import {
   MenuIcon,
   CloseIcon,
 } from "../components/icons";
-
 interface NavItemProps {
   to: string;
   end?: boolean;
@@ -102,9 +101,11 @@ const AdminLayout: React.FC = () => {
       >
         <div className="p-6 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center font-hanzi font-bold shadow-lg shadow-red-900/50">
-              GY
-            </div>
+            <img
+              src={"/assets/app_icon.png"}
+              alt="GYSpace"
+              className="w-8 h-8 rounded-lg shadow-lg shadow-red-900/50"
+            />
             <div>
               <h1 className="text-lg font-bold font-hanzi text-white tracking-wide">
                 GYSpace

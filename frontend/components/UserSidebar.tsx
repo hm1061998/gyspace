@@ -41,6 +41,19 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
   onTogglePremium,
   isAdmin,
 }) => {
+  const getAvatarColor = (name: string) => {
+    if (!name) return "hsl(0, 70%, 60%)"; // Default Red
+    const firstChar = name.charAt(0).toUpperCase();
+    const charCode = firstChar.charCodeAt(0);
+    // Map A-Z (65-90) to 0-360 hue
+    const hue = Math.floor(((charCode - 65) / 26) * 360);
+    return `hsl(${hue}, 70%, 40%)`; // Darker Pastel for text readability or use with white text
+  };
+
+  const username = getCurrentUser().username || "";
+  const avatarChar = username.charAt(0).toUpperCase();
+  const avatarBg = getAvatarColor(username);
+
   return (
     <>
       {isOpen && (
@@ -82,15 +95,18 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
             </div>
           ) : (
             <div className="flex items-center space-x-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <div className="w-12 h-12 bg-red-700 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
-                A
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow-lg transition-transform hover:scale-105"
+                style={{ backgroundColor: avatarBg }}
+              >
+                {avatarChar}
               </div>
               <div>
                 <h3 className="font-bold text-slate-800">
                   {getCurrentUser().username}
                 </h3>
                 <p className="text-[10px] text-red-600 font-bold uppercase tracking-tight">
-                  {isAdmin ? "Quyền quản trị viên" : "Quyền người dùng"}
+                  {isAdmin ? "Quản trị viên" : "Người dùng"}
                 </p>
               </div>
             </div>
