@@ -125,8 +125,8 @@ const Home: React.FC = () => {
 
   return (
     <div
-      className={`w-full h-full flex flex-col flex-1 items-center ${
-        isCenteredMode ? "justify-center -mt-16 h-svh" : "pt-4"
+      className={`w-full min-h-full flex flex-col items-center transition-all duration-700 ${
+        isCenteredMode ? "justify-center pb-20" : "justify-start pt-4"
       }`}
     >
       <div

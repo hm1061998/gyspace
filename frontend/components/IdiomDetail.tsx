@@ -16,6 +16,7 @@ import {
   checkSavedStatus,
   fetchSavedIdioms,
   toggleSaveIdiom,
+  updateSRSProgress,
 } from "@/services/userDataService";
 
 interface IdiomDetailProps {
@@ -121,8 +122,41 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
     }
   };
 
-  const handleAddToFlashcard = () => {};
-  const handleStudyAgain = () => {};
+  const handleAddToFlashcard = async () => {
+    if (!isLoggedIn) {
+      toast.error("Vui lòng đăng nhập để sử dụng tính năng này.");
+      return;
+    }
+    if (isSaved) {
+      toast.info("Từ này đã có trong bộ thẻ ghi nhớ của bạn rồi!");
+      return;
+    }
+    // Nếu chưa lưu thì lưu lại
+    await handleToggleSave();
+  };
+
+  const handleStudyAgain = async () => {
+    if (!isLoggedIn) {
+      toast.error("Vui lòng đăng nhập để sử dụng tính năng này.");
+      return;
+    }
+    if (!idiom.id) return;
+
+    try {
+      // Reset về trạng thái mới: interval=0, repetition=0, ef=2.5, nextReview=now
+      await updateSRSProgress(idiom.id, {
+        interval: 0,
+        repetition: 0,
+        easeFactor: 2.5,
+        nextReviewDate: Date.now().toString(),
+      });
+      toast.success(
+        "Đã cài đặt lại tiến độ. Từ này sẽ xuất hiện ngay trong bài ôn tập tới!"
+      );
+    } catch (e) {
+      toast.error("Không thể cập nhật tiến độ học.");
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto pb-12 animate-[fadeInUp_0.4s_ease-out]">

@@ -108,7 +108,8 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
               className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-all group"
             >
               <div className="flex items-center space-x-3 text-slate-600 group-hover:text-red-600">
-                <ListBulletIcon className="w-5 h-5" /> <span>Trang chủ</span>
+                <ListBulletIcon className="w-5 h-5" />{" "}
+                <span className="font-medium">Trang chủ</span>
               </div>
               <ChevronRightIcon className="w-4 h-4 text-slate-300" />
             </button>
@@ -133,7 +134,8 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
               className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-all group"
             >
               <div className="flex items-center space-x-3 text-slate-600 group-hover:text-red-600">
-                <CardIcon className="w-5 h-5" /> <span>Thẻ từ học tập</span>
+                <CardIcon className="w-5 h-5" />{" "}
+                <span className="font-medium">Thẻ từ học tập</span>
               </div>
               <ChevronRightIcon className="w-4 h-4 text-slate-300" />
             </button>
@@ -145,7 +147,8 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
               className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-all group"
             >
               <div className="flex items-center space-x-3 text-slate-600 group-hover:text-red-600">
-                <BookmarkIcon className="w-5 h-5" /> <span>Từ vựng đã lưu</span>
+                <BookmarkIcon className="w-5 h-5" />{" "}
+                <span className="font-medium">Từ vựng đã lưu</span>
               </div>
               <ChevronRightIcon className="w-4 h-4 text-slate-300" />
             </button>
@@ -178,7 +181,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
               >
                 <div className="flex items-center space-x-3 text-slate-600 group-hover:text-red-600">
                   <ListBulletIcon className="w-5 h-5" />{" "}
-                  <span>Trang quản trị</span>
+                  <span className="font-medium">Trang quản trị</span>
                 </div>
                 <ChevronRightIcon className="w-4 h-4 text-slate-300" />
               </button>
@@ -205,7 +208,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
               className="w-full flex items-center justify-center space-x-2 text-slate-500 font-bold hover:text-red-600 transition-all py-2"
             >
               <LogoutIcon className="w-5 h-5" />
-              <span>Đăng xuất khỏi hệ thống</span>
+              <span className="font-medium">Đăng xuất khỏi hệ thống</span>
             </button>
           </div>
         )}
