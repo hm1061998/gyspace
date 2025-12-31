@@ -50,8 +50,8 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
     return `hsl(${hue}, 70%, 40%)`; // Darker Pastel for text readability or use with white text
   };
 
-  const username = getCurrentUser().username || "";
-  const avatarChar = username.charAt(0).toUpperCase();
+  const username = getCurrentUser()?.username || "";
+  const avatarChar = username?.charAt(0)?.toUpperCase();
   const avatarBg = getAvatarColor(username);
 
   return (
