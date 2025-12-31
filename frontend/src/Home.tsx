@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  useNavigate,
+  useOutletContext,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { fetchIdiomDetails } from "../services/idiomService";
 import type { Idiom, SearchMode } from "../types";
 import IdiomDetail from "../components/IdiomDetail";
@@ -26,6 +31,7 @@ const Home: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchMode, setSearchMode] = useState<SearchMode>("database");
   const [isHandwritingPadOpen, setIsHandwritingPadOpen] = useState(false);
+  const { isLoggedIn } = useOutletContext<{ isLoggedIn: boolean }>();
 
   const searchQuery = searchParams.get("query");
 
@@ -53,7 +59,7 @@ const Home: React.FC = () => {
     try {
       const result = await fetchIdiomDetails(searchTerm, modeToUse);
       setCurrentIdiom(result);
-      if (result?.id) {
+      if (result?.id && isLoggedIn) {
         addToHistory(result.id);
       }
     } catch (err: any) {
@@ -115,7 +121,7 @@ const Home: React.FC = () => {
           </div> */}
           <IdiomDetail
             idiom={currentIdiom}
-            isLoggedIn={true}
+            isLoggedIn={isLoggedIn}
             isPremium={true}
           />
         </div>

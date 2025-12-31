@@ -60,6 +60,7 @@ export class SRSProgressEntity {
 }
 
 @Entity('search_history')
+@Unique(['user', 'idiom'])
 export class HistoryEntity {
   @PrimaryGeneratedColumn()
   id: number;

@@ -77,10 +77,7 @@ const App: React.FC = () => {
         {/* User Routes - Sử dụng MainLayout chung */}
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
-          <Route
-            path="/saved"
-            element={<SavedVocabulary onBack={() => navigate("/")} />}
-          />
+
           <Route
             path="/flashcards"
             element={<FlashcardReview onBack={() => navigate("/")} />}
@@ -89,19 +86,29 @@ const App: React.FC = () => {
             path="/word_search"
             element={<WordSearchGame onBack={() => navigate("/")} />}
           />
-          <Route
-            path="/history"
-            element={
-              <HistoryList
-                onBack={() => navigate("/")}
-                onSelect={(idiom) => {
-                  addToHistory(idiom);
-                  navigate(`/?query=${encodeURIComponent(idiom.hanzi)}`);
-                }}
-              />
-            }
-          />
+
           <Route path="/auth" element={<AuthWrapper />} />
+
+          {/* chức năng cần login */}
+          <Route element={<RequireAuth />}>
+            <Route
+              path="/saved"
+              element={<SavedVocabulary onBack={() => navigate("/")} />}
+            />
+            <Route
+              path="/history"
+              element={
+                <HistoryList
+                  onBack={() => navigate("/")}
+                  onSelect={(idiom) => {
+                    addToHistory(idiom);
+                    navigate(`/?query=${encodeURIComponent(idiom.hanzi)}`);
+                  }}
+                />
+              }
+            />
+          </Route>
+
           {/* Fallback cho các route không khớp trong User scope */}
           <Route path="*" element={<Home />} />
         </Route>

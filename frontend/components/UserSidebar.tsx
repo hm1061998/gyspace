@@ -17,6 +17,7 @@ import {
 } from "./icons";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
+import { toast } from "@/services/toastService";
 
 interface UserSidebarProps {
   isOpen: boolean;
@@ -132,6 +133,10 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
             </button>
             <button
               onClick={() => {
+                if (!isLoggedIn) {
+                  toast.error("Vui lòng đăng nhập để sử dụng tính năng này.");
+                  return;
+                }
                 onViewChange("history");
                 onClose();
               }}
@@ -158,6 +163,10 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
             </button>
             <button
               onClick={() => {
+                if (!isLoggedIn) {
+                  toast.error("Vui lòng đăng nhập để sử dụng tính năng này.");
+                  return;
+                }
                 onViewChange("saved");
                 onClose();
               }}

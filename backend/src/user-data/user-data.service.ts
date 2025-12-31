@@ -116,6 +116,18 @@ export class UserDataService {
     });
     if (!idiom) return;
 
+    // Kiểm tra xem từ này đã có trong lịch sử của user này chưa
+    const existing = await this.historyRepository.findOne({
+      where: { user: { id: userId }, idiom: { id: idiomId } },
+    });
+
+    if (existing) {
+      // Nếu đã tồn tại, cập nhật thời gian để đẩy lên đầu list (nếu cần)
+      // hoặc chỉ đơn giản là không tạo thêm bản ghi mới.
+      existing.createdAt = new Date();
+      return this.historyRepository.save(existing);
+    }
+
     const history = this.historyRepository.create({
       user: { id: userId },
       idiom: { id: idiomId },

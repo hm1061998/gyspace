@@ -15,6 +15,7 @@ import {
 } from "../services/userDataService";
 import type { Idiom } from "../types";
 import { toast } from "../services/toastService";
+import { useOutletContext } from "react-router-dom";
 
 interface FlashcardReviewProps {
   onBack: () => void;
@@ -40,6 +41,7 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
   const [srsData, setSrsData] = useState<SRSDataMap>({});
   const [totalAvailableCards, setTotalAvailableCards] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const { isLoggedIn } = useOutletContext<{ isLoggedIn: boolean }>();
 
   useEffect(() => {
     loadData();
@@ -63,16 +65,20 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
     setLoading(true);
     try {
       // 1. Tải tiến độ SRS từ server (lấy tối đa 500 bản ghi để chuẩn bị ôn tập)
-      const srsResponse = await fetchSRSData(1, 500);
+
       const progressMap: SRSDataMap = {};
-      srsResponse.data.forEach((item: any) => {
-        progressMap[item.idiom.hanzi] = {
-          interval: item.interval,
-          repetition: item.repetition,
-          efactor: item.efactor,
-          nextReviewDate: Number(item.nextReviewDate),
-        };
-      });
+
+      if (isLoggedIn) {
+        const srsResponse = await fetchSRSData(1, 500);
+        srsResponse.data.forEach((item: any) => {
+          progressMap[item.idiom.hanzi] = {
+            interval: item.interval,
+            repetition: item.repetition,
+            efactor: item.efactor,
+            nextReviewDate: Number(item.nextReviewDate),
+          };
+        });
+      }
 
       setSrsData(progressMap);
 
@@ -221,7 +227,13 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
             <HistoryIcon className="w-3.5 h-3.5" /> Tất cả
           </button>
           <button
-            onClick={() => setSource("saved")}
+            onClick={() => {
+              if (!isLoggedIn) {
+                toast.error("Vui lòng đăng nhập để sử dụng tính năng này.");
+                return;
+              }
+              setSource("saved");
+            }}
             className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
               source === "saved"
                 ? "bg-red-600 text-white shadow-md"
