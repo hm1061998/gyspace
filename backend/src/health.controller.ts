@@ -8,7 +8,6 @@ export class HealthController {
   @Get('health')
   async health() {
     let db = 'down';
-
     try {
       await this.dataSource.query('SELECT 1');
       db = 'up';

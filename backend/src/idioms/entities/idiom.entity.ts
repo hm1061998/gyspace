@@ -32,29 +32,32 @@ export class IdiomEntity {
 
   // Chuyển sang text vì nghĩa có thể dài
   @Column({ type: 'text' })
-  vietnameseMeaning: string;
+  vietnameseMeaning: string; //nghĩa tiếng Việt
 
   // Chuyển sang text
   @Column({ type: 'text', nullable: true })
-  literalMeaning: string;
+  literalMeaning: string; //nghĩa đen
 
   @Column('text')
-  figurativeMeaning: string;
+  figurativeMeaning: string; //nghĩa bóng/thực tế
 
   @Column({ type: 'text', nullable: true })
-  chineseDefinition: string;
+  chineseDefinition: string; //nghĩa tiếng Trung
 
   @Column({ type: 'text', nullable: true })
-  origin: string;
+  origin: string; //nguồn gốc
 
   @Column({ type: 'text', nullable: true })
-  grammar: string;
+  grammar: string; //ngữ pháp
 
   @Column({ nullable: true })
-  imageUrl: string;
+  imageUrl: string; //hình ảnh
 
   @Column({ nullable: true })
-  videoUrl: string;
+  videoUrl: string; //video
+
+  @Column({ nullable: true })
+  usageContext: string; //bối cảnh sử dụng
 
   @CreateDateColumn()
   createdAt: Date;
@@ -63,13 +66,13 @@ export class IdiomEntity {
     cascade: true,
     orphanedRowAction: 'delete',
   })
-  analysis: CharacterAnalysisEntity[];
+  analysis: CharacterAnalysisEntity[]; // phân tích các ký tự
 
   @OneToMany(() => ExampleSentenceEntity, (example) => example.idiom, {
     cascade: true,
     orphanedRowAction: 'delete',
   })
-  examples: ExampleSentenceEntity[];
+  examples: ExampleSentenceEntity[]; // ví dụ
 }
 
 @Entity('character_analysis')

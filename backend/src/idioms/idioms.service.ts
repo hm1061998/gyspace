@@ -33,6 +33,46 @@ export class IdiomsService {
     }
   }
 
+  async getAdminStats() {
+    try {
+      const totalIdioms = await this.idiomRepository.count();
+
+      // Thống kê theo cấp độ
+      const levels = ['Sơ cấp', 'Trung cấp', 'Cao cấp'];
+      const levelStats = await Promise.all(
+        levels.map(async (level) => ({
+          name: level,
+          count: await this.idiomRepository.count({ where: { level } }),
+        })),
+      );
+
+      // Thống kê theo loại
+      const types = ['Quán dụng ngữ', 'Thành ngữ (Chengyu)', 'Tiếng lóng'];
+      const typeStats = await Promise.all(
+        types.map(async (type) => ({
+          name: type,
+          count: await this.idiomRepository.count({ where: { type } }),
+        })),
+      );
+
+      // Lấy 5 từ vựng mới thêm gần nhất
+      const recentIdioms = await this.idiomRepository.find({
+        order: { createdAt: 'DESC' },
+        take: 5,
+        select: ['id', 'hanzi', 'pinyin', 'createdAt'],
+      });
+
+      return {
+        totalIdioms,
+        levelStats,
+        typeStats,
+        recentIdioms,
+      };
+    } catch (error) {
+      throw new HttpException('Lỗi khi lấy dữ liệu thống kê.', 400);
+    }
+  }
+
   async findAll(
     page: number = 1,
     limit: number = 12,

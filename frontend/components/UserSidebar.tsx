@@ -12,7 +12,12 @@ import {
   PlusIcon,
   ListBulletIcon,
   UserIcon,
+  PuzzlePieceIcon,
+  HistoryIcon,
 } from "./icons";
+import { useSelector } from "react-redux";
+import { RootState } from "../redux/store";
+import { toast } from "@/services/toastService";
 
 interface UserSidebarProps {
   isOpen: boolean;
@@ -36,7 +41,23 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
   onViewChange,
   isPremium,
   onTogglePremium,
+  isAdmin,
 }) => {
+  const { user: reduxUser } = useSelector((state: RootState) => state.auth);
+
+  const getAvatarColor = (name: string) => {
+    if (!name) return "hsl(0, 70%, 60%)"; // Default Red
+    const firstChar = name.charAt(0).toUpperCase();
+    const charCode = firstChar.charCodeAt(0);
+    // Map A-Z (65-90) to 0-360 hue
+    const hue = Math.floor(((charCode - 65) / 26) * 360);
+    return `hsl(${hue}, 70%, 40%)`; // Darker Pastel for text readability or use with white text
+  };
+
+  const username = reduxUser?.username || "";
+  const avatarChar = username?.charAt(0)?.toUpperCase();
+  const avatarBg = getAvatarColor(username);
+
   return (
     <>
       {isOpen && (
@@ -65,26 +86,29 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
         <div className="flex-1 overflow-y-auto p-6 space-y-8">
           {!isLoggedIn ? (
             <div className="space-y-3">
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest ml-1">
                 Tài khoản
               </p>
               <button
                 onClick={onLogin}
-                className="w-full flex items-center justify-center space-x-3 py-3 bg-red-700 text-white rounded-xl hover:bg-red-800 transition-all shadow-lg shadow-red-100 active:scale-[0.98]"
+                className="w-full flex items-center justify-center space-x-3 py-4 bg-slate-800 text-white rounded-2xl hover:bg-black transition-all shadow-lg active:scale-[0.98]"
               >
                 <UserIcon className="w-5 h-5" />
-                <span className="font-bold">Đăng nhập Admin</span>
+                <span className="font-bold">Đăng nhập / Đăng ký</span>
               </button>
             </div>
           ) : (
             <div className="flex items-center space-x-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <div className="w-12 h-12 bg-red-700 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
-                A
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow-lg transition-transform hover:scale-105"
+                style={{ backgroundColor: avatarBg }}
+              >
+                {avatarChar}
               </div>
               <div>
-                <h3 className="font-bold text-slate-800">Administrator</h3>
+                <h3 className="font-bold text-slate-800">{username}</h3>
                 <p className="text-[10px] text-red-600 font-bold uppercase tracking-tight">
-                  Quyền quản trị viên
+                  {isAdmin ? "Quản trị viên" : "Người dùng"}
                 </p>
               </div>
             </div>
@@ -101,10 +125,28 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
               }}
               className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-all group"
             >
-              <div className="flex items-center space-x-3 text-slate-600 font-bold group-hover:text-red-600">
-                <ListBulletIcon className="w-5 h-5" /> <span>Trang chủ</span>
+              <div className="flex items-center space-x-3 text-slate-600 group-hover:text-red-600">
+                <ListBulletIcon className="w-5 h-5" />{" "}
+                <span className="font-medium">Trang chủ</span>
               </div>
               <ChevronRightIcon className="w-4 h-4 text-slate-300" />
+            </button>
+            <button
+              onClick={() => {
+                if (!isLoggedIn) {
+                  toast.error("Vui lòng đăng nhập để sử dụng tính năng này.");
+                  return;
+                }
+                onViewChange("history");
+                onClose();
+              }}
+              className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-colors group"
+            >
+              <div className="flex items-center space-x-3 text-slate-600 group-hover:text-red-700 transition-colors">
+                <HistoryIcon className="w-5 h-5" />
+                <span className="font-medium">Lịch sử tra cứu</span>
+              </div>
+              <ChevronRightIcon className="w-4 h-4 text-slate-300 group-hover:text-red-300" />
             </button>
             <button
               onClick={() => {
@@ -113,26 +155,45 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
               }}
               className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-all group"
             >
-              <div className="flex items-center space-x-3 text-slate-600 font-bold group-hover:text-red-600">
-                <CardIcon className="w-5 h-5" /> <span>Thẻ từ học tập</span>
+              <div className="flex items-center space-x-3 text-slate-600 group-hover:text-red-600">
+                <CardIcon className="w-5 h-5" />{" "}
+                <span className="font-medium">Thẻ từ học tập</span>
               </div>
               <ChevronRightIcon className="w-4 h-4 text-slate-300" />
             </button>
             <button
               onClick={() => {
+                if (!isLoggedIn) {
+                  toast.error("Vui lòng đăng nhập để sử dụng tính năng này.");
+                  return;
+                }
                 onViewChange("saved");
                 onClose();
               }}
               className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-all group"
             >
-              <div className="flex items-center space-x-3 text-slate-600 font-bold group-hover:text-red-600">
-                <BookmarkIcon className="w-5 h-5" /> <span>Từ vựng đã lưu</span>
+              <div className="flex items-center space-x-3 text-slate-600 group-hover:text-red-600">
+                <BookmarkIcon className="w-5 h-5" />{" "}
+                <span className="font-medium">Từ vựng đã lưu</span>
               </div>
               <ChevronRightIcon className="w-4 h-4 text-slate-300" />
             </button>
+            <button
+              onClick={() => {
+                onViewChange("word_search");
+                onClose();
+              }}
+              className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-colors group"
+            >
+              <div className="flex items-center space-x-3 text-slate-600 group-hover:text-red-700 transition-colors">
+                <PuzzlePieceIcon className="w-5 h-5" />
+                <span className="font-medium">Game Tìm Chữ</span>
+              </div>
+              <ChevronRightIcon className="w-4 h-4 text-slate-300 group-hover:text-red-300" />
+            </button>
           </div>
 
-          {isLoggedIn && (
+          {isLoggedIn && isAdmin && (
             <div className="space-y-2">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-3 mb-2">
                 Quản trị hệ thống (Admin)
@@ -144,9 +205,9 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
                 }}
                 className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-all group"
               >
-                <div className="flex items-center space-x-3 text-slate-600 font-bold group-hover:text-red-600">
+                <div className="flex items-center space-x-3 text-slate-600 group-hover:text-red-600">
                   <ListBulletIcon className="w-5 h-5" />{" "}
-                  <span>Kho dữ liệu gốc</span>
+                  <span className="font-medium">Trang quản trị</span>
                 </div>
                 <ChevronRightIcon className="w-4 h-4 text-slate-300" />
               </button>
@@ -173,7 +234,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
               className="w-full flex items-center justify-center space-x-2 text-slate-500 font-bold hover:text-red-600 transition-all py-2"
             >
               <LogoutIcon className="w-5 h-5" />
-              <span>Đăng xuất khỏi hệ thống</span>
+              <span className="font-medium">Đăng xuất khỏi hệ thống</span>
             </button>
           </div>
         )}

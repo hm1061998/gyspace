@@ -20,6 +20,7 @@ export class CreateIdiomDto {
   literalMeaning?: string;
   figurativeMeaning: string;
   chineseDefinition?: string;
+  usageContext?: string;
   origin?: string;
   grammar?: string;
   imageUrl?: string;
