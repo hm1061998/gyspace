@@ -1,5 +1,4 @@
-
-export type SearchMode = 'database' | 'ai';
+export type SearchMode = "database" | "ai";
 
 export interface CharacterAnalysisRow {
   id: string;
@@ -27,16 +26,17 @@ export interface IdiomRow {
   literalMeaning: string;
   figurativeMeaning: string;
   chineseDefinition?: string; // MỚI: Nghĩa tiếng Trung
-  source?: string;           // MỚI: Vị trí xuất hiện (Qiaoliang, HSK...)
-  level?: string;            // MỚI: Cấp độ (Trung cấp, Cao cấp)
+  source?: string; // MỚI: Vị trí xuất hiện (Qiaoliang, HSK...)
+  level?: string; // MỚI: Cấp độ (Trung cấp, Cao cấp)
   origin: string;
   grammar: string;
   imageUrl?: string;
+  videoUrl?: string;
 }
 
 export interface Idiom extends IdiomRow {
-  analysis: Omit<CharacterAnalysisRow, 'id' | 'idiomId'>[];
-  examples: Omit<ExampleSentenceRow, 'id' | 'idiomId'>[];
+  analysis: Omit<CharacterAnalysisRow, "id" | "idiomId">[];
+  examples: Omit<ExampleSentenceRow, "id" | "idiomId">[];
 }
 
 export interface Feedback {
