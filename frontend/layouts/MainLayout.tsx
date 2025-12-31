@@ -1,12 +1,12 @@
 import React, { useState, useCallback } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import Header from "../components/Header";
-import UserSidebar from "../components/UserSidebar";
-import ToastContainer from "../components/ToastContainer";
-import { logoutAdmin } from "../services/authService";
-import { RootState } from "../redux/store";
-import { logout as reduxLogout } from "../redux/authSlice";
+import Header from "@/components/Header";
+import UserSidebar from "@/components/UserSidebar";
+import ToastContainer from "@/components/ToastContainer";
+import { logoutAdmin } from "@/services/api/authService";
+import { RootState } from "@/redux/store";
+import { logout as reduxLogout } from "@/redux/authSlice";
 
 const MainLayout: React.FC = () => {
   const navigate = useNavigate();

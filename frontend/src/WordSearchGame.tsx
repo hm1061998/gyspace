@@ -4,7 +4,7 @@ import {
   PuzzlePieceIcon,
   SpinnerIcon,
 } from "@/components/icons";
-import { fetchStoredIdioms } from "@/services/idiomService";
+import { fetchStoredIdioms } from "@/services/api/idiomService";
 import type { Idiom } from "@/types";
 
 interface WordSearchGameProps {

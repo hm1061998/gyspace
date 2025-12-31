@@ -8,7 +8,7 @@ import {
   HistoryIcon,
   ChevronRightIcon,
 } from "@/components/icons";
-import { fetchAdminStats } from "@/services/idiomService";
+import { fetchAdminStats } from "@/services/api/idiomService";
 import { useNavigate } from "react-router-dom";
 
 const AdminDashboard: React.FC = () => {

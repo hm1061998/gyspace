@@ -11,13 +11,13 @@ import {
   SpinnerIcon,
 } from "./icons";
 import IdiomComments from "./IdiomComments";
-import { toast } from "@/services/toastService";
+import { toast } from "@/services/ui/toastService";
 import {
   checkSavedStatus,
   fetchSavedIdioms,
   toggleSaveIdiom,
   updateSRSProgress,
-} from "@/services/userDataService";
+} from "@/services/api/userDataService";
 
 interface IdiomDetailProps {
   idiom: Idiom;

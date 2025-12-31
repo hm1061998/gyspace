@@ -9,7 +9,7 @@ import {
   ArrowLeftIcon,
   MenuIcon,
   CloseIcon,
-} from "../components/icons";
+} from "@/components/icons";
 interface NavItemProps {
   to: string;
   end?: boolean;
