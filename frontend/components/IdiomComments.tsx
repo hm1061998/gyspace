@@ -7,6 +7,7 @@ import {
   FlagIcon,
 } from "./icons";
 import type { Feedback } from "@/types";
+import Textarea from "@/components/Textarea";
 
 interface IdiomCommentsProps {
   idiomHanzi: string;
@@ -248,16 +249,16 @@ const IdiomComments: React.FC<IdiomCommentsProps> = ({
               <UserIcon className="w-5 h-5" />
             </div>
             <div className="flex-1 relative">
-              <textarea
+              <Textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Chia sẻ hiểu biết của bạn về từ này..."
-                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-400 outline-none resize-none shadow-sm min-h-[80px]"
+                className="min-h-[80px] pb-12 focus:ring-amber-400"
               />
               <button
                 type="submit"
                 disabled={!newComment.trim()}
-                className="absolute bottom-3 right-3 p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                className="absolute bottom-3 right-3 p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm z-10"
               >
                 <PaperAirplaneIcon className="w-4 h-4" />
               </button>

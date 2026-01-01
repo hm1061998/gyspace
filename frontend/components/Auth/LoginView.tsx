@@ -4,6 +4,7 @@ import { loginAdmin } from "@/services/api/authService";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/redux/authSlice";
 import { useForm } from "react-hook-form";
+import Input from "@/components/Input";
 
 interface LoginViewProps {
   onLoginSuccess: () => void;
@@ -69,66 +70,45 @@ const LoginView: React.FC<LoginViewProps> = ({
           )}
 
           <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-                Tên đăng nhập
-              </label>
-              <input
-                {...register("username", {
-                  required: "Tên đăng nhập là bắt buộc",
-                  minLength: {
-                    value: 4,
-                    message: "Tên đăng nhập phải có ít nhất 4 ký tự",
-                  },
-                  maxLength: {
-                    value: 20,
-                    message: "Tên đăng nhập không được quá 20 ký tự",
-                  },
-                  pattern: {
-                    value: /^[a-zA-Z0-9_-]+$/,
-                    message: "Tên đăng nhập chỉ chứa chữ cái, số, - và _",
-                  },
-                })}
-                type="text"
-                className={`w-full px-4 py-3 bg-slate-50 border ${
-                  errors.username ? "border-red-500" : "border-slate-200"
-                } rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all`}
-                placeholder="Nhập tên đăng nhập"
-              />
-              {errors.username && (
-                <p className="text-red-500 text-[10px] mt-1 font-bold">
-                  {errors.username.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-                Mật khẩu
-              </label>
-              <input
-                {...register("pass", {
-                  required: "Mật khẩu là bắt buộc",
-                  minLength: {
-                    value: 6,
-                    message: "Mật khẩu phải có ít nhất 6 ký tự",
-                  },
-                  maxLength: {
-                    value: 100,
-                    message: "Mật khẩu không được quá 100 ký tự",
-                  },
-                })}
-                type="password"
-                className={`w-full px-4 py-3 bg-slate-50 border ${
-                  errors.pass ? "border-red-500" : "border-slate-200"
-                } rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all`}
-                placeholder="••••••••"
-              />
-              {errors.pass && (
-                <p className="text-red-500 text-[10px] mt-1 font-bold">
-                  {errors.pass.message}
-                </p>
-              )}
-            </div>
+            <Input
+              label="TÊN ĐĂNG NHẬP"
+              {...register("username", {
+                required: "Tên đăng nhập là bắt buộc",
+                minLength: {
+                  value: 4,
+                  message: "Tên đăng nhập phải có ít nhất 4 ký tự",
+                },
+                maxLength: {
+                  value: 20,
+                  message: "Tên đăng nhập không được quá 20 ký tự",
+                },
+                pattern: {
+                  value: /^[a-zA-Z0-9_-]+$/,
+                  message: "Tên đăng nhập chỉ chứa chữ cái, số, - và _",
+                },
+              })}
+              placeholder="Nhập tên đăng nhập"
+              error={errors.username?.message}
+              className="bg-slate-50 py-3"
+            />
+            <Input
+              label="MẬT KHẨU"
+              {...register("pass", {
+                required: "Mật khẩu là bắt buộc",
+                minLength: {
+                  value: 6,
+                  message: "Mật khẩu phải có ít nhất 6 ký tự",
+                },
+                maxLength: {
+                  value: 100,
+                  message: "Mật khẩu không được quá 100 ký tự",
+                },
+              })}
+              type="password"
+              placeholder="••••••••"
+              error={errors.pass?.message}
+              className="bg-slate-50 py-3"
+            />
           </div>
 
           <button

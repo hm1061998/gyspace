@@ -20,6 +20,7 @@ import { useNavigate } from "react-router";
 import { confirmService } from "@/services/ui/confirmService";
 import { toast } from "@/services/ui/toastService";
 import FormSelect from "@/components/FormSelect";
+import Input from "@/components/Input";
 
 interface VocabularyListProps {
   onBack: () => void;
@@ -235,14 +236,13 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
 
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1">
-          <input
-            type="text"
+          <Input
             placeholder="Tìm theo hán tự, pinyin, ý nghĩa..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition-all bg-white"
+            className="pl-10 focus:ring-red-200 focus:border-red-400"
           />
-          <SearchIcon className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" />
+          <SearchIcon className="w-5 h-5 text-slate-400 absolute left-3 top-3" />
         </div>
         <FormSelect
           value={selectedLevel}

@@ -10,6 +10,8 @@ import FormSelect from "@/components/FormSelect";
 import { useOutletContext } from "react-router";
 import { AdminOutletContext } from "@/layouts/AdminLayout";
 import { useForm, useFieldArray } from "react-hook-form";
+import Input from "@/components/Input";
+import Textarea from "@/components/Textarea";
 
 interface AdminInsertProps {
   onBack: () => void;
@@ -177,76 +179,44 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                 Thông tin cơ bản
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
-                    Hán tự *
-                  </label>
-                  <input
-                    {...register("hanzi", {
-                      required: "Vui lòng nhập Hán tự",
-                      maxLength: {
-                        value: 100,
-                        message: "Hán tự tối đa 100 ký tự",
-                      },
-                    })}
-                    className={`w-full border ${
-                      errors.hanzi ? "border-red-500" : "border-slate-200"
-                    } rounded-xl p-3 font-hanzi text-lg focus:ring-2 focus:ring-red-500/10 focus:border-red-500 transition-all outline-none bg-slate-50/50`}
-                    placeholder="VD: 做生意"
-                  />
-                  {errors.hanzi && (
-                    <p className="text-red-500 text-[10px] mt-1 font-bold ml-1">
-                      {errors.hanzi.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
-                    Pinyin *
-                  </label>
-                  <input
-                    {...register("pinyin", {
-                      maxLength: {
-                        value: 200,
-                        message: "Pinyin tối đa 200 ký tự",
-                      },
-                    })}
-                    className={`w-full border ${
-                      errors.pinyin ? "border-red-500" : "border-slate-200"
-                    } rounded-xl p-3 focus:ring-2 focus:ring-red-500/10 focus:border-red-500 transition-all outline-none bg-slate-50/50`}
-                    placeholder="VD: zuò shēngyi"
-                  />
-                  {errors.pinyin && (
-                    <p className="text-red-500 text-[10px] mt-1 font-bold ml-1">
-                      {errors.pinyin.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
-                  Nghĩa tiếng Việt *
-                </label>
-                <input
-                  {...register("vietnameseMeaning", {
+                <Input
+                  label="HÁN TỰ *"
+                  {...register("hanzi", {
+                    required: "Vui lòng nhập Hán tự",
                     maxLength: {
-                      value: 2000,
-                      message: "Nghĩa tối đa 2000 ký tự",
+                      value: 100,
+                      message: "Hán tự tối đa 100 ký tự",
                     },
                   })}
-                  className={`w-full border ${
-                    errors.vietnameseMeaning
-                      ? "border-red-500"
-                      : "border-slate-200"
-                  } rounded-xl p-3 focus:ring-2 focus:ring-red-500/10 focus:border-red-500 transition-all outline-none bg-slate-50/50`}
-                  placeholder="VD: Làm ăn"
+                  className="font-hanzi text-lg bg-slate-50/50"
+                  placeholder="VD: 做生意"
+                  error={errors.hanzi?.message}
                 />
-                {errors.vietnameseMeaning && (
-                  <p className="text-red-500 text-[10px] mt-1 font-bold ml-1">
-                    {errors.vietnameseMeaning.message}
-                  </p>
-                )}
+                <Input
+                  label="PINYIN *"
+                  {...register("pinyin", {
+                    maxLength: {
+                      value: 200,
+                      message: "Pinyin tối đa 200 ký tự",
+                    },
+                  })}
+                  className="bg-slate-50/50"
+                  placeholder="VD: zuò shēngyi"
+                  error={errors.pinyin?.message}
+                />
               </div>
+              <Input
+                label="NGHĨA TIẾNG VIỆT *"
+                {...register("vietnameseMeaning", {
+                  maxLength: {
+                    value: 2000,
+                    message: "Nghĩa tối đa 2000 ký tự",
+                  },
+                })}
+                className="bg-slate-50/50"
+                placeholder="VD: Làm ăn"
+                error={errors.vietnameseMeaning?.message}
+              />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
@@ -285,14 +255,14 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
-                    Nguồn (Giáo trình)
+                  <label className="block text-sm font-bold text-slate-700 ml-1">
+                    NGUỒN (GIÁO TRÌNH)
                   </label>
-                  <input
+                  <Input
                     {...register("source", {
                       maxLength: { value: 100, message: "Tối đa 100 ký tự" },
                     })}
-                    className="w-full border border-slate-200 rounded-xl p-3 bg-slate-50/50 outline-none"
+                    className="bg-slate-50/50"
                     placeholder="VD: Qiaoliang"
                   />
                 </div>
@@ -308,116 +278,80 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                 Giải nghĩa & Ngữ pháp
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
-                    Nghĩa đen
-                  </label>
-                  <input
-                    {...register("literalMeaning")}
-                    className="w-full border border-slate-200 rounded-xl p-3 bg-slate-50/50 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
-                    Nghĩa bóng
-                  </label>
-                  <input
-                    {...register("figurativeMeaning")}
-                    className="w-full border border-slate-200 rounded-xl p-3 bg-slate-50/50 outline-none"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
-                    Ảnh minh họa
-                  </label>
-                  <input
-                    {...register("imageUrl", {
-                      maxLength: {
-                        value: 1000,
-                        message: "URL tối đa 1000 ký tự",
-                      },
-                      pattern: {
-                        value: /^https?:\/\/.+/,
-                        message: "Phải là URL hợp lệ (http/https)",
-                      },
-                    })}
-                    className="w-full border border-slate-200 rounded-xl p-3 bg-slate-50/50 outline-none focus:border-slate-400 transition-all"
-                    placeholder="https://anh.png"
-                  />
-                  {errors.imageUrl && (
-                    <p className="text-red-500 text-[10px] mt-1 font-bold ml-1">
-                      {errors.imageUrl.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
-                    Video (URL)
-                  </label>
-                  <input
-                    {...register("videoUrl", {
-                      maxLength: {
-                        value: 1000,
-                        message: "URL tối đa 1000 ký tự",
-                      },
-                      pattern: {
-                        value: /^https?:\/\/.+/,
-                        message: "Phải là URL hợp lệ (http/https)",
-                      },
-                    })}
-                    className="w-full border border-slate-200 rounded-xl p-3 bg-slate-50/50 outline-none focus:border-slate-400 transition-all"
-                    placeholder="https://video.mp4"
-                  />
-                  {errors.videoUrl && (
-                    <p className="text-red-500 text-[10px] mt-1 font-bold ml-1">
-                      {errors.videoUrl.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
-                  Giải thích tiếng Trung
-                </label>
-                <textarea
-                  {...register("chineseDefinition")}
-                  className="w-full border border-slate-200 rounded-xl p-3 h-20 bg-slate-50/50 outline-none"
+                <Input
+                  label="NGHĨA ĐEN"
+                  {...register("literalMeaning")}
+                  className="bg-slate-50/50"
+                  error={errors.literalMeaning?.message}
                 />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
-                  Ngữ cảnh
-                </label>
-                <textarea
-                  {...register("usageContext")}
-                  className="w-full border border-slate-200 rounded-xl p-3 h-20 bg-slate-50/50 outline-none"
+                <Input
+                  label="NGHĨA BÓNG"
+                  {...register("figurativeMeaning")}
+                  className="bg-slate-50/50"
+                  error={errors.figurativeMeaning?.message}
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
-                    Nguồn gốc
-                  </label>
-                  <textarea
-                    {...register("origin", {
-                      maxLength: { value: 2000, message: "Tối đa 2000 ký tự" },
-                    })}
-                    className="w-full border border-slate-200 rounded-xl p-3 h-24 bg-slate-50/50 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
-                    Cách dùng/Ngữ pháp
-                  </label>
-                  <textarea
-                    {...register("grammar", {
-                      maxLength: { value: 2000, message: "Tối đa 2000 ký tự" },
-                    })}
-                    className="w-full border border-slate-200 rounded-xl p-3 h-24 bg-slate-50/50 outline-none"
-                  />
-                </div>
+                <Input
+                  label="ẢNH MINH HỌA"
+                  {...register("imageUrl", {
+                    maxLength: {
+                      value: 1000,
+                      message: "URL tối đa 1000 ký tự",
+                    },
+                    pattern: {
+                      value: /^https?:\/\/.+/,
+                      message: "Phải là URL hợp lệ (http/https)",
+                    },
+                  })}
+                  className="bg-slate-50/50"
+                  placeholder="https://anh.png"
+                  error={errors.imageUrl?.message}
+                />
+                <Input
+                  label="VIDEO (URL)"
+                  {...register("videoUrl", {
+                    maxLength: {
+                      value: 1000,
+                      message: "URL tối đa 1000 ký tự",
+                    },
+                    pattern: {
+                      value: /^https?:\/\/.+/,
+                      message: "Phải là URL hợp lệ (http/https)",
+                    },
+                  })}
+                  className="bg-slate-50/50"
+                  placeholder="https://video.mp4"
+                  error={errors.videoUrl?.message}
+                />
+              </div>
+              <Textarea
+                label="GIẢI THÍCH TIẾNG TRUNG"
+                {...register("chineseDefinition")}
+                className="h-20 bg-slate-50/50"
+              />
+              <Textarea
+                label="NGỮ CẢNH"
+                {...register("usageContext")}
+                className="h-20 bg-slate-50/50"
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Textarea
+                  label="NGUỒN GỐC"
+                  {...register("origin", {
+                    maxLength: { value: 2000, message: "Tối đa 2000 ký tự" },
+                  })}
+                  className="h-24 bg-slate-50/50"
+                  error={errors.origin?.message}
+                />
+                <Textarea
+                  label="CÁCH DÙNG/NGỮ PHÁP"
+                  {...register("grammar", {
+                    maxLength: { value: 2000, message: "Tối đa 2000 ký tự" },
+                  })}
+                  className="h-24 bg-slate-50/50"
+                  error={errors.grammar?.message}
+                />
               </div>
             </div>
 
@@ -448,38 +382,36 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                   >
                     <div className="flex-1 grid grid-cols-3 gap-3">
                       <div>
-                        <input
+                        <Input
                           {...register(`analysis.${idx}.character`, {
                             maxLength: {
                               value: 10,
                               message: "Tối đa 10 ký tự",
                             },
                           })}
-                          className="w-full border border-slate-200 rounded-lg p-2 font-hanzi bg-white focus:border-red-400 outline-none"
+                          className="font-hanzi"
                           placeholder="Chữ"
                         />
                       </div>
                       <div>
-                        <input
+                        <Input
                           {...register(`analysis.${idx}.pinyin`, {
                             maxLength: {
                               value: 100,
                               message: "Tối đa 100 ký tự",
                             },
                           })}
-                          className="w-full border border-slate-200 rounded-lg p-2 bg-white focus:border-red-400 outline-none"
                           placeholder="Pinyin"
                         />
                       </div>
                       <div>
-                        <input
+                        <Input
                           {...register(`analysis.${idx}.meaning`, {
                             maxLength: {
                               value: 500,
                               message: "Tối đa 500 ký tự",
                             },
                           })}
-                          className="w-full border border-slate-200 rounded-lg p-2 bg-white focus:border-red-400 outline-none"
                           placeholder="Nghĩa"
                         />
                       </div>
@@ -525,46 +457,40 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1 ml-1">
-                          Tiếng Trung
-                        </label>
-                        <input
+                        <Input
+                          label="TIẾNG TRUNG"
                           {...register(`examples.${idx}.chinese`, {
                             maxLength: {
                               value: 1000,
                               message: "Tối đa 1000 ký tự",
                             },
                           })}
-                          className="w-full border border-slate-200 rounded-xl p-3 font-hanzi bg-slate-50/50 outline-none"
+                          className="font-hanzi bg-slate-50/50"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1 ml-1">
-                          Pinyin
-                        </label>
-                        <input
+                        <Input
+                          label="PINYIN"
                           {...register(`examples.${idx}.pinyin`, {
                             maxLength: {
                               value: 1000,
                               message: "Tối đa 1000 ký tự",
                             },
                           })}
-                          className="w-full border border-slate-200 rounded-xl p-3 bg-slate-50/50 outline-none"
+                          className="bg-slate-50/50"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1 ml-1">
-                        Nghĩa tiếng Việt
-                      </label>
-                      <input
+                      <Input
+                        label="NGHĨA TIẾNG VIỆT"
                         {...register(`examples.${idx}.vietnamese`, {
                           maxLength: {
                             value: 1000,
                             message: "Tối đa 1000 ký tự",
                           },
                         })}
-                        className="w-full border border-slate-200 rounded-xl p-3 bg-slate-50/50 outline-none"
+                        className="bg-slate-50/50"
                       />
                     </div>
                     {exampleFields.length > 1 && (

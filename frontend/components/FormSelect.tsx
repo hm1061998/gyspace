@@ -13,6 +13,7 @@ interface FormSelectProps {
   onChange?: (value: string) => void;
   error?: string;
   placeholder?: string;
+  disabled?: boolean;
 }
 
 const FormSelectCustom: React.FC<FormSelectProps> = ({
@@ -22,6 +23,7 @@ const FormSelectCustom: React.FC<FormSelectProps> = ({
   onChange,
   error,
   placeholder = "Chọn...",
+  disabled,
 }) => {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -52,12 +54,20 @@ const FormSelectCustom: React.FC<FormSelectProps> = ({
         {/* Trigger */}
         <button
           type="button"
-          onClick={() => setOpen(!open)}
+          onClick={() => !disabled && setOpen(!open)}
+          disabled={disabled}
           className={`
-        w-full flex items-center justify-between
-        px-4 py-2 rounded-xl border bg-white
-        ${error ? "border-red-500" : "border-slate-200 hover:border-slate-300"}
-      `}
+            w-full flex items-center justify-between
+            px-4 py-2 rounded-xl border bg-white
+            ${
+              error
+                ? "border-red-500"
+                : "border-slate-200 hover:border-slate-300"
+            }
+            focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-500
+            disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed
+            transition-all duration-200
+          `}
         >
           <span className={selected ? "text-slate-700" : "text-slate-400"}>
             {selected?.label || placeholder}
@@ -65,7 +75,7 @@ const FormSelectCustom: React.FC<FormSelectProps> = ({
           <ChevronDownIcon
             className={`w-5 h-5 transition-transform ml-2 ${
               open ? "rotate-180" : ""
-            }`}
+            } ${disabled ? "text-slate-300" : ""}`}
           />
         </button>
 
