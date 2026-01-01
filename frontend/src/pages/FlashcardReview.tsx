@@ -309,7 +309,7 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
             onClick={() => !isFlipped && setIsFlipped(true)}
           >
             <div
-              className={`relative w-full h-full transition-transform transform-style-3d ${
+              className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${
                 isFlipped ? "rotate-y-180" : ""
               }`}
             >

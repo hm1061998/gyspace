@@ -36,7 +36,7 @@ export const fetchSavedIdioms = async (
 
 export const updateSRSProgress = async (idiomId: string, srsData: any) => {
   const response = await http.post(`${API_BASE_URL}/srs`, {
-    idiomId,
+    idiomId: `${idiomId}`,
     ...srsData,
   });
   return response.data;
