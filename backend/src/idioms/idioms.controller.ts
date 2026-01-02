@@ -14,6 +14,7 @@ import {
 import { IdiomsService } from './idioms.service';
 import { CreateIdiomDto, BulkCreateIdiomDto } from './dto/create-idiom.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from '../auth/guards/admin.guard';
 
 export type SearchMode = 'database' | 'ai';
 
@@ -21,7 +22,7 @@ export type SearchMode = 'database' | 'ai';
 export class IdiomsController {
   constructor(private readonly idiomsService: IdiomsService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Get('admin/stats')
   async getAdminStats() {
     return this.idiomsService.getAdminStats();
@@ -63,13 +64,13 @@ export class IdiomsController {
     return this.idiomsService.findById(id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Post()
   async create(@Body() createIdiomDto: CreateIdiomDto) {
     return this.idiomsService.create(createIdiomDto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Put(':id')
   async update(
     @Param('id') id: string,
@@ -78,13 +79,13 @@ export class IdiomsController {
     return this.idiomsService.update(id, updateIdiomDto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.idiomsService.remove(id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Post('bulk')
   async bulkCreate(@Body() body: any) {
     const idioms = Array.isArray(body) ? body : body.idioms;

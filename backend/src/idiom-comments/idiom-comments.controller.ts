@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { IdiomCommentsService } from './idiom-comments.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from '../auth/guards/admin.guard';
 import {
   CreateCommentDto,
   UpdateCommentStatusDto,
@@ -68,21 +69,21 @@ export class IdiomCommentsController {
 
   // Admin endpoint - Lấy tất cả comments với filter
   @Get('admin/all')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async getAllComments(@Query() query: CommentQueryDto, @Req() req) {
     return this.commentsService.findAll(query);
   }
 
   // Admin endpoint - Lấy thống kê
   @Get('admin/stats')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async getStats(@Req() req) {
     return this.commentsService.getStats();
   }
 
   // Admin endpoint - Cập nhật trạng thái comment
   @Patch('admin/:id/status')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(HttpStatus.OK)
   async updateCommentStatus(
     @Param('id') id: string,
@@ -94,7 +95,7 @@ export class IdiomCommentsController {
 
   // Admin endpoint - Xóa comment
   @Delete('admin/:id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(HttpStatus.OK)
   async deleteComment(@Param('id') id: string, @Req() req) {
     return this.commentsService.delete(id, req.user.id);
