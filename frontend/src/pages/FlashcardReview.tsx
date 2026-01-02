@@ -213,7 +213,7 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
     );
 
   return (
-    <div className="max-w-2xl mx-auto w-full flex flex-col h-full animate-pop">
+    <div className="max-w-2xl mx-auto w-full flex flex-col h-full animate-pop p-3">
       <div className="flex justify-between items-center mb-6">
         <div className="flex bg-white p-1 rounded-full border shadow-sm">
           <button

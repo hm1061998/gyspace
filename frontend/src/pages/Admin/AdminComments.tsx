@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
+  ArrowLeftIcon,
   ChatBubbleIcon,
   CheckCircleIcon,
   XCircleIcon,
@@ -28,8 +29,9 @@ import { getCommentStats } from "@/redux/adminSlice";
 import FormSelect from "@/components/common/FormSelect";
 import Drawer from "@/components/common/Drawer";
 import BulkActionBar from "@/components/common/BulkActionBar";
+import SelectAllCheckbox from "@/components/common/SelectAllCheckbox";
 
-const AdminComments: React.FC = () => {
+const AdminComments: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { commentStats: stats, commentLoading: statsLoading } = useSelector(
     (state: RootState) => state.admin
@@ -333,151 +335,305 @@ const AdminComments: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-800 mb-2 flex items-center">
-          <ChatBubbleIcon className="w-8 h-8 mr-3 text-red-600" />
-          Quản lý Góp ý & Bình luận
-        </h1>
-        <p className="text-slate-600">
-          Kiểm duyệt và quản lý các góp ý từ người dùng
-        </p>
-      </div>
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm relative overflow-hidden">
-          <div className="text-slate-600 text-sm mb-1">Tổng số</div>
-          <div className="text-3xl font-bold text-slate-800">
-            {stats?.total || 0}
+    <div className="h-full flex flex-col overflow-hidden bg-slate-50">
+      {/* Fixed Top Section: Header, Stats, Tabs, Toolbar */}
+      <div className="flex-none bg-white border-b border-slate-200 shadow-sm z-10 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="p-1.5 -ml-1 text-slate-400 hover:text-red-700 hover:bg-red-50 rounded-full transition-all"
+                  title="Quay lại"
+                >
+                  <ArrowLeftIcon className="w-5 h-5" />
+                </button>
+              )}
+              <div>
+                <h1 className="text-lg sm:text-2xl font-bold text-slate-800 flex items-center">
+                  <ChatBubbleIcon className="w-5 h-5 sm:w-8 sm:h-8 mr-2 sm:mr-3 text-red-600 shrink-0" />
+                  <span className="truncate">Góp ý</span>
+                </h1>
+                <p className="text-slate-500 text-[10px] sm:text-xs hidden sm:block">
+                  Kiểm duyệt và quản lý các góp ý từ người dùng
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Stats inside title row on mobile */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              <div className="px-2 py-0.5 bg-slate-100 rounded-lg border border-slate-200 flex items-center gap-1.5">
+                <span className="text-[9px] font-bold text-slate-400 uppercase">
+                  T
+                </span>
+                <span className="text-xs font-black text-slate-700">
+                  {stats?.total || 0}
+                </span>
+              </div>
+              <div className="px-2 py-0.5 bg-yellow-50 rounded-lg border border-yellow-100 flex items-center gap-1.5">
+                <span className="text-[9px] font-bold text-yellow-600 uppercase">
+                  W
+                </span>
+                <span className="text-xs font-black text-yellow-700">
+                  {stats?.pending || 0}
+                </span>
+              </div>
+            </div>
           </div>
-          {statsLoading && (
-            <div className="absolute inset-0 bg-white/50 animate-pulse" />
-          )}
-        </div>
-        <div className="bg-yellow-50 rounded-xl border border-yellow-200 p-4 shadow-sm relative overflow-hidden">
-          <div className="text-yellow-700 text-sm mb-1">Chờ duyệt</div>
-          <div className="text-3xl font-bold text-yellow-700">
-            {stats?.pending || 0}
-          </div>
-          {statsLoading && (
-            <div className="absolute inset-0 bg-yellow-50/50 animate-pulse" />
-          )}
-        </div>
-        <div className="bg-green-50 rounded-xl border border-green-200 p-4 shadow-sm relative overflow-hidden">
-          <div className="text-green-700 text-sm mb-1">Đã duyệt</div>
-          <div className="text-3xl font-bold text-green-700">
-            {stats?.approved || 0}
-          </div>
-          {statsLoading && (
-            <div className="absolute inset-0 bg-green-50/50 animate-pulse" />
-          )}
-        </div>
-        <div className="bg-red-50 rounded-xl border border-red-200 p-4 shadow-sm relative overflow-hidden">
-          <div className="text-red-700 text-sm mb-1">Từ chối</div>
-          <div className="text-3xl font-bold text-red-700">
-            {stats?.rejected || 0}
-          </div>
-          {statsLoading && (
-            <div className="absolute inset-0 bg-red-50/50 animate-pulse" />
-          )}
-        </div>
-      </div>
-      {/* Search & Filter Toolbar */}
-      <div className="flex flex-col md:flex-row gap-3 mb-4">
-        <form onSubmit={onSearchSubmit} className="relative flex-1 group">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <SearchIcon className="h-4 w-4 text-slate-400 group-focus-within:text-red-500 transition-colors" />
-          </div>
-          <input
-            type="text"
-            placeholder="Tìm kiếm nội dung, người dùng..."
-            className="block w-full pl-9 pr-9 py-2.5 h-10 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all shadow-sm"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
+
+          {/* Search & Filter Toolbar - Row on mobile */}
+          <div className="flex items-center gap-2 mb-3">
+            <form onSubmit={onSearchSubmit} className="relative flex-1 group">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <SearchIcon className="h-4 w-4 text-slate-400 group-focus-within:text-red-500 transition-colors" />
+              </div>
+              <input
+                type="text"
+                placeholder="Tìm..."
+                className="block w-full pl-9 pr-9 h-10 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all font-medium"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setPage(1);
+                  }}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <CloseIcon className="h-3.5 w-3.5 text-slate-400 hover:text-slate-600 cursor-pointer" />
+                </button>
+              )}
+            </form>
+
             <button
-              type="button"
-              onClick={() => {
-                setSearchQuery("");
-                setPage(1);
-              }}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              onClick={openFilterDrawer}
+              className={`flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl font-bold text-sm transition-all active:scale-95 border shrink-0 ${
+                onlyReported || selectedIdiom
+                  ? "bg-red-50 text-red-600 border-red-200"
+                  : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+              }`}
             >
-              <CloseIcon className="h-3.5 w-3.5 text-slate-400 hover:text-slate-600 cursor-pointer" />
+              <FunnelIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">Bộ lọc</span>
+              {(onlyReported || selectedIdiom) && (
+                <span className="flex h-1.5 w-1.5 rounded-full bg-red-600 ml-0.5"></span>
+              )}
             </button>
-          )}
-        </form>
+          </div>
 
-        <button
-          onClick={openFilterDrawer}
-          className={`flex items-center justify-center gap-2 px-4 h-10 rounded-xl font-bold text-sm transition-all shadow-sm active:scale-95 border ${
-            onlyReported || selectedIdiom
-              ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
-              : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-          }`}
-        >
-          <FunnelIcon className="w-4 h-4" />
-          <span>Bộ lọc</span>
-          {(onlyReported || selectedIdiom) && (
-            <span className="flex h-1.5 w-1.5 rounded-full bg-red-600 ml-0.5"></span>
-          )}
-        </button>
+          {/* Status Tabs */}
+          <div className="flex gap-1 overflow-x-auto no-scrollbar">
+            {[
+              { key: "all", label: "Tất cả" },
+              { key: "pending", label: "Chờ duyệt" },
+              { key: "approved", label: "Đã duyệt" },
+              { key: "rejected", label: "Từ chối" },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => {
+                  setFilter(tab.key as any);
+                  setPage(1);
+                }}
+                className={`px-3 py-1.5 text-[10px] font-black transition-all rounded-lg border-b-2 ${
+                  filter === tab.key
+                    ? "text-red-700 border-red-700 bg-red-50/50"
+                    : "text-slate-400 border-transparent hover:text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {tab.label.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Status Tabs */}
-      <div className="flex border-b border-slate-200 mb-4 overflow-x-auto custom-scrollbar">
-        {[
-          { key: "all", label: "Tất cả" },
-          { key: "pending", label: "Chờ duyệt" },
-          { key: "approved", label: "Đã duyệt" },
-          { key: "rejected", label: "Từ chối" },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => {
-              setFilter(tab.key as any);
-              setPage(1);
-            }}
-            className={`px-5 py-3 text-sm font-bold transition-all whitespace-nowrap border-b-2 ${
-              filter === tab.key
-                ? "text-red-600 border-red-600 bg-red-50/20"
-                : "text-slate-500 border-transparent hover:text-slate-800 hover:bg-slate-50"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Bulk Actions Bar */}
-      <BulkActionBar
-        selectedCount={selectedIds.length}
-        onDelete={handleBulkDelete}
-        onClearSelection={() => setSelectedIds([])}
-        label="bình luận"
-      />
-
-      {/* Select All Checkbox */}
-      {!loading && comments.length > 0 && (
-        <div className="mb-3 flex items-center gap-2 px-4">
-          <input
-            type="checkbox"
-            checked={isAllSelected}
-            ref={(input) => {
-              if (input) {
-                input.indeterminate = isSomeSelected;
-              }
-            }}
-            onChange={toggleSelectAll}
-            className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-2 focus:ring-indigo-100 cursor-pointer"
+      {/* Middle Section: Scrollable List */}
+      <div className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar bg-slate-50/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 pt-2">
+          <BulkActionBar
+            selectedCount={selectedIds.length}
+            onDelete={handleBulkDelete}
+            onClearSelection={() => setSelectedIds([])}
+            label="bình luận"
           />
-          <label
-            className="text-sm font-medium text-slate-600 cursor-pointer"
-            onClick={toggleSelectAll}
-          >
-            Chọn tất cả ({comments.length} bình luận)
-          </label>
+
+          <SelectAllCheckbox
+            checked={isAllSelected}
+            indeterminate={isSomeSelected}
+            onChange={toggleSelectAll}
+            subLabel={`(${comments.length} bình luận trong trang này)`}
+            className="mb-4"
+          />
+
+          {loading ? (
+            <div className="flex flex-col items-center justify-center p-20 text-slate-400">
+              <div className="w-10 h-10 border-4 border-slate-200 border-t-red-600 rounded-full animate-spin mb-4" />
+              <p className="font-bold text-xs uppercase tracking-wider">
+                Đang tải dữ liệu...
+              </p>
+            </div>
+          ) : comments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-20 text-slate-400">
+              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                <ChatBubbleIcon className="w-8 h-8 text-slate-300" />
+              </div>
+              <p className="font-bold text-slate-500">Chưa có bình luận nào</p>
+              <p className="text-xs mt-1">
+                Thử thay đổi bộ lọc tìm kiếm xem sao!
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-20">
+              {comments.map((comment) => (
+                <div
+                  key={comment.id}
+                  className={`bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition-all group flex flex-col relative ${
+                    selectedIds.includes(comment.id)
+                      ? "border-indigo-400 bg-indigo-50/30 ring-2 ring-indigo-50"
+                      : "border-slate-100 hover:border-red-100"
+                  }`}
+                >
+                  {/* Checkbox */}
+                  <div className="absolute top-4 left-4 z-10">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(comment.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        toggleSelect(comment.id);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-2 focus:ring-indigo-100 cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-4 pl-8">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-200 flex items-center justify-center text-slate-600 font-bold text-sm shadow-inner shrink-0">
+                        {(comment.user.displayName || comment.user.username)
+                          ?.charAt(0)
+                          .toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-800 text-sm flex flex-wrap items-center gap-2">
+                          {comment.user.displayName || comment.user.username}
+                          {comment.reportCount > 0 && (
+                            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-50 text-red-600 text-[10px] uppercase font-black tracking-wider border border-red-100">
+                              <FlagIcon className="w-3 h-3" />
+                              {comment.reportCount}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1 mt-0.5">
+                          <ClockIcon className="w-3 h-3" />
+                          {formatDate(comment.createdAt)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="shrink-0">
+                      {getStatusBadge(comment.status)}
+                    </div>
+                  </div>
+
+                  {/* Context Badge */}
+                  <div className="mb-4">
+                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-100 text-[11px] text-slate-500 font-bold uppercase tracking-wider">
+                      <span>tại:</span>
+                      <span className="font-hanzi font-black text-slate-800">
+                        {comment.idiom?.hanzi}
+                      </span>
+                    </span>
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 mb-5">
+                    <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 text-slate-700 text-sm leading-relaxed whitespace-pre-wrap break-words min-h-[80px]">
+                      {comment.content}
+                    </div>
+                  </div>
+
+                  {/* Actions Footer */}
+                  <div className="pt-4 border-t border-slate-50 flex items-center justify-between gap-2 mt-auto">
+                    <div className="flex items-center gap-2">
+                      {comment.status === "pending" && (
+                        <>
+                          <button
+                            onClick={() =>
+                              handleUpdateStatus(comment.id, "approved")
+                            }
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-[11px] font-black rounded-xl shadow-lg shadow-green-100 hover:bg-green-700 hover:-translate-y-0.5 transition-all uppercase tracking-wider"
+                          >
+                            <CheckCircleIcon className="w-4 h-4" />
+                            <span>Duyệt</span>
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleUpdateStatus(comment.id, "rejected")
+                            }
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 text-[11px] font-black rounded-xl hover:bg-slate-200 transition-all uppercase tracking-wider"
+                          >
+                            <XCircleIcon className="w-4 h-4" />
+                            <span>Từ chối</span>
+                          </button>
+                        </>
+                      )}
+
+                      {comment.status === "approved" && (
+                        <button
+                          onClick={() =>
+                            handleUpdateStatus(comment.id, "rejected")
+                          }
+                          className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 text-[11px] font-black rounded-xl border border-orange-100 hover:bg-orange-100 transition-all uppercase tracking-wider"
+                        >
+                          <XCircleIcon className="w-4 h-4" />
+                          <span>Ẩn đi</span>
+                        </button>
+                      )}
+
+                      {comment.status === "rejected" && (
+                        <button
+                          onClick={() =>
+                            handleUpdateStatus(comment.id, "approved")
+                          }
+                          className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-600 text-[11px] font-black rounded-xl border border-green-100 hover:bg-green-100 transition-all uppercase tracking-wider"
+                        >
+                          <CheckCircleIcon className="w-4 h-4" />
+                          <span>Khôi phục</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => handleDelete(comment.id)}
+                      className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                      title="Xóa vĩnh viễn"
+                    >
+                      <TrashIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Fixed Bottom Section */}
+      {totalPages > 1 && (
+        <div className="flex-none bg-white border-t border-slate-200 py-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          </div>
         </div>
       )}
 
@@ -490,25 +646,25 @@ const AdminComments: React.FC = () => {
           <>
             <button
               onClick={handleResetFilters}
-              className="flex-1 px-4 py-3 bg-white border border-slate-200 text-slate-600 text-sm font-bold rounded-xl hover:bg-slate-50 hover:text-slate-800 transition-all"
+              className="flex-1 px-4 py-3 bg-white border border-slate-200 text-slate-600 text-[11px] font-black rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest"
             >
               Thiết lập lại
             </button>
             <button
               onClick={handleApplyFilters}
-              className="flex-[2] px-4 py-3 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-black shadow-lg shadow-slate-200 transition-all active:scale-[0.98]"
+              className="flex-[2] px-4 py-3 bg-slate-900 text-white text-[11px] font-black rounded-xl hover:bg-black shadow-lg shadow-slate-200 transition-all active:scale-[0.95] uppercase tracking-widest"
             >
               Áp dụng bộ lọc
             </button>
           </>
         }
       >
-        <div className="space-y-6">
+        <div className="space-y-8 py-4">
           {/* Idiom Select */}
-          <div className="space-y-3">
-            <label className="text-sm font-bold text-slate-700">
+          <div className="space-y-4">
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">
               Theo thành ngữ
-            </label>
+            </h4>
             <FormSelect
               placeholder="Tìm thành ngữ..."
               searchable
@@ -545,24 +701,25 @@ const AdminComments: React.FC = () => {
               onSearchChange={setIdiomSearchText}
               onLoadMore={handleLoadMoreSuggestions}
               loading={loadingSuggestions}
+              className="!bg-slate-50 border-slate-200 rounded-xl"
             />
           </div>
 
           {/* Only Reported Toggle */}
-          <div className="space-y-3">
-            <label className="text-sm font-bold text-slate-700">
+          <div className="space-y-4">
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">
               Trạng thái báo cáo
-            </label>
-            <label className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 cursor-pointer hover:border-red-200 hover:bg-red-50/30 transition-all group">
+            </h4>
+            <label className="flex items-center gap-4 p-4 rounded-2xl border border-slate-200 cursor-pointer hover:border-red-200 hover:bg-red-50/50 transition-all group">
               <div
-                className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${
                   tempOnlyReported
-                    ? "bg-red-600 border-red-600"
+                    ? "bg-red-600 border-red-600 shadow-lg shadow-red-100"
                     : "bg-white border-slate-300"
                 }`}
               >
                 {tempOnlyReported && (
-                  <CheckCircleIcon className="w-3.5 h-3.5 text-white" />
+                  <CheckCircleIcon className="w-4 h-4 text-white" />
                 )}
               </div>
               <input
@@ -571,178 +728,13 @@ const AdminComments: React.FC = () => {
                 checked={tempOnlyReported}
                 onChange={(e) => setTempOnlyReported(e.target.checked)}
               />
-              <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900">
+              <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900 transition-colors">
                 Chỉ hiện bình luận bị báo cáo
               </span>
             </label>
           </div>
         </div>
       </Drawer>
-      {/* Comments List */}
-      {/* Comments List Grid */}
-      <div className="bg-slate-50/50 min-h-[400px]">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center p-20 text-slate-400">
-            <div className="w-10 h-10 border-4 border-slate-200 border-t-red-600 rounded-full animate-spin mb-4" />
-            <p className="font-bold text-sm uppercase tracking-wider">
-              Đang tải dữ liệu...
-            </p>
-          </div>
-        ) : comments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-20 text-slate-400">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-              <ChatBubbleIcon className="w-8 h-8 text-slate-300" />
-            </div>
-            <p className="font-bold text-slate-500">Chưa có bình luận nào</p>
-            <p className="text-xs mt-1">
-              Thử thay đổi bộ lọc tìm kiếm xem sao!
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4">
-            {comments.map((comment) => (
-              <div
-                key={comment.id}
-                className={`bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition-all group flex flex-col relative ${
-                  selectedIds.includes(comment.id)
-                    ? "border-indigo-400 bg-indigo-50/30"
-                    : "border-slate-200 hover:border-red-100"
-                }`}
-              >
-                {/* Checkbox */}
-                <div className="absolute top-4 right-4 z-10">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.includes(comment.id)}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      toggleSelect(comment.id);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-2 focus:ring-indigo-100 cursor-pointer"
-                  />
-                </div>
-
-                {/* Header */}
-                <div className="flex items-start justify-between mb-4 pr-8">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-300 flex items-center justify-center text-slate-600 font-bold text-sm shadow-inner">
-                      {(comment.user.displayName || comment.user.username)
-                        ?.charAt(0)
-                        .toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                        {comment.user.displayName || comment.user.username}
-                        {comment.reportCount > 0 && (
-                          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-red-50 text-red-600 text-[10px] uppercase font-black tracking-wider border border-red-100">
-                            <FlagIcon className="w-3 h-3" />
-                            {comment.reportCount} report
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-xs text-slate-400 font-medium flex items-center gap-1 mt-0.5">
-                        <ClockIcon className="w-3 h-3" />
-                        {formatDate(comment.createdAt)}
-                      </div>
-                    </div>
-                  </div>
-                  <div>{getStatusBadge(comment.status)}</div>
-                </div>
-
-                {/* Context Badge */}
-                <div className="mb-3">
-                  <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 border border-slate-100 text-xs text-slate-500 font-medium">
-                    <span>💬 tại từ:</span>
-                    <span className="font-hanzi font-bold text-slate-700">
-                      {comment.idiom?.hanzi}
-                    </span>
-                  </span>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 mb-5">
-                  <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100 text-slate-700 text-sm leading-relaxed whitespace-pre-wrap break-words min-h-[80px]">
-                    {comment.content}
-                  </div>
-                </div>
-
-                {/* Actions Footer */}
-                <div className="pt-4 border-t border-slate-50 flex items-center justify-between gap-3 bg-white mt-auto">
-                  {/* Status Actions */}
-                  <div className="flex items-center gap-2">
-                    {comment.status === "pending" && (
-                      <>
-                        <button
-                          onClick={() =>
-                            handleUpdateStatus(comment.id, "approved")
-                          }
-                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-green-200 hover:bg-green-700 hover:-translate-y-0.5 transition-all"
-                        >
-                          <CheckCircleIcon className="w-4 h-4" />
-                          <span>Duyệt hiển thị</span>
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleUpdateStatus(comment.id, "rejected")
-                          }
-                          className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-200 hover:text-slate-800 transition-all"
-                        >
-                          <XCircleIcon className="w-4 h-4" />
-                          <span>Từ chối</span>
-                        </button>
-                      </>
-                    )}
-
-                    {comment.status === "approved" && (
-                      <button
-                        onClick={() =>
-                          handleUpdateStatus(comment.id, "rejected")
-                        }
-                        className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 text-xs font-bold rounded-xl border border-orange-100 hover:bg-orange-100 transition-all"
-                      >
-                        <XCircleIcon className="w-4 h-4" />
-                        <span>Ẩn bình luận</span>
-                      </button>
-                    )}
-
-                    {comment.status === "rejected" && (
-                      <button
-                        onClick={() =>
-                          handleUpdateStatus(comment.id, "approved")
-                        }
-                        className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-600 text-xs font-bold rounded-xl border border-green-100 hover:bg-green-100 transition-all"
-                      >
-                        <CheckCircleIcon className="w-4 h-4" />
-                        <span>Khôi phục</span>
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Destructive Actions */}
-                  <button
-                    onClick={() => handleDelete(comment.id)}
-                    className="group flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                    title="Xóa vĩnh viễn"
-                  >
-                    <span className="text-[10px] font-bold uppercase hidden group-hover:inline-block">
-                      Xóa
-                    </span>
-                    <TrashIcon className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      {/* Pagination */}
-      <Pagination
-        currentPage={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        className="p-4 border-t border-slate-100"
-      />
     </div>
   );
 };

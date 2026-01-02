@@ -145,8 +145,14 @@ const App: React.FC = () => {
                 <AdminInsert onBack={() => navigate("/admin/idiom/list")} />
               }
             />
-            <Route path="comments" element={<AdminComments />} />
-            <Route path="search-logs" element={<SearchLogs />} />
+            <Route
+              path="comments"
+              element={<AdminComments onBack={() => navigate("/admin")} />}
+            />
+            <Route
+              path="search-logs"
+              element={<SearchLogs onBack={() => navigate("/admin")} />}
+            />
           </Route>
         </Route>
       </Routes>

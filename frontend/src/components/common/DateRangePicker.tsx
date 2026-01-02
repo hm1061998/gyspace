@@ -8,6 +8,7 @@ interface DateRangePickerProps {
   onEndDateChange: (date: string) => void;
   onClear?: () => void;
   className?: string;
+  height?: string;
 }
 
 const DateRangePicker: React.FC<DateRangePickerProps> = ({
@@ -17,6 +18,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   onEndDateChange,
   onClear,
   className = "",
+  height = "h-10",
 }) => {
   const hasValue = startDate || endDate;
 
@@ -28,7 +30,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
   return (
     <div className={`relative ${className}`}>
-      <div className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 transition-all group">
+      <div
+        className={`flex items-center gap-2 ${height} px-4 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 transition-all group`}
+      >
         <CalendarIcon className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors flex-shrink-0" />
 
         <div className="flex items-center gap-2 flex-1 min-w-0">

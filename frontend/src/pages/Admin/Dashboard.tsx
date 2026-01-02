@@ -73,20 +73,20 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="max-w-[1440px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-1000">
       {/* Mini Top Row: Totals & Status */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-0.5">
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
             Dashboard
           </h1>
-          <div className="flex items-center gap-2 text-slate-500 font-medium">
+          <div className="flex items-center gap-2 text-slate-500 font-medium text-sm sm:text-base">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
             Hệ thống đang hoạt động ổn định
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={onRefresh}
-            className="flex items-center gap-2 bg-white text-slate-600 px-5 py-2.5 rounded-2xl font-bold border border-slate-200 hover:border-slate-300 transition-all active:scale-95 text-sm"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-white text-slate-600 px-4 sm:px-5 py-2.5 rounded-2xl font-bold border border-slate-200 hover:border-slate-300 transition-all active:scale-95 text-xs sm:text-sm"
           >
             <HistoryIcon
               className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
@@ -95,50 +95,50 @@ const AdminDashboard: React.FC = () => {
           </button>
           <button
             onClick={() => onNavigate("/admin/idiom/insert")}
-            className="flex items-center gap-2 bg-slate-900 text-white px-6 py-2.5 rounded-2xl font-bold hover:bg-black transition-all active:scale-95 text-sm shadow-xl shadow-slate-200"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-slate-900 text-white px-4 sm:px-6 py-2.5 rounded-2xl font-bold hover:bg-black transition-all active:scale-95 text-xs sm:text-sm shadow-xl shadow-slate-200"
           >
-            <PlusIcon className="w-4 h-4" /> Thêm từ mới
+            <PlusIcon className="w-4 h-4" /> Thêm mới
           </button>
         </div>
       </div>
 
       {/* Main Grid Layout - Compact Bento */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
-        {/* Row 1, Col 1-4: Welcome & Strategy - Reduced Height */}
-        <div className="lg:col-span-8 bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] p-8 md:p-10 text-white relative overflow-hidden shadow-2xl min-h-[300px] flex flex-col justify-center">
-          <div className="relative z-10 space-y-5">
-            <h2 className="text-3xl md:text-4xl font-bold leading-tight">
+        {/* Row 1, Col 1-8: Welcome & Strategy */}
+        <div className="lg:col-span-7 xl:col-span-8 bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] p-6 sm:p-8 md:p-10 text-white relative overflow-hidden shadow-2xl min-h-[260px] sm:min-h-[300px] flex flex-col justify-center">
+          <div className="relative z-10 space-y-4 sm:space-y-5">
+            <h2 className="text-2xl sm:text-3xl md:text-3xl xl:text-4xl font-bold leading-tight">
               Phát triển kho từ vựng.
             </h2>
-            <p className="text-slate-400 text-lg max-w-lg leading-relaxed">
+            <p className="text-slate-400 text-base sm:text-lg max-w-lg leading-relaxed">
               Theo dõi sức khỏe nội dung và các từ khóa người dùng quan tâm để
               cập nhật dữ liệu.
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
               <button
                 onClick={() => onNavigate("/admin/idiom/list")}
-                className="px-6 py-3 bg-white text-slate-900 rounded-xl font-black hover:bg-red-50 transition-all active:scale-95 text-sm"
+                className="w-full sm:w-auto px-6 py-3 bg-white text-slate-900 rounded-xl font-black hover:bg-red-50 transition-all active:scale-95 text-sm"
               >
                 Xem kho từ điển
               </button>
             </div>
           </div>
-          <div className="absolute -right-16 -bottom-16 opacity-5 pointer-events-none">
-            <ListBulletIcon className="w-96 h-96" />
+          <div className="absolute -right-16 -bottom-16 opacity-5 pointer-events-none hidden sm:block">
+            <ListBulletIcon className="w-64 md:w-80 xl:w-96 h-64 md:h-80 xl:h-96" />
           </div>
         </div>
 
         {/* Row 1, Col 9-12: Primary KPI Cluster */}
-        <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+        <div className="lg:col-span-5 xl:col-span-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
           <CompactStatCard
-            icon={<ListBulletIcon className="w-6 h-6" />}
+            icon={<ListBulletIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
             label="Tổng từ vựng"
             value={stats?.totalIdioms || 0}
             color="red"
             onClick={() => onNavigate("/admin/idiom/list")}
           />
           <CompactStatCard
-            icon={<ChatBubbleIcon className="w-6 h-6" />}
+            icon={<ChatBubbleIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
             label="Chờ duyệt"
             value={commentStats?.pending || 0}
             color="amber"
@@ -151,43 +151,43 @@ const AdminDashboard: React.FC = () => {
         {/* --- Masonry-style Grid for Content Health, Tracking, etc. --- */}
 
         {/* Moderation Stats - Replaces Content Health */}
-        <div className="lg:col-span-4">
+        <div className="md:col-span-1 lg:col-span-6 xl:col-span-4">
           <Section
             title="Tỉ lệ duyệt"
             icon={<CheckCircleIcon className="w-4 h-4 text-emerald-600" />}
           >
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-center">
-                  <div className="text-2xl font-black text-emerald-600">
+              <div className="flex items-center justify-between gap-1 sm:gap-2">
+                <div className="text-center flex-1">
+                  <div className="text-xl sm:text-2xl font-black text-emerald-600">
                     {commentStats?.approved || 0}
                   </div>
-                  <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                     Đã duyệt
                   </div>
                 </div>
-                <div className="h-8 w-px bg-slate-100 mx-2" />
-                <div className="text-center">
-                  <div className="text-2xl font-black text-red-600">
+                <div className="h-6 sm:h-8 w-px bg-slate-100" />
+                <div className="text-center flex-1">
+                  <div className="text-xl sm:text-2xl font-black text-red-600">
                     {commentStats?.rejected || 0}
                   </div>
-                  <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                     Từ chối
                   </div>
                 </div>
-                <div className="h-8 w-px bg-slate-100 mx-2" />
-                <div className="text-center">
-                  <div className="text-2xl font-black text-amber-500">
+                <div className="h-6 sm:h-8 w-px bg-slate-100" />
+                <div className="text-center flex-1">
+                  <div className="text-xl sm:text-2xl font-black text-amber-500">
                     {commentStats?.pending || 0}
                   </div>
-                  <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                     Chờ xử lý
                   </div>
                 </div>
               </div>
 
               {/* Mini visual bar */}
-              <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden flex">
+              <div className="h-1.5 sm:h-2 w-full bg-slate-50 rounded-full overflow-hidden flex">
                 <div
                   style={{
                     width: `${
@@ -220,12 +220,12 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Level Distribution - Replaces Processing Speed */}
-        <div className="lg:col-span-4">
+        <div className="md:col-span-1 lg:col-span-6 xl:col-span-4">
           <Section
             title="Phân bố cấp độ"
             icon={<BrainIcon className="w-4 h-4 text-indigo-500" />}
           >
-            <div className="space-y-3">
+            <div className="space-y-2.5 sm:space-y-3">
               {stats?.levelStats?.slice(0, 3).map((level: any) => {
                 const percentage =
                   stats.totalIdioms > 0
@@ -250,7 +250,7 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Hot Keywords - Compact */}
-        <div className="lg:col-span-4">
+        <div className="md:col-span-2 lg:col-span-12 xl:col-span-4">
           <Section
             title="Tìm kiếm bị bỏ lỡ"
             icon={<FireIcon className="w-4 h-4 text-orange-500" />}
@@ -259,16 +259,16 @@ const AdminDashboard: React.FC = () => {
                 onClick={() => onNavigate("/admin/search-logs")}
                 className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1"
               >
-                Xem tất cả <ChevronRightIcon className="w-3 h-3" />
+                Tất cả <ChevronRightIcon className="w-3 h-3" />
               </button>
             }
           >
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 gap-2">
               {stats?.hotKeywords?.slice(0, 4).map((item: any, idx: number) => (
                 <HotLink key={idx} text={item.query} count={item.count} />
               ))}
               {(!stats?.hotKeywords || stats.hotKeywords.length === 0) && (
-                <p className="col-span-2 text-slate-400 text-xs italic py-2 text-center">
+                <p className="col-span-full text-slate-400 text-xs italic py-2 text-center">
                   Chưa có dữ liệu.
                 </p>
               )}
@@ -361,15 +361,15 @@ const CompactStatCard = ({ icon, label, value, color, onClick }: any) => {
   return (
     <div
       onClick={onClick}
-      className={`p-6 rounded-[1.5rem] border transition-all cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98] flex items-center justify-between group ${styles[color]}`}
+      className={`p-4 sm:p-6 rounded-[1.5rem] border transition-all cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98] flex items-center justify-between group ${styles[color]}`}
     >
       <div>
-        <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">
+        <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest opacity-60 mb-0.5 sm:mb-1">
           {label}
         </p>
-        <h2 className="text-3xl font-black">{value}</h2>
+        <h2 className="text-2xl sm:text-3xl font-black">{value}</h2>
       </div>
-      <div className="p-3 bg-white rounded-xl shadow-sm group-hover:scale-110 transition-transform">
+      <div className="p-2 sm:p-3 bg-white rounded-xl shadow-sm group-hover:scale-110 transition-transform">
         {icon}
       </div>
     </div>
