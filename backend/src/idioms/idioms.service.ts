@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable, HttpException } from '@nestjs/common';
+import { Injectable, HttpException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike, DataSource } from 'typeorm';
 import {
@@ -14,6 +14,7 @@ import { SearchMode } from './idioms.controller';
 
 @Injectable()
 export class IdiomsService {
+  private readonly logger = new Logger(IdiomsService.name);
   private ai: GoogleGenAI;
 
   constructor(
@@ -122,7 +123,7 @@ export class IdiomsService {
         },
       };
     } catch (error) {
-      console.error('Database find error:', error);
+      this.logger.error('Database find error:', error);
       throw new HttpException('Lỗi khi truy xuất dữ liệu từ database.', 400);
     }
   }
@@ -241,7 +242,7 @@ export class IdiomsService {
       // 4. Lưu lại toàn bộ entity. TypeORM sẽ tự động handle transaction cho cascade
       return await this.idiomRepository.save(idiom);
     } catch (error) {
-      console.error('Update idiom error:', error);
+      this.logger.error('Update idiom error:', error);
       throw new HttpException('Lỗi khi cập nhật từ vựng.', 400);
     }
   }
@@ -311,11 +312,11 @@ export class IdiomsService {
         return { ...data, dataSource: 'ai' };
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
-        console.error('Failed to parse JSON from AI', cleanJson);
+        this.logger.error('Failed to parse JSON from AI', cleanJson);
         throw new Error('AI trả về dữ liệu không hợp lệ.');
       }
     } catch (err) {
-      console.error('Chưa cấu hình mô hình AI');
+      this.logger.error('AI Model error or not configured', err);
       throw new HttpException('Chưa cấu hình mô hình AI', 400);
     }
   }

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -26,8 +26,10 @@ import {
 import { UserDataModule } from './user-data/user-data.module';
 import { IdiomCommentsModule } from './idiom-comments/idiom-comments.module';
 import { IdiomCommentEntity } from './idiom-comments/entities/idiom-comment.entity';
+import { TraceMiddleware } from './common/middleware/trace.middleware';
 
 const isProd = process.env.NODE_ENV === 'production';
+
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -72,4 +74,8 @@ const isProd = process.env.NODE_ENV === 'production';
   controllers: [AppController, HealthController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(TraceMiddleware).forRoutes('*');
+  }
+}
