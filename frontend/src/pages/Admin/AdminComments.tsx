@@ -17,6 +17,7 @@ import {
 } from "@/services/api/commentService";
 import { toast } from "@/services/ui/toastService";
 import { modalService } from "@/services/ui/modalService";
+import Pagination from "@/components/common/Pagination";
 
 const AdminComments: React.FC = () => {
   const [comments, setComments] = useState<Feedback[]>([]);
@@ -134,7 +135,7 @@ const AdminComments: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-800 mb-2 flex items-center">
           <ChatBubbleIcon className="w-8 h-8 mr-3 text-red-600" />
@@ -296,27 +297,12 @@ const AdminComments: React.FC = () => {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="p-4 border-t border-slate-200 flex justify-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Trước
-            </button>
-            <span className="px-4 py-2 text-slate-600">
-              Trang {page} / {totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Sau
-            </button>
-          </div>
-        )}
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          className="p-4 border-t border-slate-100"
+        />
       </div>
     </div>
   );

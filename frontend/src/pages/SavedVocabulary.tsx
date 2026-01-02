@@ -14,6 +14,7 @@ import {
   toggleSaveIdiom,
 } from "@/services/api/userDataService";
 import { toast } from "@/services/ui/toastService";
+import Pagination from "@/components/common/Pagination";
 
 interface SavedVocabularyProps {
   onBack: () => void;
@@ -145,37 +146,12 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = ({ onBack }) => {
               </div>
             ))}
           </div>
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center space-x-4 pt-4 border-t border-slate-100">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className={`flex items-center px-4 py-2 rounded-full border text-sm font-bold transition-all ${
-                  page === 1
-                    ? "border-slate-100 text-slate-300 cursor-not-allowed"
-                    : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-red-300"
-                }`}
-              >
-                <ArrowLeftIcon className="w-4 h-4 mr-2" />
-                Trước
-              </button>
-              <span className="text-slate-500 font-bold text-sm">
-                Trang {page} / {totalPages}
-              </span>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className={`flex items-center px-4 py-2 rounded-full border text-sm font-bold transition-all ${
-                  page === totalPages
-                    ? "border-slate-100 text-slate-300 cursor-not-allowed"
-                    : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-red-300"
-                }`}
-              >
-                Sau
-                <ChevronRightIcon className="w-4 h-4 ml-2" />
-              </button>
-            </div>
-          )}
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            className="pt-8 border-t border-slate-100"
+          />
         </React.Fragment>
       )}
     </div>

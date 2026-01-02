@@ -15,7 +15,7 @@ import WordSearchGame from "@/pages/WordSearchGame";
 import HistoryList from "@/pages/HistoryList";
 import Profile from "@/pages/Profile";
 import Dashboard from "@/pages/Admin/Dashboard";
-import AdminComments from "@/views/AdminComments";
+import AdminComments from "@/pages/Admin/AdminComments";
 import { addToLocalHistory } from "@/services/api";
 import Auth from "@/pages/Auth";
 import RequireAuth from "@/context/RequireAuth";

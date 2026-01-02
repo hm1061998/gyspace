@@ -21,6 +21,7 @@ import { modalService } from "@/services/ui/modalService";
 import { toast } from "@/services/ui/toastService";
 import FormSelect from "@/components/common/FormSelect";
 import Input from "@/components/common/Input";
+import Pagination from "@/components/common/Pagination";
 
 interface VocabularyListProps {
   onBack: () => void;
@@ -177,25 +178,17 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
     onEdit(id);
   };
 
-  const handlePrevPage = () => {
-    if (page > 1) setPage((p) => p - 1);
-  };
-
-  const handleNextPage = () => {
-    if (page < totalPages) setPage((p) => p + 1);
-  };
-
   return (
     <div className="max-w-6xl w-full mx-auto animate-pop">
-      <div className="flex flex-row justify-between items-center gap-4 mb-6">
-        <div className="flex items-center w-auto">
-          <h1 className="text-2xl font-hanzi font-bold text-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+        <div className="flex items-center">
+          <h1 className="text-xl md:text-2xl font-hanzi font-bold text-slate-800">
             Kho từ vựng ({totalItems})
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="relative flex-1 sm:flex-initial">
             <input
               type="file"
               ref={fileInputRef}
@@ -206,16 +199,16 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
             />
             <label
               htmlFor="excel-upload-list"
-              className={`flex items-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all cursor-pointer shadow-md font-bold text-sm ${
+              className={`flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all cursor-pointer shadow-md font-bold text-xs md:text-sm ${
                 isImporting ? "opacity-75 cursor-not-allowed" : ""
               }`}
             >
               {isImporting ? (
-                <SpinnerIcon className="w-5 h-5" />
+                <SpinnerIcon className="w-4 h-4 md:w-5 md:h-5" />
               ) : (
-                <UploadIcon className="w-5 h-5" />
+                <UploadIcon className="w-4 h-4 md:w-5 md:h-5" />
               )}
-              <span>Import Excel</span>
+              <span className="whitespace-nowrap">Import Excel</span>
             </label>
           </div>
 
@@ -223,73 +216,76 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
             onClick={() => {
               navigate("/admin/idiom/insert");
             }}
-            className="flex items-center justify-between px-4 py-3 bg-red-700 hover:bg-red-800 text-white rounded-xl transition-all shadow-md font-bold text-sm"
+            className="flex-1 sm:flex-initial flex items-center justify-center px-3 md:px-4 py-2.5 md:py-3 bg-red-700 hover:bg-red-800 text-white rounded-xl transition-all shadow-md font-bold text-xs md:text-sm group"
           >
             <div className="flex items-center space-x-2">
-              <PlusIcon className="w-5 h-5" /> <span>Thêm mới</span>
+              <PlusIcon className="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:rotate-90" />
+              <span className="whitespace-nowrap">Thêm mới</span>
             </div>
           </button>
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <div className="flex flex-col lg:flex-row gap-3 mb-5">
         <div className="relative flex-1">
           <Input
             placeholder="Tìm theo hán tự, pinyin, ý nghĩa..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="pl-10 focus:ring-red-200 focus:border-red-400"
+            className="pl-10 !py-2.5 focus:ring-red-200 focus:border-red-400 text-sm"
           />
-          <SearchIcon className="w-5 h-5 text-slate-400 absolute left-3 top-3" />
+          <SearchIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
         </div>
-        <FormSelect
-          value={selectedLevel}
-          onChange={(e) => {
-            setSelectedLevel(e);
-            setPage(1);
-          }}
-          options={[
-            { value: "", label: "Tất cả cấp độ" },
-            { value: "Sơ cấp", label: "Sơ cấp" },
-            { value: "Trung cấp", label: "Trung cấp" },
-            { value: "Cao cấp", label: "Cao cấp" },
-          ]}
-          className="min-w-[140px] !py-2"
-        />
-        <FormSelect
-          value={selectedType}
-          onChange={(e) => {
-            setSelectedType(e);
-            setPage(1);
-          }}
-          options={[
-            { value: "", label: "Tất cả loại từ" },
-            { value: "Quán dụng ngữ", label: "Quán dụng ngữ" },
-            { value: "Thành ngữ (Chengyu)", label: "Thành ngữ" },
-            { value: "Tiếng lóng", label: "Tiếng lóng" },
-          ]}
-          className="min-w-[160px] !py-2"
-        />
+        <div className="flex gap-2 sm:gap-3">
+          <FormSelect
+            value={selectedLevel}
+            onChange={(e) => {
+              setSelectedLevel(e);
+              setPage(1);
+            }}
+            options={[
+              { value: "", label: "Tất cả cấp độ" },
+              { value: "Sơ cấp", label: "Sơ cấp" },
+              { value: "Trung cấp", label: "Trung cấp" },
+              { value: "Cao cấp", label: "Cao cấp" },
+            ]}
+            className="flex-1 lg:min-w-[140px] !py-2.5 text-xs md:text-sm"
+          />
+          <FormSelect
+            value={selectedType}
+            onChange={(e) => {
+              setSelectedType(e);
+              setPage(1);
+            }}
+            options={[
+              { value: "", label: "Tất cả loại từ" },
+              { value: "Quán dụng ngữ", label: "Quán dụng ngữ" },
+              { value: "Thành ngữ (Chengyu)", label: "Thành ngữ" },
+              { value: "Tiếng lóng", label: "Tiếng lóng" },
+            ]}
+            className="flex-1 lg:min-w-[160px] !py-2.5 text-xs md:text-sm"
+          />
+        </div>
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center py-20">
+        <div className="flex justify-center items-center py-16">
           <SpinnerIcon className="w-8 h-8 text-red-600" />
         </div>
       ) : error ? (
         <div className="text-center text-red-500 py-10">{error}</div>
       ) : idioms.length === 0 ? (
-        <div className="text-center text-slate-400 py-20">
+        <div className="text-center text-slate-400 py-16">
           <p>Không tìm thấy kết quả phù hợp.</p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
             {idioms.map((item) => (
               <div
                 key={item.id}
                 onClick={() => onEdit(item.id)}
-                className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-red-200 cursor-pointer transition-all group relative overflow-hidden"
+                className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-red-200 cursor-pointer transition-all group relative overflow-hidden"
               >
                 <div className="flex justify-between items-start mb-2">
                   <h2 className="text-2xl font-hanzi font-bold text-slate-800 group-hover:text-red-700">
@@ -322,39 +318,12 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
             ))}
           </div>
 
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center space-x-4 pt-4 border-t border-slate-100">
-              <button
-                onClick={handlePrevPage}
-                disabled={page === 1}
-                className={`flex items-center px-4 py-2 rounded-full border text-sm font-bold transition-all ${
-                  page === 1
-                    ? "border-slate-100 text-slate-300 cursor-not-allowed"
-                    : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-red-300"
-                }`}
-              >
-                <ArrowLeftIcon className="w-4 h-4 mr-2" />
-                Trang trước
-              </button>
-
-              <span className="text-slate-500 font-bold text-sm">
-                Trang {page} / {totalPages}
-              </span>
-
-              <button
-                onClick={handleNextPage}
-                disabled={page === totalPages}
-                className={`flex items-center px-4 py-2 rounded-full border text-sm font-bold transition-all ${
-                  page === totalPages
-                    ? "border-slate-100 text-slate-300 cursor-not-allowed"
-                    : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-red-300"
-                }`}
-              >
-                Trang sau
-                <ChevronRightIcon className="w-4 h-4 ml-2" />
-              </button>
-            </div>
-          )}
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            className="pt-4 border-t border-slate-100"
+          />
         </>
       )}
     </div>

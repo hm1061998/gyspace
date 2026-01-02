@@ -48,18 +48,10 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto w-full animate-pop">
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center gap-3">
-          {/* <button
-            onClick={onBack}
-            className="p-2 hover:bg-white rounded-full transition-colors"
-          >
-            <ArrowLeftIcon className="w-5 h-5 text-slate-500" />
-          </button> */}
-          <h1 className="text-3xl font-hanzi font-bold text-slate-800">
-            Bảng điều khiển Admin
-          </h1>
-        </div>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 className="text-2xl md:text-3xl font-hanzi font-bold text-slate-800">
+          Bảng điều khiển Admin
+        </h1>
         <div className="flex gap-2">
           <button
             onClick={() => onNavigate("insert")}
@@ -70,10 +62,10 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between">
-          <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mb-4">
-            <ListBulletIcon className="w-6 h-6" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+        <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-red-50 text-red-600 rounded-xl md:rounded-2xl flex items-center justify-center mb-4">
+            <ListBulletIcon className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div>
             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">
@@ -85,9 +77,9 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between">
-          <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
-            <BrainIcon className="w-6 h-6" />
+        <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-50 text-blue-600 rounded-xl md:rounded-2xl flex items-center justify-center mb-4">
+            <BrainIcon className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div>
             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">
@@ -100,9 +92,9 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between">
-          <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-4">
-            <HistoryIcon className="w-6 h-6" />
+        <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-emerald-50 text-emerald-600 rounded-xl md:rounded-2xl flex items-center justify-center mb-4">
+            <HistoryIcon className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div>
             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">
@@ -112,9 +104,9 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between">
-          <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-4">
-            <PlusIcon className="w-6 h-6" />
+        <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-50 text-amber-600 rounded-xl md:rounded-2xl flex items-center justify-center mb-4">
+            <PlusIcon className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div>
             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">
@@ -129,9 +121,9 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          <div className="bg-slate-800 rounded-3xl p-10 text-white relative overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="lg:col-span-2 space-y-6 md:space-y-8">
+          <div className="bg-slate-800 rounded-2xl md:rounded-3xl p-6 md:p-8 text-white relative overflow-hidden">
             <div className="relative z-10">
               <h3 className="text-2xl font-hanzi font-bold mb-2">
                 Quản lý kho dữ liệu
@@ -159,10 +151,10 @@ const AdminDashboard: React.FC = () => {
               <ListBulletIcon className="w-64 h-64" />
             </div>
           </div>
-          <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
-            <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center justify-between">
+          <div className="bg-white rounded-2xl p-6 md:p-7 border border-slate-100 shadow-sm">
+            <h3 className="text-lg font-bold text-slate-800 mb-5 flex items-center justify-between">
               Phân bố Cấp độ
-              <span className="text-xs text-slate-400 font-normal uppercase tracking-widest">
+              <span className="text-[10px] text-slate-400 font-normal uppercase tracking-widest">
                 Dữ liệu thực tế
               </span>
             </h3>
@@ -199,9 +191,9 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div>
-          <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm h-full">
-            <h3 className="text-lg font-bold text-slate-800 mb-6">
+        <div className="h-full">
+          <div className="bg-white rounded-2xl p-6 md:p-7 border border-slate-100 shadow-sm h-full">
+            <h3 className="text-lg font-bold text-slate-800 mb-5">
               Mới cập nhật
             </h3>
             <div className="space-y-4">
