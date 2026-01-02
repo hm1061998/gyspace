@@ -16,15 +16,18 @@ import {
   fetchAllComments,
   updateCommentStatus,
   deleteComment,
+  bulkDeleteComments,
 } from "@/services/api/commentService";
 import { fetchSuggestions, fetchIdiomById } from "@/services/api/idiomService";
 import { modalService } from "@/services/ui/modalService";
+import { toast } from "@/services/ui/toastService";
 import Pagination from "@/components/common/Pagination";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { getCommentStats } from "@/redux/adminSlice";
 import FormSelect from "@/components/common/FormSelect";
 import Drawer from "@/components/common/Drawer";
+import BulkActionBar from "@/components/common/BulkActionBar";
 
 const AdminComments: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -43,6 +46,7 @@ const AdminComments: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // New filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -208,6 +212,7 @@ const AdminComments: React.FC = () => {
       const response = await fetchAllComments(params);
       setComments(response.data);
       setTotalPages(response.totalPages);
+      setSelectedIds([]); // Clear selection when data changes
     } catch (error) {
       console.error("Error loading comments", error);
     } finally {
@@ -224,7 +229,7 @@ const AdminComments: React.FC = () => {
       await loadComments();
       dispatch(getCommentStats(true));
     } catch (error: any) {
-      alert(
+      toast.error(
         error.response?.data?.message ||
           "Không thể cập nhật trạng thái. Vui lòng thử lại."
       );
@@ -240,15 +245,62 @@ const AdminComments: React.FC = () => {
 
     try {
       await deleteComment(commentId);
+      toast.success("Đã xóa bình luận thành công");
       await loadComments();
       dispatch(getCommentStats(true));
     } catch (error: any) {
-      alert(
+      toast.error(
         error.response?.data?.message ||
           "Không thể xóa bình luận. Vui lòng thử lại."
       );
     }
   };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Vui lòng chọn ít nhất một bình luận để xóa");
+      return;
+    }
+
+    const confirmed = await modalService.danger(
+      `Bạn có chắc chắn muốn xóa ${selectedIds.length} bình luận đã chọn không? Hành động này không thể hoàn tác.`,
+      "Xác nhận xóa"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await bulkDeleteComments(selectedIds);
+      toast.success(`Đã xóa ${selectedIds.length} bình luận thành công`);
+      await loadComments();
+      dispatch(getCommentStats(true));
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || "Xóa thất bại. Vui lòng thử lại."
+      );
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === comments.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(comments.map((comment) => comment.id));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((selectedId) => selectedId !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  const isAllSelected =
+    comments.length > 0 && selectedIds.length === comments.length;
+  const isSomeSelected =
+    selectedIds.length > 0 && selectedIds.length < comments.length;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString("vi-VN");
@@ -397,6 +449,38 @@ const AdminComments: React.FC = () => {
           </button>
         ))}
       </div>
+
+      {/* Bulk Actions Bar */}
+      <BulkActionBar
+        selectedCount={selectedIds.length}
+        onDelete={handleBulkDelete}
+        onClearSelection={() => setSelectedIds([])}
+        label="bình luận"
+      />
+
+      {/* Select All Checkbox */}
+      {!loading && comments.length > 0 && (
+        <div className="mb-3 flex items-center gap-2 px-4">
+          <input
+            type="checkbox"
+            checked={isAllSelected}
+            ref={(input) => {
+              if (input) {
+                input.indeterminate = isSomeSelected;
+              }
+            }}
+            onChange={toggleSelectAll}
+            className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-2 focus:ring-indigo-100 cursor-pointer"
+          />
+          <label
+            className="text-sm font-medium text-slate-600 cursor-pointer"
+            onClick={toggleSelectAll}
+          >
+            Chọn tất cả ({comments.length} bình luận)
+          </label>
+        </div>
+      )}
+
       {/* Filter Drawer Overlay */}
       <Drawer
         isOpen={isFilterOpen}
@@ -519,10 +603,28 @@ const AdminComments: React.FC = () => {
             {comments.map((comment) => (
               <div
                 key={comment.id}
-                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md hover:border-red-100 transition-all group flex flex-col"
+                className={`bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition-all group flex flex-col relative ${
+                  selectedIds.includes(comment.id)
+                    ? "border-indigo-400 bg-indigo-50/30"
+                    : "border-slate-200 hover:border-red-100"
+                }`}
               >
+                {/* Checkbox */}
+                <div className="absolute top-4 right-4 z-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(comment.id)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      toggleSelect(comment.id);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-2 focus:ring-indigo-100 cursor-pointer"
+                  />
+                </div>
+
                 {/* Header */}
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start justify-between mb-4 pr-8">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-300 flex items-center justify-center text-slate-600 font-bold text-sm shadow-inner">
                       {(comment.user.displayName || comment.user.username)

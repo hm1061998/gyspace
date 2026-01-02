@@ -130,6 +130,11 @@ export const deleteIdiom = async (id: string) => {
   return response.data;
 };
 
+export const bulkDeleteIdioms = async (ids: string[]) => {
+  const response = await http.post("/idioms/bulk-delete", { ids });
+  return response.data;
+};
+
 interface PaginatedResponse {
   data: Idiom[];
   meta: {
@@ -145,7 +150,9 @@ export const fetchStoredIdioms = async (
   limit = 12,
   filter = "",
   level = "",
-  type = ""
+  type = "",
+  sort = "createdAt",
+  order: "ASC" | "DESC" = "DESC"
 ): Promise<PaginatedResponse> => {
   try {
     const response = await http.get<PaginatedResponse>("/idioms", {
@@ -154,8 +161,8 @@ export const fetchStoredIdioms = async (
       filter,
       level,
       type,
-      sort: "createdAt",
-      order: "DESC",
+      sort,
+      order,
     });
     return response.data;
   } catch (error) {
@@ -196,4 +203,44 @@ export const addToLocalHistory = (idiom: Idiom) => {
   } catch (e) {
     console.error("Error saving history", e);
   }
+};
+
+export interface SearchLog {
+  query: string;
+  count: number;
+  lastSearched: string;
+}
+
+export const fetchSearchLogs = async (
+  page: number = 1,
+  limit: number = 20,
+  search: string = "",
+  startDate?: string,
+  endDate?: string
+): Promise<{ data: SearchLog[]; meta: { lastPage: number } }> => {
+  const response = await http.get<{
+    data: SearchLog[];
+    meta: { lastPage: number };
+  }>("/idioms/admin/search-logs", {
+    page,
+    limit,
+    search,
+    startDate,
+    endDate,
+  });
+  return response.data;
+};
+
+export const deleteSearchLog = async (query: string) => {
+  const response = await http.delete(
+    `/idioms/admin/search-logs/${encodeURIComponent(query)}`
+  );
+  return response.data;
+};
+
+export const bulkDeleteSearchLogs = async (queries: string[]) => {
+  const response = await http.post("/idioms/admin/search-logs/bulk-delete", {
+    queries,
+  });
+  return response.data;
 };

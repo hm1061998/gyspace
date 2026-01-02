@@ -16,6 +16,7 @@ import HistoryList from "@/pages/HistoryList";
 import Profile from "@/pages/Profile";
 import Dashboard from "@/pages/Admin/Dashboard";
 import AdminComments from "@/pages/Admin/AdminComments";
+import SearchLogs from "@/pages/Admin/SearchLogs";
 import { addToLocalHistory } from "@/services/api";
 import Auth from "@/pages/Auth";
 import RequireAuth from "@/context/RequireAuth";
@@ -145,6 +146,7 @@ const App: React.FC = () => {
               }
             />
             <Route path="comments" element={<AdminComments />} />
+            <Route path="search-logs" element={<SearchLogs />} />
           </Route>
         </Route>
       </Routes>

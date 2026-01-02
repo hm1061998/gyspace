@@ -95,6 +95,107 @@ export class IdiomsService {
     }
   }
 
+  async getSearchLogs(
+    page: number = 1,
+    limit: number = 20,
+    search: string = '',
+    startDate?: string,
+    endDate?: string,
+  ) {
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.searchLogRepository
+      .createQueryBuilder('log')
+      .select('log.query', 'query')
+      .addSelect('COUNT(log.id)', 'count')
+      .addSelect('MAX(log.createdAt)', 'lastSearched')
+      .where('log.found = :found', { found: false });
+
+    if (search) {
+      queryBuilder.andWhere('log.query ILike :search', {
+        search: `%${search}%`,
+      });
+    }
+
+    if (startDate) {
+      queryBuilder.andWhere('log.createdAt >= :startDate', { startDate });
+    }
+
+    if (endDate) {
+      // Add 1 day to include the end date fully
+      const end = new Date(endDate);
+      end.setDate(end.getDate() + 1);
+      queryBuilder.andWhere('log.createdAt < :endDate', {
+        endDate: end.toISOString().split('T')[0],
+      });
+    }
+
+    // Since we are grouping, we need a way to count distinct groups for pagination
+    // TypeORM's getRawMany doesn't give total count easily with grouping + pagination
+    // So we first get all distinct queries count
+    const countQuery = this.searchLogRepository
+      .createQueryBuilder('log')
+      .select('COUNT(DISTINCT log.query)', 'total')
+      .where('log.found = :found', { found: false });
+
+    if (search) {
+      countQuery.andWhere('log.query ILike :search', { search: `%${search}%` });
+    }
+
+    if (startDate) {
+      countQuery.andWhere('log.createdAt >= :startDate', { startDate });
+    }
+
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setDate(end.getDate() + 1);
+      countQuery.andWhere('log.createdAt < :endDate', {
+        endDate: end.toISOString().split('T')[0],
+      });
+    }
+
+    const countResult = await countQuery.getRawOne();
+    const total = parseInt(countResult?.total || '0');
+
+    const data = await queryBuilder
+      .groupBy('log.query')
+      .orderBy('count', 'DESC')
+      .offset(skip)
+      .limit(limit)
+      .getRawMany();
+
+    return {
+      data: data.map((item) => ({
+        query: item.query,
+        count: parseInt(item.count),
+        lastSearched: item.lastSearched,
+      })),
+      meta: {
+        total,
+        page,
+        limit,
+        lastPage: Math.ceil(total / limit) || 1,
+      },
+    };
+  }
+
+  async deleteSearchLog(query: string) {
+    await this.searchLogRepository.delete({ query });
+    return { success: true };
+  }
+
+  async bulkDeleteSearchLogs(queries: string[]) {
+    if (!queries || queries.length === 0) {
+      throw new HttpException('Danh sách trống', 400);
+    }
+    await this.searchLogRepository
+      .createQueryBuilder()
+      .delete()
+      .where('query IN (:...queries)', { queries })
+      .execute();
+    return { success: true, deleted: queries.length };
+  }
+
   async findAll(
     page: number = 1,
     limit: number = 12,
@@ -383,6 +484,14 @@ export class IdiomsService {
     const idiom = await this.findById(id);
     await this.idiomRepository.remove(idiom);
     return { success: true };
+  }
+
+  async bulkDelete(ids: string[]) {
+    if (!ids || ids.length === 0) {
+      throw new HttpException('Danh sách trống', 400);
+    }
+    await this.idiomRepository.delete(ids);
+    return { success: true, deleted: ids.length };
   }
 
   private async callGeminiAI(query: string) {

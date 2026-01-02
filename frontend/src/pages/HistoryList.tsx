@@ -8,10 +8,15 @@ import {
   SpinnerIcon,
 } from "@/components/common/icons";
 import type { Idiom } from "@/types";
-import { fetchHistory, clearAllHistory } from "@/services/api/userDataService";
+import {
+  fetchHistory,
+  clearAllHistory,
+  bulkDeleteHistory,
+} from "@/services/api/userDataService";
 import { modalService } from "@/services/ui/modalService";
 import { toast } from "@/services/ui/toastService";
 import Pagination from "@/components/common/Pagination";
+import BulkActionBar from "@/components/common/BulkActionBar";
 
 interface HistoryListProps {
   onBack: () => void;
@@ -22,6 +27,7 @@ const HistoryList: React.FC<HistoryListProps> = ({ onBack, onSelect }) => {
   const [historyItems, setHistoryItems] = useState<Idiom[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Pagination State
   const [page, setPage] = useState(1);
@@ -39,6 +45,7 @@ const HistoryList: React.FC<HistoryListProps> = ({ onBack, onSelect }) => {
       setHistoryItems(response.data);
       setTotalPages(response.meta.lastPage);
       setTotalItems(response.meta.total);
+      setSelectedIds([]); // Clear selection when data changes
     } catch (e) {
       toast.error("Không thể tải lịch sử.");
     } finally {
@@ -59,12 +66,57 @@ const HistoryList: React.FC<HistoryListProps> = ({ onBack, onSelect }) => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Vui lòng chọn ít nhất một mục để xóa");
+      return;
+    }
+
+    const confirmed = await modalService.danger(
+      `Bạn có chắc chắn muốn xóa ${selectedIds.length} mục trong lịch sử đã chọn không?`,
+      "Xác nhận xóa?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await bulkDeleteHistory(selectedIds);
+      toast.success(`Đã xóa ${selectedIds.length} mục thành công!`);
+      loadHistoryData();
+    } catch (error) {
+      console.error(error);
+      toast.error("Xóa thất bại");
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredItems.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredItems.map((item) => item.id!));
+    }
+  };
+
+  const toggleSelect = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((selectedId) => selectedId !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
   const filteredItems = historyItems.filter(
     (item) =>
       item.hanzi.toLowerCase().includes(filter.toLowerCase()) ||
       item.pinyin.toLowerCase().includes(filter.toLowerCase()) ||
       item.vietnameseMeaning.toLowerCase().includes(filter.toLowerCase())
   );
+
+  const isAllSelected =
+    filteredItems.length > 0 && selectedIds.length === filteredItems.length;
+  const isSomeSelected =
+    selectedIds.length > 0 && selectedIds.length < filteredItems.length;
 
   return (
     <div className="max-w-4xl mx-auto w-full animate-pop">
@@ -110,14 +162,58 @@ const HistoryList: React.FC<HistoryListProps> = ({ onBack, onSelect }) => {
         </div>
       ) : (
         <>
+          {/* Bulk Actions Bar */}
+          <BulkActionBar
+            selectedCount={selectedIds.length}
+            onDelete={handleBulkDelete}
+            onClearSelection={() => setSelectedIds([])}
+            label="mục"
+          />
+
+          {/* Select All Checkbox */}
+          {filteredItems.length > 0 && (
+            <div className="mb-3 flex items-center gap-2 px-4">
+              <input
+                type="checkbox"
+                checked={isAllSelected}
+                ref={(input) => {
+                  if (input) {
+                    input.indeterminate = isSomeSelected;
+                  }
+                }}
+                onChange={toggleSelectAll}
+                className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-2 focus:ring-indigo-100 cursor-pointer"
+              />
+              <label
+                className="text-sm font-medium text-slate-600 cursor-pointer"
+                onClick={toggleSelectAll}
+              >
+                Chọn tất cả ({filteredItems.length} mục)
+              </label>
+            </div>
+          )}
+
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             {filteredItems.map((item, index) => (
               <div
                 key={`${item.id}-${index}`}
                 onClick={() => onSelect(item)}
-                className="p-4 border-b border-slate-100 last:border-0 hover:bg-slate-50 cursor-pointer transition-colors flex items-center justify-between group"
+                className={`p-4 border-b border-slate-100 last:border-0 cursor-pointer transition-colors flex items-center justify-between group ${
+                  selectedIds.includes(item.id!)
+                    ? "bg-indigo-50/50"
+                    : "hover:bg-slate-50"
+                }`}
               >
                 <div className="flex items-center gap-4">
+                  {/* Individual Checkbox */}
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(item.id!)}
+                    onChange={(e) => toggleSelect(e as any, item.id!)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-2 focus:ring-indigo-100 cursor-pointer"
+                  />
+
                   <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs">
                     {index + 1}
                   </div>

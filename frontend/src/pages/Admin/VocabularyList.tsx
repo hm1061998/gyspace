@@ -14,14 +14,16 @@ import {
   fetchStoredIdioms,
   deleteIdiom,
   bulkCreateIdioms,
+  bulkDeleteIdioms,
 } from "@/services/api/idiomService";
 import { Idiom } from "@/types";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { modalService } from "@/services/ui/modalService";
 import { toast } from "@/services/ui/toastService";
 import FormSelect from "@/components/common/FormSelect";
 import Input from "@/components/common/Input";
 import Pagination from "@/components/common/Pagination";
+import BulkActionBar from "@/components/common/BulkActionBar";
 
 interface VocabularyListProps {
   onBack: () => void;
@@ -35,23 +37,29 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
   onEdit,
 }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [idioms, setIdioms] = useState<Idiom[]>([]);
   const [loading, setLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Pagination State
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
-  // Filter State
+  // Filter & Sort State
   const [filter, setFilter] = useState("");
   const [debouncedFilter, setDebouncedFilter] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("");
   const [selectedType, setSelectedType] = useState("");
+
+  // Sort from URL or default
+  const sortParam = searchParams.get("sort") || "createdAt";
+  const orderParam = (searchParams.get("order") as "ASC" | "DESC") || "DESC";
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -73,11 +81,14 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
         12,
         debouncedFilter,
         selectedLevel,
-        selectedType
+        selectedType,
+        sortParam,
+        orderParam
       );
       setIdioms(response.data);
       setTotalPages(response.meta.lastPage);
       setTotalItems(response.meta.total);
+      setSelectedIds([]); // Clear selection when data changes
     } catch (err) {
       setError("Không thể tải danh sách từ. Vui lòng thử lại.");
     } finally {
@@ -177,6 +188,50 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
     e.stopPropagation();
     onEdit(id);
   };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Vui lòng chọn ít nhất một mục để xóa");
+      return;
+    }
+
+    const confirmed = await modalService.danger(
+      `Bạn có chắc chắn muốn xóa ${selectedIds.length} từ vựng đã chọn không? Hành động này không thể hoàn tác.`,
+      "Xác nhận xóa?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await bulkDeleteIdioms(selectedIds);
+      toast.success(`Đã xóa ${selectedIds.length} từ vựng thành công!`);
+      loadIdioms();
+    } catch (error) {
+      console.error(error);
+      toast.error("Xóa thất bại");
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === idioms.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(idioms.map((idiom) => idiom.id));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((selectedId) => selectedId !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  const isAllSelected =
+    idioms.length > 0 && selectedIds.length === idioms.length;
+  const isSomeSelected =
+    selectedIds.length > 0 && selectedIds.length < idioms.length;
 
   return (
     <div className="max-w-6xl w-full mx-auto animate-pop">
@@ -280,14 +335,61 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
         </div>
       ) : (
         <>
+          {/* Bulk Actions Bar */}
+          <BulkActionBar
+            selectedCount={selectedIds.length}
+            onDelete={handleBulkDelete}
+            onClearSelection={() => setSelectedIds([])}
+            label="từ vựng"
+          />
+
+          {/* Select All Checkbox */}
+          <div className="mb-3 flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={isAllSelected}
+              ref={(input) => {
+                if (input) {
+                  input.indeterminate = isSomeSelected;
+                }
+              }}
+              onChange={toggleSelectAll}
+              className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-2 focus:ring-indigo-100 cursor-pointer"
+            />
+            <label
+              className="text-sm font-medium text-slate-600 cursor-pointer"
+              onClick={toggleSelectAll}
+            >
+              Chọn tất cả ({idioms.length} mục)
+            </label>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
             {idioms.map((item) => (
               <div
                 key={item.id}
                 onClick={() => onEdit(item.id)}
-                className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-red-200 cursor-pointer transition-all group relative overflow-hidden"
+                className={`bg-white p-4 rounded-xl border shadow-sm hover:shadow-md cursor-pointer transition-all group relative overflow-hidden ${
+                  selectedIds.includes(item.id)
+                    ? "border-indigo-400 bg-indigo-50/30"
+                    : "border-slate-200 hover:border-red-200"
+                }`}
               >
-                <div className="flex justify-between items-start mb-2">
+                {/* Checkbox */}
+                <div className="absolute top-3 left-3 z-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(item.id)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      toggleSelect(item.id);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-2 focus:ring-indigo-100 cursor-pointer"
+                  />
+                </div>
+
+                <div className="flex justify-between items-start mb-2 pl-6">
                   <h2 className="text-2xl font-hanzi font-bold text-slate-800 group-hover:text-red-700">
                     {item.hanzi}
                   </h2>

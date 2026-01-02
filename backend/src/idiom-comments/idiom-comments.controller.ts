@@ -100,4 +100,12 @@ export class IdiomCommentsController {
   async deleteComment(@Param('id') id: string, @Req() req) {
     return this.commentsService.delete(id, req.user.id);
   }
+
+  // Admin endpoint - Xóa nhiều comments
+  @Post('admin/bulk-delete')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @HttpCode(HttpStatus.OK)
+  async bulkDeleteComments(@Body() body: { ids: string[] }, @Req() req) {
+    return this.commentsService.bulkDelete(body.ids, req.user.id);
+  }
 }

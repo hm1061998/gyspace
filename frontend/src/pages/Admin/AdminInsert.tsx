@@ -7,7 +7,7 @@ import {
 } from "@/services/api/idiomService";
 import { toast } from "@/services/ui/toastService";
 import FormSelect from "@/components/common/FormSelect";
-import { useOutletContext } from "react-router";
+import { useOutletContext, useSearchParams } from "react-router-dom";
 import { AdminOutletContext } from "@/layouts/AdminLayout";
 import { useForm, useFieldArray } from "react-hook-form";
 import Input from "@/components/common/Input";
@@ -58,12 +58,14 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
   const dispatch = useDispatch<AppDispatch>();
   const topRef = useRef<HTMLDivElement>(null);
   const { setPageHeader } = useOutletContext<AdminOutletContext>();
+  const [searchParams] = useSearchParams();
 
   const {
     register,
     handleSubmit,
     control,
     reset,
+    getValues,
     formState: { errors },
   } = useForm<IdiomFormInputs>({
     defaultValues: {
@@ -95,8 +97,14 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
   useEffect(() => {
     if (idiomId) {
       loadIdiomData(idiomId);
+    } else {
+      // Check for 'hanzi' param for pre-filling
+      const hanziParam = searchParams.get("hanzi");
+      if (hanziParam) {
+        reset({ ...getValues(), hanzi: hanziParam });
+      }
     }
-  }, [idiomId]);
+  }, [idiomId, searchParams, reset, getValues]);
 
   const loadIdiomData = async (id: string) => {
     setFetching(true);

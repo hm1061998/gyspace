@@ -81,4 +81,14 @@ export class UserDataController {
   clearHistory(@Request() req) {
     return this.userDataService.clearHistory(req.user.id);
   }
+
+  @Post('saved/bulk-delete')
+  bulkDeleteSaved(@Request() req, @Body('idiomIds') idiomIds: string[]) {
+    return this.userDataService.bulkRemoveSaved(req.user.id, idiomIds);
+  }
+
+  @Post('history/bulk-delete')
+  bulkDeleteHistory(@Request() req, @Body('idiomIds') idiomIds: string[]) {
+    return this.userDataService.bulkRemoveHistory(req.user.id, idiomIds);
+  }
 }

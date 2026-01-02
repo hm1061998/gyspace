@@ -28,6 +28,36 @@ export class IdiomsController {
     return this.idiomsService.getAdminStats();
   }
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Get('admin/search-logs')
+  async getSearchLogs(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20,
+    @Query('search') search: string = '',
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.idiomsService.getSearchLogs(
+      page,
+      limit,
+      search,
+      startDate,
+      endDate,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Delete('admin/search-logs/:query')
+  async deleteSearchLog(@Param('query') query: string) {
+    return this.idiomsService.deleteSearchLog(query);
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Post('admin/search-logs/bulk-delete')
+  async bulkDeleteSearchLogs(@Body() body: { queries: string[] }) {
+    return this.idiomsService.bulkDeleteSearchLogs(body.queries);
+  }
+
   @Get()
   async findAll(
     @Query('page') page: number = 1,
@@ -93,6 +123,12 @@ export class IdiomsController {
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.idiomsService.remove(id);
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Post('bulk-delete')
+  async bulkDelete(@Body() body: { ids: string[] }) {
+    return this.idiomsService.bulkDelete(body.ids);
   }
 
   @UseGuards(JwtAuthGuard, AdminGuard)

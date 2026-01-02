@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { getAdminStats, getCommentStats } from "@/redux/adminSlice";
+import { toast } from "@/services/ui/toastService";
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -253,6 +254,14 @@ const AdminDashboard: React.FC = () => {
           <Section
             title="Tìm kiếm bị bỏ lỡ"
             icon={<FireIcon className="w-4 h-4 text-orange-500" />}
+            action={
+              <button
+                onClick={() => onNavigate("/admin/search-logs")}
+                className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1"
+              >
+                Xem tất cả <ChevronRightIcon className="w-3 h-3" />
+              </button>
+            }
           >
             <div className="grid grid-cols-2 gap-2">
               {stats?.hotKeywords?.slice(0, 4).map((item: any, idx: number) => (
@@ -274,6 +283,16 @@ const AdminDashboard: React.FC = () => {
           <Section
             title="Cập nhật gần đây"
             icon={<HistoryIcon className="w-4 h-4 text-blue-500" />}
+            action={
+              <button
+                onClick={() =>
+                  onNavigate("/admin/idiom/list?sort=createdAt&order=DESC")
+                }
+                className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+              >
+                Xem tất cả <ChevronRightIcon className="w-3 h-3" />
+              </button>
+            }
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {stats?.recentIdioms?.slice(0, 4).map((idiom: any) => (
@@ -297,6 +316,14 @@ const AdminDashboard: React.FC = () => {
           <Section
             title="Nội dung cần rà soát"
             icon={<FlagIcon className="w-4 h-4 text-red-600" />}
+            action={
+              <button
+                onClick={() => onNavigate("/admin/comments?onlyReported=true")}
+                className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1"
+              >
+                Xem tất cả <ChevronRightIcon className="w-3 h-3" />
+              </button>
+            }
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {commentStats?.topReported?.slice(0, 4).map((item: any) => (
@@ -349,13 +376,16 @@ const CompactStatCard = ({ icon, label, value, color, onClick }: any) => {
   );
 };
 
-const Section = ({ title, icon, children }: any) => (
+const Section = ({ title, icon, action, children }: any) => (
   <div className="bg-white rounded-[1.5rem] p-5 border border-slate-100 shadow-sm h-full hover:shadow-md transition-shadow">
-    <div className="flex items-center gap-2 mb-4">
-      {icon}
-      <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">
-        {title}
-      </h3>
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-2">
+        {icon}
+        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">
+          {title}
+        </h3>
+      </div>
+      {action}
     </div>
     {children}
   </div>

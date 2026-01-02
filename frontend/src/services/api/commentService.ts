@@ -141,6 +141,19 @@ export const deleteComment = async (
   return response.data;
 };
 
+/**
+ * Bulk delete comments (Admin only)
+ */
+export const bulkDeleteComments = async (
+  ids: string[]
+): Promise<{ success: boolean; deleted: number }> => {
+  const response = await http.post<{ success: boolean; deleted: number }>(
+    "/idiom-comments/admin/bulk-delete",
+    { ids }
+  );
+  return response.data;
+};
+
 // ============================================
 // Local Storage Helpers
 // ============================================

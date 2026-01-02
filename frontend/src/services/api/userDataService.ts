@@ -83,6 +83,20 @@ export const clearAllHistory = async () => {
   return response.data;
 };
 
+export const bulkDeleteSavedIdioms = async (idiomIds: string[]) => {
+  const response = await http.post(`${API_BASE_URL}/saved/bulk-delete`, {
+    idiomIds,
+  });
+  return response.data;
+};
+
+export const bulkDeleteHistory = async (idiomIds: string[]) => {
+  const response = await http.post(`${API_BASE_URL}/history/bulk-delete`, {
+    idiomIds,
+  });
+  return response.data;
+};
+
 // USER PROFILE MANAGEMENT
 export interface UpdateProfileData {
   displayName: string;

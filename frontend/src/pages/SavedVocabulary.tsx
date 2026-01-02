@@ -12,9 +12,12 @@ import type { Idiom } from "@/types";
 import {
   fetchSavedIdioms,
   toggleSaveIdiom,
+  bulkDeleteSavedIdioms,
 } from "@/services/api/userDataService";
 import { toast } from "@/services/ui/toastService";
+import { modalService } from "@/services/ui/modalService";
 import Pagination from "@/components/common/Pagination";
+import BulkActionBar from "@/components/common/BulkActionBar";
 
 interface SavedVocabularyProps {
   onBack: () => void;
@@ -25,6 +28,7 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = ({ onBack }) => {
   const [savedItems, setSavedItems] = useState<Idiom[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Pagination State
   const [page, setPage] = useState(1);
@@ -42,6 +46,7 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = ({ onBack }) => {
       setSavedItems(response.data);
       setTotalPages(response.meta.lastPage);
       setTotalItems(response.meta.total);
+      setSelectedIds([]); // Clear selection when data changes
     } catch (e) {
       toast.error("Không thể tải danh sách từ vựng đã lưu.");
     } finally {
@@ -59,8 +64,48 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = ({ onBack }) => {
       await toggleSaveIdiom(idiomId);
       setSavedItems((prev) => prev.filter((item) => item.id !== idiomId));
       toast.info(`Đã bỏ lưu "${hanzi}"`);
+      setSelectedIds((prev) => prev.filter((id) => id !== idiomId));
     } catch (e) {
       toast.error("Lỗi khi thực hiện thao tác.");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Vui lòng chọn ít nhất một mục để bỏ lưu");
+      return;
+    }
+
+    const confirmed = await modalService.danger(
+      `Bạn có chắc chắn muốn bỏ lưu ${selectedIds.length} từ vựng đã chọn không?`,
+      "Xác nhận bỏ lưu?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await bulkDeleteSavedIdioms(selectedIds);
+      toast.success(`Đã bỏ lưu ${selectedIds.length} từ vựng thành công!`);
+      loadSavedData();
+    } catch (error) {
+      console.error(error);
+      toast.error("Thao tác thất bại");
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredItems.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredItems.map((item) => item.id!));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((selectedId) => selectedId !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
     }
   };
 
@@ -69,6 +114,11 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = ({ onBack }) => {
       item.hanzi.includes(filter) ||
       item.vietnameseMeaning.toLowerCase().includes(filter.toLowerCase())
   );
+
+  const isAllSelected =
+    filteredItems.length > 0 && selectedIds.length === filteredItems.length;
+  const isSomeSelected =
+    selectedIds.length > 0 && selectedIds.length < filteredItems.length;
   return (
     <div className="max-w-6xl mx-auto w-full animate-pop">
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
@@ -108,6 +158,38 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = ({ onBack }) => {
         </div>
       ) : (
         <React.Fragment>
+          {/* Bulk Actions Bar */}
+          <BulkActionBar
+            selectedCount={selectedIds.length}
+            onDelete={handleBulkDelete}
+            onClearSelection={() => setSelectedIds([])}
+            label="từ vựng"
+            deleteLabel="Bỏ lưu đã chọn"
+          />
+
+          {/* Select All Checkbox */}
+          {filteredItems.length > 0 && (
+            <div className="mb-3 flex items-center gap-2 px-2">
+              <input
+                type="checkbox"
+                checked={isAllSelected}
+                ref={(input) => {
+                  if (input) {
+                    input.indeterminate = isSomeSelected;
+                  }
+                }}
+                onChange={toggleSelectAll}
+                className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-2 focus:ring-indigo-100 cursor-pointer"
+              />
+              <label
+                className="text-sm font-medium text-slate-600 cursor-pointer"
+                onClick={toggleSelectAll}
+              >
+                Chọn tất cả ({filteredItems.length} mục)
+              </label>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredItems.map((item) => (
               <div
@@ -115,10 +197,28 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = ({ onBack }) => {
                 onClick={() =>
                   navigate(`/?query=${encodeURIComponent(item.hanzi)}`)
                 }
-                className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-red-200 cursor-pointer transition-all group"
+                className={`bg-white p-6 rounded-2xl shadow-sm border cursor-pointer transition-all group relative overflow-hidden ${
+                  selectedIds.includes(item.id!)
+                    ? "border-indigo-400 bg-indigo-50/30 shadow-md"
+                    : "border-slate-200 hover:shadow-md hover:border-red-200"
+                }`}
               >
-                <div className="flex justify-between items-start mb-3">
-                  <h2 className="text-3xl font-hanzi font-bold text-slate-800">
+                {/* Checkbox */}
+                <div className="absolute top-4 left-4 z-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(item.id!)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      toggleSelect(item.id!);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-2 focus:ring-indigo-100 cursor-pointer"
+                  />
+                </div>
+
+                <div className="flex justify-between items-start mb-3 pl-6">
+                  <h2 className="text-3xl font-hanzi font-bold text-slate-800 group-hover:text-red-700">
                     {item.hanzi}
                   </h2>
                   <button
@@ -136,9 +236,6 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = ({ onBack }) => {
                   {item.vietnameseMeaning}
                 </p>
                 <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-end">
-                  {/* <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50 px-2 py-0.5 rounded">
-                  {item.type}
-                </span> */}
                   <span className="text-xs text-red-600 font-bold">
                     Xem chi tiết →
                   </span>

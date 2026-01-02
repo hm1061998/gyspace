@@ -10,6 +10,7 @@ import {
   MenuIcon,
   CloseIcon,
   ChatBubbleIcon,
+  FireIcon,
 } from "@/components/common/icons";
 import { fetchCommentStats } from "@/services/api/commentService";
 import { useSelector } from "react-redux";
@@ -118,6 +119,8 @@ const AdminLayout: React.FC = () => {
     if (location.pathname.startsWith("/admin/idiom/detail"))
       return `Chi tiết từ vựng ${headerState.data?.hanzi}`;
     if (location.pathname.startsWith("/admin/comments")) return "Quản lý góp ý";
+    if (location.pathname.startsWith("/admin/search-logs"))
+      return "Mọi người đã tìm";
     return "Admin Portal";
   };
 
@@ -188,6 +191,11 @@ const AdminLayout: React.FC = () => {
               icon={<ChatBubbleIcon />}
               label="Quản lý góp ý"
               badge={pendingCount}
+            />
+            <NavItem
+              to="/admin/search-logs"
+              icon={<FireIcon />}
+              label="Mọi người đã tìm"
             />
           </nav>
         </div>

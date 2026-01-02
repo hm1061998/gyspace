@@ -221,14 +221,6 @@ export class IdiomCommentsService {
   }
 
   async delete(id: string, userId: string) {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-    });
-
-    if (!user || !user.isAdmin) {
-      throw new ForbiddenException('Chỉ admin mới có quyền xóa');
-    }
-
     const comment = await this.commentRepository.findOne({
       where: { id },
     });
@@ -242,6 +234,15 @@ export class IdiomCommentsService {
 
     await this.commentRepository.remove(comment);
     return { message: 'Đã xóa bình luận thành công' };
+  }
+
+  async bulkDelete(ids: string[], userId: string) {
+    if (!ids || ids.length === 0) {
+      throw new BadRequestException('Danh sách trống');
+    }
+
+    await this.commentRepository.delete(ids);
+    return { success: true, deleted: ids.length };
   }
 
   async getStats() {

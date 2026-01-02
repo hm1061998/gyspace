@@ -160,4 +160,32 @@ export class UserDataService {
     await this.historyRepository.delete({ user: { id: userId } });
     return { success: true };
   }
+
+  async bulkRemoveSaved(userId: string, idiomIds: string[]) {
+    if (!idiomIds || idiomIds.length === 0)
+      return { success: true, deleted: 0 };
+    await this.savedRepository
+      .createQueryBuilder()
+      .delete()
+      .where('userId = :userId AND idiomId IN (:...idiomIds)', {
+        userId,
+        idiomIds,
+      })
+      .execute();
+    return { success: true, deleted: idiomIds.length };
+  }
+
+  async bulkRemoveHistory(userId: string, idiomIds: string[]) {
+    if (!idiomIds || idiomIds.length === 0)
+      return { success: true, deleted: 0 };
+    await this.historyRepository
+      .createQueryBuilder()
+      .delete()
+      .where('userId = :userId AND idiomId IN (:...idiomIds)', {
+        userId,
+        idiomIds,
+      })
+      .execute();
+    return { success: true, deleted: idiomIds.length };
+  }
 }
