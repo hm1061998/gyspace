@@ -62,6 +62,12 @@ export const fetchAdminStats = async () => {
   return response.data;
 };
 
+export const fetchSuggestions = async (query: string): Promise<Idiom[]> => {
+  if (!query || query.trim().length < 1) return [];
+  const response = await http.get<Idiom[]>("/idioms/suggestions", { query });
+  return response.data;
+};
+
 export const fetchIdiomDetails = async (
   query: string,
   mode: SearchMode = "database"

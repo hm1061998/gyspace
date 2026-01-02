@@ -136,6 +136,22 @@ export class IdiomsService {
     return idiom;
   }
 
+  async fetchSuggestions(query: string) {
+    if (!query || query.trim().length < 1) return [];
+
+    const normalizedQuery = query.toLowerCase().trim();
+
+    return await this.idiomRepository.find({
+      where: [
+        { hanzi: ILike(`${normalizedQuery}%`) },
+        { pinyin: ILike(`${normalizedQuery}%`) },
+        { vietnameseMeaning: ILike(`%${normalizedQuery}%`) },
+      ],
+      select: ['id', 'hanzi', 'pinyin', 'vietnameseMeaning'],
+      take: 8,
+    });
+  }
+
   async search(query: string, mode: SearchMode) {
     if (mode === 'ai') {
       return this.callGeminiAI(query);

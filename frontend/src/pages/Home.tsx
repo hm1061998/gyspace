@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   useNavigate,
   useOutletContext,
@@ -6,7 +6,10 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
-import { fetchIdiomDetails } from "@/services/api/idiomService";
+import {
+  fetchIdiomDetails,
+  fetchSuggestions,
+} from "@/services/api/idiomService";
 import type { Idiom, SearchMode } from "@/types";
 import IdiomDetail from "@/components/idiom/IdiomDetail";
 import HandwritingPad from "@/components/game/HandwritingPad";
@@ -19,6 +22,7 @@ import {
   PuzzlePieceIcon,
   ArrowLeftIcon,
   MicrophoneIcon,
+  ChevronRightIcon,
 } from "@/components/common/icons";
 import { addToHistory } from "@/services/api/userDataService";
 
@@ -35,6 +39,16 @@ const Home: React.FC = () => {
   const [isHandwritingPadOpen, setIsHandwritingPadOpen] = useState(false);
   const [voiceLang, setVoiceLang] = useState<"vi-VN" | "zh-CN">("vi-VN");
   const { isLoggedIn } = useOutletContext<{ isLoggedIn: boolean }>();
+
+  // Refs
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Suggestions State
+  const [suggestions, setSuggestions] = useState<Idiom[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const suggestionsListRef = useRef<HTMLDivElement>(null);
+  const lastMousePos = useRef({ x: 0, y: 0 });
 
   const searchQuery = searchParams.get("query");
 
@@ -56,10 +70,63 @@ const Home: React.FC = () => {
     if (searchQuery) {
       setQuery(searchQuery);
       handleSearch(searchQuery);
+      setShowSuggestions(false);
     }
   }, [searchQuery]);
 
+  // Handle Suggestions Fetching
+  useEffect(() => {
+    const fetchTimer = setTimeout(async () => {
+      if (query.trim() && searchMode === "database" && !currentIdiom) {
+        try {
+          const results = await fetchSuggestions(query);
+          setSuggestions(results);
+          setShowSuggestions(results.length > 0);
+          setSelectedIndex(-1);
+        } catch (err) {
+          console.error("Suggestions error:", err);
+        }
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 200);
+
+    return () => clearTimeout(fetchTimer);
+  }, [query, searchMode, currentIdiom]);
+
+  // Handle Click Outside Suggestions
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Handle Scroll to selected suggestion
+  useEffect(() => {
+    if (selectedIndex >= 0 && suggestionsListRef.current) {
+      const selectedElement = suggestionsListRef.current.children[
+        selectedIndex
+      ] as HTMLElement;
+      if (selectedElement) {
+        selectedElement.scrollIntoView({
+          block: "nearest",
+          behavior: "smooth",
+        });
+      }
+    }
+  }, [selectedIndex]);
+
   const handleSearch = async (searchTerm: string, forceMode?: SearchMode) => {
+    setShowSuggestions(false);
     if (!searchTerm.trim()) {
       setError(null);
       setCurrentIdiom(null);
@@ -98,8 +165,9 @@ const Home: React.FC = () => {
   };
 
   const handleChangeMode = (mode: string) => {
-    setSearchMode(mode);
+    setSearchMode(mode as SearchMode);
     setError(null);
+    setShowSuggestions(false);
   };
 
   const isCenteredMode = !currentIdiom && !isLoading;
@@ -157,7 +225,7 @@ const Home: React.FC = () => {
       }`}
     >
       <div
-        className={`w-full max-w-3xl transition-all duration-700 ${
+        className={`w-full max-w-3xl transition-all duration-700 z-[1]${
           isCenteredMode ? "scale-105" : "mb-8"
         }`}
       >
@@ -212,49 +280,77 @@ const Home: React.FC = () => {
             handleSearch(query);
           }}
           className="relative group"
+          ref={searchContainerRef}
         >
           <div
             className={`absolute -inset-1 rounded-full blur opacity-20 transition duration-1000 ${
               searchMode === "ai" ? "bg-purple-600" : "bg-red-600"
             }`}
           ></div>
-          <div className="relative flex items-center bg-white rounded-full shadow-xl border border-slate-100 overflow-hidden">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={
-                searchMode === "database"
-                  ? "Nhập Hán tự, Pinyin, nghĩa tiếng Việt..."
-                  : "Hỏi AI bất cứ từ nào..."
-              }
-              className="w-full py-3 md:py-4 pl-4 md:pl-6 pr-32 text-base md:text-lg outline-none text-slate-700 font-medium bg-transparent"
-            />
+          <div className="relative flex items-center bg-white rounded-full shadow-xl border border-slate-100">
+            <div className="relative flex-1 flex items-center overflow-hidden rounded-l-full">
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => {
+                  if (suggestions.length > 0) setShowSuggestions(true);
+                }}
+                onKeyDown={(e) => {
+                  if (showSuggestions) {
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setSelectedIndex((prev) =>
+                        prev < suggestions.length - 1 ? prev + 1 : prev
+                      );
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
+                    } else if (e.key === "Enter") {
+                      if (selectedIndex >= 0) {
+                        e.preventDefault();
+                        const selected = suggestions[selectedIndex];
+                        setQuery(selected.hanzi);
+                        handleSearch(selected.hanzi);
+                      }
+                    } else if (e.key === "Escape") {
+                      setShowSuggestions(false);
+                    }
+                  }
+                }}
+                placeholder={
+                  searchMode === "database"
+                    ? "Nhập Hán tự, Pinyin, nghĩa tiếng Việt..."
+                    : "Hỏi AI bất cứ từ nào..."
+                }
+                className="w-full py-3 md:py-4 pl-4 md:pl-6 pr-4 text-base md:text-lg outline-none text-slate-700 font-medium bg-transparent"
+              />
 
-            {isListening && (
-              <div className="absolute inset-0 bg-white z-10 flex items-center justify-between px-6 animate-fadeIn">
-                <div className="flex items-center gap-3">
-                  <div className="flex gap-1 h-4 items-end">
-                    <span className="w-1 h-2 bg-red-600 rounded-full animate-[bounce_1s_infinite_100ms]"></span>
-                    <span className="w-1 h-3 bg-red-600 rounded-full animate-[bounce_1s_infinite_200ms]"></span>
-                    <span className="w-1 h-4 bg-red-600 rounded-full animate-[bounce_1s_infinite_300ms]"></span>
-                    <span className="w-1 h-2 bg-red-600 rounded-full animate-[bounce_1s_infinite_400ms]"></span>
+              {isListening && (
+                <div className="absolute inset-0 bg-white z-10 flex items-center justify-between px-6 animate-fadeIn">
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-1 h-4 items-end">
+                      <span className="w-1 h-2 bg-red-600 rounded-full animate-[bounce_1s_infinite_100ms]"></span>
+                      <span className="w-1 h-3 bg-red-600 rounded-full animate-[bounce_1s_infinite_200ms]"></span>
+                      <span className="w-1 h-4 bg-red-600 rounded-full animate-[bounce_1s_infinite_300ms]"></span>
+                      <span className="w-1 h-2 bg-red-600 rounded-full animate-[bounce_1s_infinite_400ms]"></span>
+                    </div>
+                    <span className="text-slate-500 font-medium text-sm">
+                      Đang nghe...
+                    </span>
                   </div>
-                  <span className="text-slate-500 font-medium text-sm">
-                    Đang nghe...
-                  </span>
+                  <button
+                    type="button"
+                    onClick={abortListening}
+                    className="text-xs font-bold text-slate-400 hover:text-red-500 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 hover:bg-white transition-all"
+                  >
+                    Hủy bỏ
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={abortListening}
-                  className="text-xs font-bold text-slate-400 hover:text-red-500 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 hover:bg-white transition-all"
-                >
-                  Hủy bỏ
-                </button>
-              </div>
-            )}
+              )}
+            </div>
 
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            <div className="flex items-center gap-1 pr-2">
               {isSupported && (
                 <div className="flex items-center gap-1 bg-slate-50 rounded-full p-1 border border-slate-100">
                   <button
@@ -283,13 +379,6 @@ const Home: React.FC = () => {
                   </button>
                 </div>
               )}
-              {/* <button
-                type="button"
-                onClick={() => setIsHandwritingPadOpen(true)}
-                className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                <PencilIcon className="w-5 h-5" />
-              </button> */}
               <button
                 type={searchQuery ? "button" : "submit"}
                 className={`p-3 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center ${
@@ -310,6 +399,68 @@ const Home: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Suggestions Dropdown */}
+          {showSuggestions && (
+            <div className="absolute top-full left-0 right-0 mt-3 bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-4 duration-300 z-[20]">
+              <div
+                ref={suggestionsListRef}
+                className="p-2 space-y-1 max-h-[40vh] overflow-y-auto"
+              >
+                {suggestions.map((item, index) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setQuery(item.hanzi);
+                      handleSearch(item.hanzi);
+                    }}
+                    className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all text-left ${
+                      selectedIndex === index
+                        ? "bg-slate-50 border-slate-100"
+                        : "hover:bg-slate-50 border-transparent"
+                    } border`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center font-hanzi font-bold text-slate-400">
+                        {item.hanzi.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-hanzi font-bold text-slate-800">
+                            {item.hanzi}
+                          </span>
+                          <span className="text-[10px] text-red-500 font-bold uppercase tracking-wider">
+                            {item.pinyin}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400 line-clamp-1">
+                          {item.vietnameseMeaning}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRightIcon className="w-4 h-4 text-slate-300" />
+                  </button>
+                ))}
+              </div>
+              <div className="bg-slate-50 px-5 py-2 flex items-center justify-between">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                  Gợi ý thông minh
+                </span>
+                <div className="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
+                  <span>Di chuyển bằng</span>
+                  <div className="flex gap-1">
+                    <span className="px-1.5 py-0.5 bg-white rounded border border-slate-200">
+                      ↑
+                    </span>
+                    <span className="px-1.5 py-0.5 bg-white rounded border border-slate-200">
+                      ↓
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </form>
 
         {searchMode === "database" && (

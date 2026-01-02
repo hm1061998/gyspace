@@ -48,6 +48,11 @@ export class IdiomsController {
     );
   }
 
+  @Get('suggestions')
+  async getSuggestions(@Query('query') query: string) {
+    return this.idiomsService.fetchSuggestions(query);
+  }
+
   @Get('search')
   async search(@Query('query') query: string, @Query('mode') mode: SearchMode) {
     return this.idiomsService.search(query, mode);
