@@ -20,6 +20,11 @@ export class LoggingInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap(() => {
+        // Skip logging for health checks
+        if (url.includes('/health')) {
+          return;
+        }
+
         const response = context.switchToHttp().getResponse();
         const statusCode = response.statusCode;
         const delay = Date.now() - now;
