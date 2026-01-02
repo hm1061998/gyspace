@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { CloseIcon } from "./icons";
 
 interface DrawerProps {
@@ -18,6 +18,18 @@ const Drawer: React.FC<DrawerProps> = ({
   footer,
   className = "",
 }) => {
+  const [shouldRender, setShouldRender] = useState(isOpen);
+
+  // Sync shouldRender with isOpen to allow exit animations
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+    } else {
+      const timer = setTimeout(() => setShouldRender(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
   // Prevent body scroll when drawer is open
   useEffect(() => {
     if (isOpen) {
@@ -30,19 +42,27 @@ const Drawer: React.FC<DrawerProps> = ({
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!shouldRender) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+    <div
+      className={`fixed inset-0 z-50 flex justify-end ${
+        !isOpen ? "pointer-events-none" : ""
+      }`}
+    >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm animate-in fade-in duration-300"
+        className={`absolute inset-0 bg-slate-900/40 backdrop-blur-sm ${
+          isOpen ? "animate-fade-in" : "animate-fade-out"
+        }`}
         onClick={onClose}
       />
 
       {/* Drawer Panel */}
       <div
-        className={`relative w-full max-w-sm bg-white shadow-2xl h-full flex flex-col animate-in slide-in-from-right duration-300 border-l border-slate-100 ${className}`}
+        className={`relative w-full max-w-sm bg-white shadow-2xl h-full flex flex-col border-l border-slate-100 ${
+          isOpen ? "animate-slide-in-right" : "animate-slide-out-right"
+        } ${className}`}
       >
         <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-white">
           <h3 className="font-bold text-lg text-slate-800">{title}</h3>
