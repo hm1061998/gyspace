@@ -17,6 +17,7 @@ import { SearchMode } from './idioms.controller';
 export class IdiomsService {
   private readonly logger = new Logger(IdiomsService.name);
   private ai: GoogleGenAI;
+  private dailyCache: { date: string; data: any[] } | null = null;
 
   constructor(
     @InjectRepository(IdiomEntity)
@@ -310,6 +311,11 @@ export class IdiomsService {
   }
 
   async getDailySuggestions() {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (this.dailyCache && this.dailyCache.date === todayStr) {
+      return this.dailyCache.data;
+    }
+
     try {
       // 1. Get popular successful searches
       const trends = await this.searchLogRepository
@@ -355,15 +361,18 @@ export class IdiomsService {
         return !duplicate;
       });
 
-      return distinct.slice(0, 4).map((i) => ({
+      const result = distinct.slice(0, 4).map((i) => ({
         id: i.id,
         hanzi: i.hanzi,
         pinyin: i.pinyin,
         vietnameseMeaning: i.vietnameseMeaning,
       }));
+
+      this.dailyCache = { date: todayStr, data: result };
+      return result;
     } catch (error) {
       this.logger.error('Failed to get daily suggestions', error);
-      // Fallback
+      // Fallback (no cache for failed attempts)
       return (await this.idiomRepository.find({ take: 4 })).map((i) => ({
         id: i.id,
         hanzi: i.hanzi,

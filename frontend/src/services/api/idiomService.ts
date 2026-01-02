@@ -74,8 +74,18 @@ export const fetchSuggestions = async (
   return response.data;
 };
 
+let dailySuggestionsCache: Idiom[] | null = null;
+let lastCacheTime: number = 0;
+const CACHE_TTL = 1000 * 60 * 60; // 1 hour
+
 export const fetchDailySuggestions = async (): Promise<Idiom[]> => {
+  const now = Date.now();
+  if (dailySuggestionsCache && now - lastCacheTime < CACHE_TTL) {
+    return dailySuggestionsCache;
+  }
   const response = await http.get<Idiom[]>("/idioms/daily");
+  dailySuggestionsCache = response.data;
+  lastCacheTime = now;
   return response.data;
 };
 
