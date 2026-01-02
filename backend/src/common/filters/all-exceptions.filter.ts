@@ -49,10 +49,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     );
 
     response.status(status).json({
-      requestId,
       statusCode: status,
-      timestamp: new Date().toISOString(),
-      path: request.url,
       message:
         typeof message === 'object' && 'message' in message
           ? message['message']

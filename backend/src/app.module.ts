@@ -27,6 +27,12 @@ import { UserDataModule } from './user-data/user-data.module';
 import { IdiomCommentsModule } from './idiom-comments/idiom-comments.module';
 import { IdiomCommentEntity } from './idiom-comments/entities/idiom-comment.entity';
 import { TraceMiddleware } from './common/middleware/trace.middleware';
+import { IpBlockEntity } from './common/security/ip-block.entity';
+import { IpBlacklistGuard } from './common/guards/ip-blacklist.guard';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerExceptionFilter } from './common/filters/throttler-exception.filter';
+import { SecurityModule } from './common/security/security.module';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -51,6 +57,7 @@ const isProd = process.env.NODE_ENV === 'production';
           SRSProgressEntity,
           HistoryEntity,
           IdiomCommentEntity,
+          IpBlockEntity,
         ],
         synchronize: true, // Lưu ý: Chỉ dùng true cho môi trường Dev để tự tạo bảng
         autoLoadEntities: true,
@@ -62,6 +69,13 @@ const isProd = process.env.NODE_ENV === 'production';
     UserDataModule,
     UserModule,
     IdiomCommentsModule,
+    SecurityModule,
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minute
+        limit: 100, // max 100 requests per minute
+      },
+    ]),
     ...(isProd
       ? [
           ServeStaticModule.forRoot({
@@ -72,7 +86,21 @@ const isProd = process.env.NODE_ENV === 'production';
       : []),
   ],
   controllers: [AppController, HealthController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: IpBlacklistGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: ThrottlerExceptionFilter,
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
