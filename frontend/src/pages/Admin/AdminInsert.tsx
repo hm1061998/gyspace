@@ -4,7 +4,12 @@ import {
   TrashIcon,
   SpinnerIcon,
   ArrowLeftIcon,
+  PhotoIcon,
+  SettingsIcon,
+  BrainIcon,
+  VideoIcon,
 } from "@/components/common/icons";
+import { mediaPickerService } from "@/libs/MediaPicker";
 import {
   createIdiom,
   updateIdiom,
@@ -69,6 +74,8 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
     control,
     reset,
     getValues,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<IdiomFormInputs>({
     defaultValues: {
@@ -87,6 +94,8 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
     control,
     name: "analysis",
   });
+
+  const imageUrlValue = watch("imageUrl");
 
   const {
     fields: exampleFields,
@@ -139,6 +148,18 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
       toast.error("Không thể tải dữ liệu để sửa.");
     } finally {
       setFetching(false);
+    }
+  };
+
+  const handleOpenMediaPicker = async () => {
+    toast.warning("Chức năng này đang được phát triển");
+    return;
+    const selectedUrl = await mediaPickerService.open();
+    if (selectedUrl) {
+      setValue("imageUrl", selectedUrl, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
     }
   };
 
@@ -210,220 +231,123 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
         {/* Scrollable Form Content */}
         <div
           ref={topRef}
-          className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar"
+          className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar bg-slate-50/50"
         >
-          <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-3">
-            <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden">
-              <div className="p-6 md:p-10 space-y-12">
-                {/* Section 1: Thông tin cơ bản */}
-                <div className="space-y-6">
-                  <h3 className="text-lg font-black text-slate-900 flex items-center gap-3">
-                    <span className="w-8 h-8 bg-slate-900 text-white rounded-xl text-sm flex items-center justify-center shrink-0 shadow-lg shadow-slate-200">
-                      1
-                    </span>
-                    Thông tin từ vựng
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Input
-                      label="HÁN TỰ *"
-                      {...register("hanzi", {
-                        required: "Vui lòng nhập Hán tự",
-                        maxLength: {
-                          value: 100,
-                          message: "Hán tự tối đa 100 ký tự",
-                        },
-                      })}
-                      className="font-hanzi text-2xl !py-3 bg-slate-50/50 focus:bg-white transition-all"
-                      placeholder="VD: 做生意"
-                      error={errors.hanzi?.message}
-                    />
-                    <Input
-                      label="PINYIN *"
-                      {...register("pinyin", {
-                        maxLength: {
-                          value: 200,
-                          message: "Pinyin tối đa 200 ký tự",
-                        },
-                      })}
-                      className="text-lg !py-3 bg-slate-50/50 focus:bg-white transition-all"
-                      placeholder="VD: zuò shēngyi"
-                      error={errors.pinyin?.message}
-                    />
-                  </div>
-                  <Input
-                    label="NGHĨA TIẾNG VIỆT *"
-                    {...register("vietnameseMeaning", {
-                      maxLength: {
-                        value: 2000,
-                        message: "Nghĩa tối đa 2000 ký tự",
-                      },
-                    })}
-                    className="text-lg bg-slate-50/50 focus:bg-white transition-all"
-                    placeholder="VD: Làm ăn"
-                    error={errors.vietnameseMeaning?.message}
-                  />
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">
-                        Phân loại
-                      </label>
-                      <FormSelect
-                        {...register("type", {
-                          maxLength: { value: 50, message: "Tối đa 50 ký tự" },
-                        })}
-                        options={[
-                          { value: "Quán dụng ngữ", label: "Quán dụng ngữ" },
-                          {
-                            value: "Thành ngữ (Chengyu)",
-                            label: "Thành ngữ (Chengyu)",
-                          },
-                          { value: "Tiếng lóng", label: "Tiếng lóng" },
-                          { value: "Ngôn ngữ mạng", label: "Ngôn ngữ mạng" },
-                        ]}
-                        className="!bg-slate-50/50 hover:!bg-white !p-3.5 rounded-xl border-slate-200 transition-all font-bold text-slate-700"
-                      />
+          <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              {/* LEFT COLUMN: Main Content */}
+              <div className="lg:col-span-8 space-y-5">
+                {/* Section 1: Dữ liệu chính */}
+                <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                  <div className="p-5 md:p-6 space-y-6">
+                    <div className="flex items-center justify-between border-b border-slate-50 pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-red-50 text-red-600 rounded-lg flex items-center justify-center">
+                          <PlusIcon className="w-5 h-5" />
+                        </div>
+                        <h3 className="text-base font-bold text-slate-800">
+                          Thông tin cốt lõi
+                        </h3>
+                      </div>
+                      <span className="text-[10px] font-black text-red-400 uppercase tracking-widest bg-red-50/50 px-2 py-1 rounded-md">
+                        Bắt buộc
+                      </span>
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">
-                        Cấp độ
-                      </label>
-                      <FormSelect
-                        {...register("level", {
-                          maxLength: { value: 20, message: "Tối đa 20 ký tự" },
-                        })}
-                        options={[
-                          { value: "Sơ cấp", label: "Sơ cấp" },
-                          { value: "Trung cấp", label: "Trung cấp" },
-                          { value: "Cao cấp", label: "Cao cấp" },
-                        ]}
-                        className="!bg-slate-50/50 hover:!bg-white !p-3.5 rounded-xl border-slate-200 transition-all font-bold text-slate-700"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">
-                        Nguồn (Giáo trình)
-                      </label>
-                      <Input
-                        {...register("source", {
-                          maxLength: {
-                            value: 100,
-                            message: "Tối đa 100 ký tự",
-                          },
-                        })}
-                        className="bg-slate-50/50 !py-3"
-                        placeholder="VD: Qiaoliang"
-                      />
+
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                      <div className="md:col-span-5">
+                        <Input
+                          label="HÁN TỰ"
+                          {...register("hanzi", { required: "Bắt buộc" })}
+                          className="font-hanzi text-sm !py-2.5 bg-slate-50/50 border-slate-100 focus:bg-white transition-all"
+                          placeholder="做生意"
+                          error={errors.hanzi?.message}
+                        />
+                      </div>
+                      <div className="md:col-span-7">
+                        <Input
+                          label="PINYIN"
+                          {...register("pinyin")}
+                          className="text-sm !py-2.5 bg-slate-50/50 border-slate-100 focus:bg-white transition-all"
+                          placeholder="zuò shēngyi"
+                        />
+                      </div>
+                      <div className="md:col-span-12">
+                        <Input
+                          label="NGHĨA TIẾNG VIỆT"
+                          {...register("vietnameseMeaning")}
+                          className="text-sm bg-slate-50/50 border-slate-100 focus:bg-white !py-2.5"
+                          placeholder="Giải nghĩa chính..."
+                        />
+                      </div>
+                      <div className="md:col-span-6">
+                        <Input
+                          label="NGHĨA ĐEN"
+                          {...register("literalMeaning")}
+                          className="text-sm bg-slate-50/50 border-slate-100 !py-2"
+                        />
+                      </div>
+                      <div className="md:col-span-6">
+                        <Input
+                          label="NGHĨA BÓNG"
+                          {...register("figurativeMeaning")}
+                          className="text-sm bg-slate-50/50 border-slate-100 !py-2"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Section 2: Giải nghĩa chi tiết */}
-                <div className="space-y-6">
-                  <h3 className="text-lg font-black text-slate-900 flex items-center gap-3">
-                    <span className="w-8 h-8 bg-slate-900 text-white rounded-xl text-sm flex items-center justify-center shrink-0 shadow-lg shadow-slate-200">
-                      2
-                    </span>
-                    Giải thích & Ngữ pháp
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Input
-                      label="NGHĨA ĐEN"
-                      {...register("literalMeaning")}
-                      className="bg-slate-50/50"
-                      placeholder="Giải thích nghĩa từng chữ"
-                      error={errors.literalMeaning?.message}
-                    />
-                    <Input
-                      label="NGHĨA BÓNG"
-                      {...register("figurativeMeaning")}
-                      className="bg-slate-50/50"
-                      placeholder="Giải thích nghĩa ẩn dụ"
-                      error={errors.figurativeMeaning?.message}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <Input
-                      label="ẢNH MINH HỌA"
-                      {...register("imageUrl", {
-                        maxLength: {
-                          value: 1000,
-                          message: "URL tối đa 1000 ký tự",
-                        },
-                        pattern: {
-                          value: /^https?:\/\/.+/,
-                          message: "Phải là URL hợp lệ (http/https)",
-                        },
-                      })}
-                      className="bg-slate-50/50"
-                      placeholder="https://example.com/image.png"
-                      error={errors.imageUrl?.message}
-                    />
-                    <Input
-                      label="VIDEO (URL)"
-                      {...register("videoUrl", {
-                        maxLength: {
-                          value: 1000,
-                          message: "URL tối đa 1000 ký tự",
-                        },
-                        pattern: {
-                          value: /^https?:\/\/.+/,
-                          message: "Phải là URL hợp lệ (http/https)",
-                        },
-                      })}
-                      className="bg-slate-50/50"
-                      placeholder="https://youtube.com/..."
-                      error={errors.videoUrl?.message}
-                    />
-                  </div>
-                  <Textarea
-                    label="GIẢI THÍCH TIẾNG TRUNG"
-                    {...register("chineseDefinition")}
-                    className="h-24 bg-slate-50/50 focus:bg-white transition-all font-hanzi text-lg"
-                    placeholder="Định nghĩa bằng tiếng Trung..."
-                  />
-                  <Textarea
-                    label="NGỮ CẢNH"
-                    {...register("usageContext")}
-                    className="h-24 bg-slate-50/50 focus:bg-white transition-all"
-                    placeholder="Cách dùng trong đời sống..."
-                  />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Textarea
-                      label="NGUỒN GỐC"
-                      {...register("origin", {
-                        maxLength: {
-                          value: 2000,
-                          message: "Tối đa 2000 ký tự",
-                        },
-                      })}
-                      className="h-32 bg-slate-50/50 focus:bg-white transition-all"
-                      placeholder="Sự tích hoặc lịch sử từ..."
-                      error={errors.origin?.message}
-                    />
-                    <Textarea
-                      label="CÁCH DÙNG/NGỮ PHÁP"
-                      {...register("grammar", {
-                        maxLength: {
-                          value: 2000,
-                          message: "Tối đa 2000 ký tự",
-                        },
-                      })}
-                      className="h-32 bg-slate-50/50 focus:bg-white transition-all"
-                      placeholder="Cấu trúc ngữ pháp liên quan..."
-                      error={errors.grammar?.message}
-                    />
+                {/* Section 2: Giải thích & Chi tiết */}
+                <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                  <div className="p-5 md:p-6 space-y-5">
+                    <div className="flex items-center gap-3 border-b border-slate-50 pb-4">
+                      <div className="w-8 h-8 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center">
+                        <SettingsIcon className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-base font-bold text-slate-800">
+                        Giải thích & Ngữ pháp
+                      </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <Textarea
+                        label="ĐỊNH NGHĨA TIẾNG TRUNG"
+                        {...register("chineseDefinition")}
+                        className="h-20 bg-slate-50/50 border-slate-100 focus:bg-white text-sm font-hanzi"
+                      />
+                      <Textarea
+                        label="NGỮ CẢNH"
+                        {...register("usageContext")}
+                        className="h-20 bg-slate-50/50 border-slate-100 focus:bg-white text-sm"
+                      />
+                      <div className="grid grid-cols-2 gap-4">
+                        <Textarea
+                          label="NGUỒN GỐC"
+                          {...register("origin")}
+                          className="h-24 bg-slate-50/50 border-slate-100 text-sm"
+                        />
+                        <Textarea
+                          label="NGỮ PHÁP"
+                          {...register("grammar")}
+                          className="h-24 bg-slate-50/50 border-slate-100 text-sm"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Section 3: Phân tích Hán tự */}
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center bg-slate-100/50 p-4 rounded-2xl border border-slate-200">
-                    <h3 className="font-black text-slate-900 flex items-center gap-3">
-                      <span className="w-8 h-8 bg-slate-900 text-white rounded-xl text-sm flex items-center justify-center shadow-lg shadow-slate-200">
-                        3
+                <div className="bg-white rounded-3xl p-5 md:p-6 border border-slate-200 shadow-sm">
+                  <div className="flex justify-between items-center mb-5 pb-3 border-b border-slate-50">
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center font-bold text-sm">
+                        字
                       </span>
-                      Phân tích Hán tự
-                    </h3>
+                      <h3 className="text-base font-bold text-slate-800">
+                        Phân tích Hán tự
+                      </h3>
+                    </div>
                     <button
                       type="button"
                       onClick={() =>
@@ -433,70 +357,62 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                           meaning: "",
                         })
                       }
-                      className="text-[10px] bg-white border border-slate-200 text-slate-900 px-4 py-2 rounded-xl font-black hover:border-slate-400 hover:shadow-md transition-all flex items-center gap-2 uppercase tracking-wider"
+                      className="px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg font-bold text-[10px] uppercase hover:bg-amber-100 transition-all flex items-center gap-1.5 border border-amber-100"
                     >
-                      <PlusIcon className="w-4 h-4" /> THÊM CHỮ
+                      <PlusIcon className="w-3.5 h-3.5" /> Thêm chữ
                     </button>
                   </div>
-                  <div className="space-y-4">
+
+                  <div className="space-y-2">
                     {analysisFields.map((field, idx) => (
                       <div
                         key={field.id}
-                        className="flex gap-4 items-start bg-slate-50/30 p-5 rounded-2xl border border-slate-100 shadow-sm"
+                        className="flex gap-3 items-center bg-slate-50/30 p-2 rounded-xl border border-slate-100 group transition-all hover:bg-white hover:shadow-sm"
                       >
-                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="w-20">
                           <Input
-                            {...register(`analysis.${idx}.character`, {
-                              maxLength: {
-                                value: 10,
-                                message: "Tối đa 10 ký tự",
-                              },
-                            })}
-                            className="font-hanzi text-xl text-center"
+                            {...register(`analysis.${idx}.character`)}
+                            className="font-hanzi text-sm text-center !py-1.5 bg-white border-slate-100"
                             placeholder="Chữ"
                           />
+                        </div>
+                        <div className="w-32">
                           <Input
-                            {...register(`analysis.${idx}.pinyin`, {
-                              maxLength: {
-                                value: 100,
-                                message: "Tối đa 100 ký tự",
-                              },
-                            })}
+                            {...register(`analysis.${idx}.pinyin`)}
+                            className="text-sm text-center !py-1.5 bg-white border-slate-100"
                             placeholder="Pinyin"
                           />
+                        </div>
+                        <div className="flex-1">
                           <Input
-                            {...register(`analysis.${idx}.meaning`, {
-                              maxLength: {
-                                value: 500,
-                                message: "Tối đa 500 ký tự",
-                              },
-                            })}
-                            placeholder="Nghĩa"
+                            {...register(`analysis.${idx}.meaning`)}
+                            className="text-sm !py-1.5 bg-white border-slate-100"
+                            placeholder="Nghĩa của chữ này..."
                           />
                         </div>
-                        {analysisFields.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeAnalysis(idx)}
-                            className="p-2 sm:p-3 text-slate-400 hover:text-red-600 transition-all bg-white rounded-xl border border-slate-200 hover:border-red-200 shadow-sm"
-                          >
-                            <TrashIcon className="w-5 h-5" />
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeAnalysis(idx)}
+                          className="p-2 text-slate-300 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Section 4: Ví dụ minh họa */}
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center bg-red-50/50 p-4 rounded-2xl border border-red-100">
-                    <h3 className="font-black text-slate-900 flex items-center gap-3">
-                      <span className="w-8 h-8 bg-red-700 text-white rounded-xl text-sm flex items-center justify-center shadow-lg shadow-red-100">
-                        4
+                <div className="bg-white rounded-3xl p-5 md:p-6 border border-slate-200 shadow-sm">
+                  <div className="flex justify-between items-center mb-5 pb-3 border-b border-slate-50">
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center font-bold text-sm">
+                        例
                       </span>
-                      Ví dụ minh họa
-                    </h3>
+                      <h3 className="text-base font-bold text-slate-800">
+                        Ví dụ minh họa
+                      </h3>
+                    </div>
                     <button
                       type="button"
                       onClick={() =>
@@ -506,61 +422,175 @@ const AdminInsert: React.FC<AdminInsertProps> = ({ onBack, idiomId }) => {
                           vietnamese: "",
                         })
                       }
-                      className="text-[10px] bg-white border border-red-200 text-red-700 px-4 py-2 rounded-xl font-black hover:bg-red-50 hover:shadow-md transition-all flex items-center gap-2 uppercase tracking-wider"
+                      className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg font-bold text-[10px] uppercase hover:bg-emerald-100 transition-all flex items-center gap-1.5 border border-emerald-200"
                     >
-                      <PlusIcon className="w-4 h-4" /> THÊM VÍ DỤ
+                      <PlusIcon className="w-3.5 h-3.5" /> Thêm ví dụ
                     </button>
                   </div>
-                  <div className="space-y-6">
+
+                  <div className="space-y-3">
                     {exampleFields.map((field, idx) => (
                       <div
                         key={field.id}
-                        className="space-y-4 bg-white p-6 rounded-3xl border border-slate-100 relative group shadow-sm hover:shadow-xl hover:shadow-slate-100 transition-all"
+                        className="relative bg-slate-50/30 p-4 rounded-2xl border border-slate-100 group hover:bg-white hover:shadow-sm transition-all"
                       >
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <Input
-                            label="TIẾNG TRUNG"
-                            {...register(`examples.${idx}.chinese`, {
-                              maxLength: {
-                                value: 1000,
-                                message: "Tối đa 1000 ký tự",
-                              },
-                            })}
-                            className="font-hanzi bg-slate-50/50 text-lg sm:text-xl"
+                        <div className="grid grid-cols-1 md:grid-cols-1 gap-3">
+                          <Textarea
+                            {...register(`examples.${idx}.chinese`)}
+                            className="font-hanzi h-[78px] text-base bg-white !py-1.5"
+                            placeholder="Câu tiếng Trung..."
                           />
-                          <Input
-                            label="PINYIN"
-                            {...register(`examples.${idx}.pinyin`, {
-                              maxLength: {
-                                value: 1000,
-                                message: "Tối đa 1000 ký tự",
-                              },
-                            })}
-                            className="bg-slate-50/50"
+                          <Textarea
+                            {...register(`examples.${idx}.pinyin`)}
+                            className="h-[78px] text-base bg-white !py-1.5"
+                            placeholder="Pinyin phiên âm..."
+                          />
+                          <Textarea
+                            {...register(`examples.${idx}.vietnamese`)}
+                            className="h-[78px] bg-white text-base !py-2"
+                            placeholder="Nghĩa tiếng Việt..."
                           />
                         </div>
-                        <Input
-                          label="NGHĨA TIẾNG VIỆT"
-                          {...register(`examples.${idx}.vietnamese`, {
-                            maxLength: {
-                              value: 1000,
-                              message: "Tối đa 1000 ký tự",
-                            },
-                          })}
-                          className="bg-slate-50/50 font-medium"
-                        />
-                        {exampleFields.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeExample(idx)}
-                            className="absolute -top-3 -right-3 p-2 text-slate-400 hover:text-red-600 transition-all bg-white rounded-xl border border-slate-200 hover:border-red-200 shadow-md opacity-0 group-hover:opacity-100"
-                          >
-                            <TrashIcon className="w-5 h-5" />
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeExample(idx)}
+                          className="absolute -top-2 -right-2 w-8 h-8 bg-white text-slate-300 hover:text-red-500 rounded-full shadow-sm border border-slate-100 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
                       </div>
                     ))}
                   </div>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN: Sidebar Settings */}
+              <div className="lg:col-span-4 space-y-5">
+                {/* Meta Settings */}
+                <div className="bg-white rounded-3xl p-5 md:p-6 shadow-sm border border-slate-200 sticky top-6">
+                  <div className="flex items-center gap-2 mb-6 border-b border-slate-50 pb-4">
+                    <div className="w-8 h-8 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center">
+                      <SettingsIcon className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">
+                      Thiết lập
+                    </h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <FormSelect
+                      label="PHÂN LOẠI"
+                      {...register("type")}
+                      options={[
+                        { value: "Quán dụng ngữ", label: "Quán dụng ngữ" },
+                        {
+                          value: "Thành ngữ (Chengyu)",
+                          label: "Thành ngữ (Chengyu)",
+                        },
+                        { value: "Tiếng lóng", label: "Tiếng lóng" },
+                        { value: "Ngôn ngữ mạng", label: "Ngôn ngữ mạng" },
+                      ]}
+                      className="bg-slate-50 border-slate-100 !py-2.5 rounded-xl text-sm text-slate-700"
+                    />
+
+                    <FormSelect
+                      label="CẤP ĐỘ"
+                      {...register("level")}
+                      options={[
+                        { value: "Sơ cấp", label: "Sơ cấp" },
+                        { value: "Trung cấp", label: "Trung cấp" },
+                        { value: "Cao cấp", label: "Cao cấp" },
+                      ]}
+                      className="bg-slate-50 border-slate-100 !py-2.5 rounded-xl text-sm text-slate-700"
+                    />
+
+                    <Input
+                      label="NGUỒN / GIÁO TRÌNH"
+                      {...register("source")}
+                      className="bg-slate-50 border-slate-100 !py-2.5 rounded-xl text-sm text-slate-700"
+                      placeholder="VD: Qiaoliang"
+                    />
+
+                    <div className="pt-2 border-t border-slate-50 space-y-3">
+                      <div className="space-y-3">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-sm font-bold text-slate-700 ml-1">
+                            {" "}
+                            MEDIA & HÌNH ẢNH{" "}
+                          </label>
+                          <div className="flex gap-2">
+                            <Input
+                              {...register("imageUrl")}
+                              className="bg-slate-50 border-slate-100 !py-2 text-sm flex-1 h-10 text-slate-700"
+                              containerClassName="flex-1"
+                              placeholder="URL Ảnh (VD: https://example.com/image.jpg)..."
+                            />
+                            <button
+                              type="button"
+                              onClick={handleOpenMediaPicker}
+                              className="w-10 h-10 bg-red-600 text-white rounded-xl hover:bg-red-500 transition-all flex items-center justify-center shrink-0 active:scale-95 shadow-lg shadow-red-100"
+                              title="Chọn từ thư viện"
+                            >
+                              <PhotoIcon className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {imageUrlValue && !errors.imageUrl && (
+                          <div className="relative aspect-video rounded-xl overflow-hidden border border-slate-100 group/img bg-slate-50">
+                            <img
+                              src={imageUrlValue}
+                              className="w-full h-full object-cover opacity-80 group-hover/img:opacity-100 transition-all duration-300"
+                              alt="Preview"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setValue("imageUrl", "")}
+                              className="absolute top-2 right-2 w-7 h-7 bg-white/90 hover:bg-red-500 hover:text-white text-slate-400 rounded-lg flex items-center justify-center shadow-sm backdrop-blur-md transition-all opacity-0 group-hover/img:opacity-100"
+                              title="Xóa ảnh"
+                            >
+                              <TrashIcon className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-sm font-bold text-slate-700 ml-1">
+                            VIDEO
+                          </label>
+                          <div className="flex gap-2">
+                            <Input
+                              {...register("videoUrl")}
+                              className="bg-slate-50 border-slate-100 !py-2 text-sm flex-1 h-10 text-slate-700"
+                              containerClassName="flex-1"
+                              placeholder="URL Video (VD: https://example.com/video.mp4)..."
+                            />
+                            <button
+                              type="button"
+                              disabled={true}
+                              className="w-10 h-10 rounded-xl transition-all flex items-center justify-center bg-slate-50 text-slate-300 cursor-not-allowed"
+                              title="Chọn từ thư viện"
+                            >
+                              <VideoIcon className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50/50 rounded-3xl p-5 border border-blue-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <BrainIcon className="w-4 h-4 text-blue-500" />
+                    <h4 className="text-sm font-bold text-blue-800">
+                      Mẹo nhanh
+                    </h4>
+                  </div>
+                  <p className="text-xs text-blue-600/80 leading-relaxed font-medium">
+                    Nhập Hán tự trước để tự động gợi ý Pinyin và ý nghĩa (nếu
+                    có).
+                  </p>
                 </div>
               </div>
             </div>

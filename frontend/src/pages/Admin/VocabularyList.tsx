@@ -280,7 +280,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
                     <UploadIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                   )}
                   <span className="whitespace-nowrap uppercase tracking-wider">
-                    Nhập
+                    Nhập Excel
                   </span>
                 </label>
               </div>
