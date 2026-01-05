@@ -176,7 +176,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[90] transition-opacity duration-500 ${
+        className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-90 transition-opacity duration-500 ${
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={onClose}
@@ -184,7 +184,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
 
       {/* Sidebar Container */}
       <div
-        className={`fixed top-0 right-0 h-full w-96 max-w-[90vw] bg-white shadow-[0_0_50px_rgba(0,0,0,0.1)] z-[91] transform transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+        className={`fixed top-0 right-0 h-full w-96 max-w-[90vw] bg-white shadow-[0_0_50px_rgba(0,0,0,0.1)] z-91 transform transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
           isOpen ? "translate-x-0" : "translate-x-full"
         } flex flex-col`}
       >
@@ -228,7 +228,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="bg-slate-50 rounded-[2rem] p-4 border border-slate-100 shadow-inner">
+              <div className="bg-slate-50 rounded-4xl p-4 border border-slate-100 shadow-inner">
                 <div className="flex items-center space-x-3 mb-3">
                   <div
                     className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-slate-200 border-4 border-white"

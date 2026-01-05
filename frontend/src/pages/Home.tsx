@@ -111,7 +111,7 @@ const Home: React.FC = () => {
       }`}
     >
       <div
-        className={`w-full max-w-3xl transition-all duration-700 z-[1] ${
+        className={`w-full max-w-3xl transition-all duration-700 z-1 ${
           isCenteredMode ? "scale-100" : "mb-8 scale-100"
         }`}
       >

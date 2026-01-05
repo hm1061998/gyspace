@@ -40,7 +40,7 @@ const NavItem: React.FC<NavItemProps> = ({
       end={end}
       onClick={onClick}
       className={({ isActive }) =>
-        `flex items-center justify-between px-4 py-3 rounded-xl transition-all font-medium ${
+        `flex items-center justify-between px-4 py-3 rounded-xl transition-all font-medium relative ${
           isActive
             ? "bg-red-600 text-white shadow-lg shadow-red-900/20"
             : "text-slate-400 hover:bg-slate-800 hover:text-white"
@@ -52,7 +52,7 @@ const NavItem: React.FC<NavItemProps> = ({
         <span>{label}</span>
       </div>
       {badge !== undefined && badge > 0 && (
-        <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-[10px] font-black rounded-full shadow-lg">
+        <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-[10px] font-black rounded-full shadow-lg absolute right-0 top-0">
           {badge > 99 ? "99+" : badge}
         </span>
       )}
@@ -169,7 +169,7 @@ const AdminLayout: React.FC = () => {
         {/* User Info Section - New location */}
         <div className="px-6 mb-2">
           <div className="p-4 bg-slate-800/40 rounded-2xl border border-slate-700/50 flex items-center gap-3 group hover:bg-slate-800/60 transition-all cursor-default">
-            <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-red-700 rounded-xl flex items-center justify-center text-white shadow-lg shadow-red-900/30 shrink-0 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 bg-linear-to-br from-red-600 to-red-700 rounded-xl flex items-center justify-center text-white shadow-lg shadow-red-900/30 shrink-0 group-hover:scale-105 transition-transform">
               <UserIcon className="w-5 h-5" />
             </div>
             <div className="overflow-hidden">
@@ -252,7 +252,7 @@ const AdminLayout: React.FC = () => {
         {/* Scroll To Top Button */}
         <button
           onClick={scrollToTop}
-          className={`fixed bottom-6 right-6 z-[9999] w-12 h-12 bg-slate-900 text-white rounded-xl shadow-xl flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-95 ${
+          className={`fixed bottom-6 right-6 z-10 w-12 h-12 bg-slate-900 text-white rounded-xl shadow-xl flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-95 ${
             showScrollTop
               ? "translate-y-0 opacity-100"
               : "translate-y-20 opacity-0 pointer-events-none"

@@ -58,7 +58,7 @@ const MainLayout: React.FC = () => {
       {/* Scroll To Top Button */}
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-8 right-8 z-[9999] w-14 h-14 bg-red-600 text-white rounded-2xl shadow-[0_20px_50px_rgba(239,68,68,0.3)] flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-90 ${
+        className={`fixed bottom-8 right-8 z-10 w-14 h-14 bg-red-600 text-white rounded-2xl shadow-[0_20px_50px_rgba(239,68,68,0.3)] flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-90 ${
           showScrollTop
             ? "translate-y-0 opacity-100"
             : "translate-y-20 opacity-0 pointer-events-none"

@@ -35,7 +35,7 @@ const InfoCard: React.FC<{
   className?: string;
 }> = ({ title, icon, children, className }) => (
   <div
-    className={`bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 ${
+    className={`bg-white rounded-3xl md:rounded-4xl p-6 md:p-8 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 ${
       className || ""
     }`}
   >
@@ -171,7 +171,7 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
         <div className="absolute -top-10 -left-10 w-48 md:w-64 h-48 md:h-64 bg-red-500/5 rounded-full blur-3xl group-hover:bg-red-500/10 transition-colors duration-700"></div>
         <div className="absolute -bottom-10 -right-10 w-64 md:w-96 h-64 md:h-96 bg-indigo-500/5 rounded-full blur-3xl group-hover:bg-indigo-500/10 transition-colors duration-700"></div>
 
-        <div className="relative bg-white/70 backdrop-blur-2xl rounded-2xl md:rounded-[2rem] p-5 md:p-8 border border-white shadow-[0_20px_50px_rgba(0,0,0,0.05)] overflow-hidden">
+        <div className="relative bg-white/70 backdrop-blur-2xl rounded-2xl md:rounded-4xl p-5 md:p-8 border border-white shadow-[0_20px_50px_rgba(0,0,0,0.05)] overflow-hidden">
           <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start md:items-center">
             {/* Hanzi Visual */}
             <div className="flex-1 space-y-4 w-full">
@@ -283,7 +283,7 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
         <div className="xl:col-span-8 space-y-6 md:space-y-8">
           {/* Detailed Analysis Section */}
           {idiom.analysis?.length > 0 && (
-            <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-8 border border-slate-100 shadow-sm relative overflow-hidden group">
+            <div className="bg-white rounded-3xl md:rounded-4xl p-5 md:p-8 border border-slate-100 shadow-sm relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
 
               <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
@@ -323,14 +323,14 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
 
           {/* Illustration Section */}
           {idiom.imageUrl && (
-            <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm group">
-              <div className="relative aspect-[4/3] sm:aspect-[16/7] md:aspect-[21/9]">
+            <div className="bg-white rounded-3xl md:rounded-4xl overflow-hidden border border-slate-100 shadow-sm group">
+              <div className="relative aspect-4/3 sm:aspect-16/7 md:aspect-21/9">
                 <img
                   src={idiom.imageUrl}
                   className="w-full h-full object-cover"
                   alt={idiom.hanzi}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent"></div>
+                <div className="absolute inset-0 bg-linear-to-t from-slate-900/60 via-transparent to-transparent"></div>
                 <div className="absolute bottom-4 md:bottom-6 left-4 md:left-8 flex items-center gap-2 md:gap-3">
                   <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/20">
                     <CheckCircleIcon className="w-5 h-5 md:w-6 md:h-6" />
@@ -362,7 +362,7 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
           </div>
 
           {/* Examples Section */}
-          <div className="bg-slate-900 rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-10 text-white shadow-2xl shadow-slate-900/20 relative overflow-hidden">
+          <div className="bg-slate-900 rounded-3xl md:rounded-4xl p-5 md:p-10 text-white shadow-2xl shadow-slate-900/20 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-48 md:w-64 h-48 md:h-64 bg-red-600/10 rounded-full blur-3xl -mr-24 md:-mr-32 -mt-24 md:-mt-32"></div>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 md:mb-10">
@@ -405,7 +405,7 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
         {/* Action Sidebar - Mobile bottom, XL side */}
         <div className="xl:col-span-4 mt-2 md:mt-0">
           <div className="xl:sticky xl:top-24 space-y-4 md:space-y-6">
-            <div className="bg-white border border-slate-100 rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-7 shadow-sm">
+            <div className="bg-white border border-slate-100 rounded-3xl md:rounded-4xl p-5 md:p-7 shadow-sm">
               <div className="flex items-center gap-3 mb-5 md:mb-7">
                 <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-50 rounded-xl md:rounded-2xl flex items-center justify-center text-amber-500 shadow-inner">
                   <VideoIcon className="w-5 h-5 md:w-6 md:h-6" />
@@ -454,7 +454,7 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
             </div>
 
             {/* Learning Tip Card - Simple on mobile */}
-            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-8 text-white relative overflow-hidden shadow-2xl shadow-indigo-600/20">
+            <div className="bg-linear-to-br from-indigo-600 to-purple-700 rounded-3xl md:rounded-4xl p-6 md:p-8 text-white relative overflow-hidden shadow-2xl shadow-indigo-600/20">
               <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
               <h5 className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-2 md:mb-3">
                 Tip học tập

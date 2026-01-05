@@ -247,7 +247,7 @@ const AdminReports: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               </p>
             </div>
           ) : reports.length === 0 ? (
-            <div className="bg-white rounded-[2rem] border border-slate-100 p-20 flex flex-col items-center justify-center text-center shadow-sm">
+            <div className="bg-white rounded-4xl border border-slate-100 p-20 flex flex-col items-center justify-center text-center shadow-sm">
               <div className="w-20 h-20 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-6">
                 <ExclamationIcon className="w-10 h-10" />
               </div>
@@ -277,7 +277,7 @@ const AdminReports: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               {reports.map((report) => (
                 <div
                   key={report.id}
-                  className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100 p-5 sm:p-7 shadow-sm hover:shadow-xl transition-all group flex flex-col"
+                  className="bg-white rounded-3xl sm:rounded-4xl border border-slate-100 p-5 sm:p-7 shadow-sm hover:shadow-xl transition-all group flex flex-col"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
