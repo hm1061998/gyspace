@@ -157,7 +157,7 @@ export const fetchStoredIdioms = async (
     const response = await http.get<PaginatedResponse<Idiom>>("/idioms", {
       ...rest,
       sort,
-      filter: typeof filter === "object" ? JSON.stringify(filter) : filter,
+      filter,
     });
     return response.data;
   } catch (error) {
@@ -222,10 +222,7 @@ export const fetchSearchLogs = async (
 
   const response = await http.get<PaginatedResponse<any>>(
     "/idioms/admin/search-logs",
-    {
-      ...rest,
-      filter: typeof filter === "object" ? JSON.stringify(filter) : filter,
-    }
+    params
   );
   return response.data;
 };

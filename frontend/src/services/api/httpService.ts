@@ -132,7 +132,20 @@ class HttpService {
     Object.entries(params).forEach(([key, value]) => {
       // Skip null, undefined, and empty strings
       if (value !== null && value !== undefined && value !== "") {
-        searchParams.append(key, String(value));
+        let stringValue = value;
+        // Automatically stringify 'filter' if it's an object
+        if (key === "filter" && typeof value === "object") {
+          const cleanedFilter = Object.entries(value).reduce((acc, [k, v]) => {
+            if (v !== null && v !== undefined && v !== "") {
+              acc[k] = v;
+            }
+            return acc;
+          }, {} as Record<string, any>);
+
+          if (Object.keys(cleanedFilter).length === 0) return;
+          stringValue = JSON.stringify(cleanedFilter);
+        }
+        searchParams.append(key, String(stringValue));
       }
     });
 

@@ -158,19 +158,30 @@ export class UserDataService {
     page: number = 1,
     limit: number = 20,
     sort: string = 'createdAt,DESC',
+    search: string = '',
   ) {
     const skip = (page - 1) * limit;
-
     const [sortField, sortOrder] = sort.split(',');
     const order = (sortOrder?.toUpperCase() as 'ASC' | 'DESC') || 'DESC';
 
-    const [history, total] = await this.historyRepository.findAndCount({
-      where: { user: { id: userId } },
-      relations: ['idiom'],
-      order: { [sortField]: order },
-      take: limit,
-      skip: skip,
-    });
+    const queryBuilder = this.historyRepository
+      .createQueryBuilder('history')
+      .leftJoinAndSelect('history.idiom', 'idiom')
+      .where('history.user.id = :userId', { userId });
+
+    if (search) {
+      const normalized = `%${search.toLowerCase().trim()}%`;
+      queryBuilder.andWhere(
+        '(idiom.hanzi ILike :search OR idiom.pinyin ILike :search OR idiom.vietnameseMeaning ILike :search)',
+        { search: normalized },
+      );
+    }
+
+    const [history, total] = await queryBuilder
+      .orderBy(`history.${sortField}`, order)
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
 
     return {
       data: history.map((h) => h.idiom),

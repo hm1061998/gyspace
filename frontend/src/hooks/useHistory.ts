@@ -17,10 +17,23 @@ export const useHistory = (initialPage = 1) => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
+  // Debounced search to avoid excessive API calls
+  const [debouncedFilter, setDebouncedFilter] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilter(filter);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [filter]);
+
   const loadHistoryData = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetchHistory(page, 20);
+      const response = await fetchHistory({
+        page,
+        limit: 20,
+        search: debouncedFilter,
+      });
       setHistoryItems(response.data);
       setTotalPages(response.meta.lastPage);
       setTotalItems(response.meta.total);
@@ -30,11 +43,16 @@ export const useHistory = (initialPage = 1) => {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, debouncedFilter]);
 
   useEffect(() => {
     loadHistoryData();
   }, [loadHistoryData]);
+
+  // Reset page to 1 when filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedFilter]);
 
   const handleClearAll = async () => {
     const confirmed = await modalService.danger(
@@ -76,14 +94,7 @@ export const useHistory = (initialPage = 1) => {
     }
   };
 
-  const filteredItems = useMemo(() => {
-    return historyItems.filter(
-      (item) =>
-        item.hanzi.toLowerCase().includes(filter.toLowerCase()) ||
-        item.pinyin.toLowerCase().includes(filter.toLowerCase()) ||
-        item.vietnameseMeaning.toLowerCase().includes(filter.toLowerCase())
-    );
-  }, [historyItems, filter]);
+  const filteredItems = historyItems;
 
   const toggleSelectAll = useCallback(() => {
     if (

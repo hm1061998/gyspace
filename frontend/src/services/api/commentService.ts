@@ -81,14 +81,9 @@ export interface CommentStats {
 export const fetchAllComments = async (
   params: QueryParams = {}
 ): Promise<PaginatedResponse<Feedback>> => {
-  const { filter, ...rest } = params;
-
   const response = await http.get<PaginatedResponse<Feedback>>(
     "/idiom-comments/admin/all",
-    {
-      ...rest,
-      filter: typeof filter === "object" ? JSON.stringify(filter) : filter,
-    }
+    params
   );
   return response.data;
 };

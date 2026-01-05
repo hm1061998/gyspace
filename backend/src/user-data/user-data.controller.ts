@@ -74,12 +74,14 @@ export class UserDataController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 20,
     @Query('sort') sort: string = 'createdAt,DESC',
+    @Query('search') search: string = '',
   ) {
     return this.userDataService.getHistory(
       req.user.id,
       Number(page),
       Number(limit),
       sort,
+      search,
     );
   }
 

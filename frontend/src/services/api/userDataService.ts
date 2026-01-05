@@ -22,15 +22,10 @@ export const checkSavedStatus = async (idiomId: string): Promise<boolean> => {
 export const fetchSavedIdioms = async (
   params: QueryParams = {}
 ): Promise<PaginatedResponse<Idiom>> => {
-  const { filter, sort = "createdAt,DESC", ...rest } = params;
   try {
     const response = await http.get<PaginatedResponse<Idiom>>(
       `${API_BASE_URL}/saved`,
-      {
-        ...rest,
-        sort,
-        filter: typeof filter === "object" ? JSON.stringify(filter) : filter,
-      }
+      { sort: "createdAt,DESC", ...params }
     );
     return response.data;
   } catch (e) {
@@ -49,15 +44,10 @@ export const updateSRSProgress = async (idiomId: string, srsData: any) => {
 export const fetchSRSData = async (
   params: QueryParams = {}
 ): Promise<PaginatedResponse<any>> => {
-  const { filter, sort = "createdAt,DESC", ...rest } = params;
   try {
     const response = await http.get<PaginatedResponse<any>>(
       `${API_BASE_URL}/srs`,
-      {
-        ...rest,
-        sort,
-        filter: typeof filter === "object" ? JSON.stringify(filter) : filter,
-      }
+      { sort: "createdAt,DESC", ...params }
     );
     return response.data;
   } catch (e) {
@@ -74,15 +64,10 @@ export const addToHistory = async (idiomId: string) => {
 export const fetchHistory = async (
   params: QueryParams = {}
 ): Promise<PaginatedResponse<Idiom>> => {
-  const { filter, sort = "createdAt,DESC", ...rest } = params;
   try {
     const response = await http.get<PaginatedResponse<Idiom>>(
       `${API_BASE_URL}/history`,
-      {
-        ...rest,
-        sort,
-        filter: typeof filter === "object" ? JSON.stringify(filter) : filter,
-      }
+      { sort: "createdAt,DESC", ...params }
     );
     return response.data;
   } catch (e) {
