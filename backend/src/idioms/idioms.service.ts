@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable, HttpException, Logger } from '@nestjs/common';
+import { Injectable, HttpException, Logger, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike, DataSource } from 'typeorm';
 import {
@@ -11,6 +11,8 @@ import {
 import { SearchLogEntity } from './entities/search-log.entity';
 import { GoogleGenAI, Type } from '@google/genai';
 import { CreateIdiomDto } from './dto/create-idiom.dto';
+import { IdiomQueryDto, SearchLogQueryDto } from './dto/idiom-query.dto';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
 import { SearchMode } from './idioms.controller';
 
 @Injectable()
@@ -92,16 +94,20 @@ export class IdiomsService {
       };
     } catch (error) {
       this.logger.error('Error getting admin stats:', error);
-      throw new HttpException('Lỗi khi lấy dữ liệu thống kê.', 400);
+      throw new HttpException(
+        'Lỗi khi lấy dữ liệu thống kê.',
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
-  async getSearchLogs(
-    page: number = 1,
-    limit: number = 20,
-    filter: string = '',
-    sort: string = 'count,DESC',
-  ) {
+  async getSearchLogs(query: SearchLogQueryDto) {
+    const {
+      page = 1,
+      limit = 20,
+      filter = '',
+      sort = 'lastsearched,DESC',
+    } = query;
     const skip = (page - 1) * limit;
 
     let search = filter;
@@ -204,7 +210,7 @@ export class IdiomsService {
 
   async bulkDeleteSearchLogs(queries: string[]) {
     if (!queries || queries.length === 0) {
-      throw new HttpException('Danh sách trống', 400);
+      throw new HttpException('Danh sách trống', HttpStatus.BAD_REQUEST);
     }
     await this.searchLogRepository
       .createQueryBuilder()
@@ -214,13 +220,14 @@ export class IdiomsService {
     return { success: true, deleted: queries.length };
   }
 
-  async findAll(
-    page: number = 1,
-    limit: number = 12,
-    search: string = '',
-    filter: string = '',
-    sort: string = 'createdAt,DESC',
-  ) {
+  async findAll(queryParams: IdiomQueryDto) {
+    const {
+      page = 1,
+      limit = 12,
+      search = '',
+      filter = '',
+      sort = 'createdAt,DESC',
+    } = queryParams;
     const skip = (page - 1) * limit;
 
     let searchKeyword = search;
@@ -287,7 +294,10 @@ export class IdiomsService {
       };
     } catch (error) {
       this.logger.error('Database find error:', error);
-      throw new HttpException('Lỗi khi truy xuất dữ liệu từ database.', 400);
+      throw new HttpException(
+        'Lỗi khi truy xuất dữ liệu từ database.',
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
@@ -296,11 +306,16 @@ export class IdiomsService {
       where: { id },
       relations: ['analysis', 'examples'],
     });
-    if (!idiom) throw new HttpException('Không tìm thấy từ vựng.', 400);
+    if (!idiom)
+      throw new HttpException(
+        'Không tìm thấy từ vựng.',
+        HttpStatus.BAD_REQUEST,
+      );
     return idiom;
   }
 
-  async fetchSuggestions(search: string, page: number = 1, limit: number = 8) {
+  async fetchSuggestions(query: PaginationQueryDto) {
+    const { page = 1, limit = 8, search = '' } = query;
     const skip = (page - 1) * limit;
 
     if (!search || search.trim().length < 1) {
@@ -454,7 +469,10 @@ export class IdiomsService {
       });
     }
 
-    throw new HttpException('Không tìm thấy từ này trong thư viện.', 400);
+    throw new HttpException(
+      'Không tìm thấy từ này trong thư viện.',
+      HttpStatus.BAD_REQUEST,
+    );
   }
 
   async create(createIdiomDto: CreateIdiomDto) {
@@ -524,7 +542,10 @@ export class IdiomsService {
       return await this.idiomRepository.save(idiom);
     } catch (error) {
       this.logger.error('Update idiom error:', error);
-      throw new HttpException('Lỗi khi cập nhật từ vựng.', 400);
+      throw new HttpException(
+        'Lỗi khi cập nhật từ vựng.',
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
@@ -536,7 +557,7 @@ export class IdiomsService {
 
   async bulkDelete(ids: string[]) {
     if (!ids || ids.length === 0) {
-      throw new HttpException('Danh sách trống', 400);
+      throw new HttpException('Danh sách trống', HttpStatus.BAD_REQUEST);
     }
     await this.idiomRepository.delete(ids);
     return { success: true, deleted: ids.length };
@@ -606,7 +627,10 @@ export class IdiomsService {
       }
     } catch (err) {
       this.logger.error('AI Model error or not configured', err);
-      throw new HttpException('Chưa cấu hình mô hình AI', 400);
+      throw new HttpException(
+        'Chưa cấu hình mô hình AI',
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 }

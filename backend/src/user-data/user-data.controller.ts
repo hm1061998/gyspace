@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserDataService } from './user-data.service';
-import { UpdateSRSDto } from './dto/user-data.dto';
+import { UserDataQueryDto, UpdateSRSDto } from './dto/user-data-query.dto';
 
 @Controller('user-data')
 @UseGuards(JwtAuthGuard)
@@ -29,18 +29,8 @@ export class UserDataController {
   }
 
   @Get('saved')
-  getSaved(
-    @Request() req,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 12,
-    @Query('sort') sort: string = 'createdAt,DESC',
-  ) {
-    return this.userDataService.getSavedIdioms(
-      req.user.id,
-      Number(page),
-      Number(limit),
-      sort,
-    );
+  getSaved(@Request() req, @Query() query: UserDataQueryDto) {
+    return this.userDataService.getSavedIdioms(req.user.id, query);
   }
 
   @Post('srs')
@@ -49,18 +39,8 @@ export class UserDataController {
   }
 
   @Get('srs')
-  getSRS(
-    @Request() req,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 50,
-    @Query('sort') sort: string = 'createdAt,DESC',
-  ) {
-    return this.userDataService.getSRSData(
-      req.user.id,
-      Number(page),
-      Number(limit),
-      sort,
-    );
+  getSRS(@Request() req, @Query() query: UserDataQueryDto) {
+    return this.userDataService.getSRSData(req.user.id, query);
   }
 
   @Post('history')
@@ -69,20 +49,8 @@ export class UserDataController {
   }
 
   @Get('history')
-  getHistory(
-    @Request() req,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
-    @Query('sort') sort: string = 'createdAt,DESC',
-    @Query('search') search: string = '',
-  ) {
-    return this.userDataService.getHistory(
-      req.user.id,
-      Number(page),
-      Number(limit),
-      sort,
-      search,
-    );
+  getHistory(@Request() req, @Query() query: UserDataQueryDto) {
+    return this.userDataService.getHistory(req.user.id, query);
   }
 
   @Delete('history')

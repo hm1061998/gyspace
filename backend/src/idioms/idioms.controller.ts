@@ -13,8 +13,10 @@ import {
 } from '@nestjs/common';
 import { IdiomsService } from './idioms.service';
 import { CreateIdiomDto, BulkCreateIdiomDto } from './dto/create-idiom.dto';
+import { IdiomQueryDto, SearchLogQueryDto } from './dto/idiom-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
 
 export type SearchMode = 'database' | 'ai';
 
@@ -30,18 +32,8 @@ export class IdiomsController {
 
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Get('admin/search-logs')
-  async getSearchLogs(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
-    @Query('filter') filter: string = '',
-    @Query('sort') sort: string = 'lastsearched,DESC',
-  ) {
-    return this.idiomsService.getSearchLogs(
-      Number(page),
-      Number(limit),
-      filter,
-      sort,
-    );
+  async getSearchLogs(@Query() query: SearchLogQueryDto) {
+    return this.idiomsService.getSearchLogs(query);
   }
 
   @UseGuards(JwtAuthGuard, AdminGuard)
@@ -57,33 +49,13 @@ export class IdiomsController {
   }
 
   @Get()
-  async findAll(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 12,
-    @Query('search') search: string = '',
-    @Query('filter') filter: string = '',
-    @Query('sort') sort: string = 'createdAt,DESC',
-  ) {
-    return this.idiomsService.findAll(
-      Number(page),
-      Number(limit),
-      search,
-      filter,
-      sort,
-    );
+  async findAll(@Query() query: IdiomQueryDto) {
+    return this.idiomsService.findAll(query);
   }
 
   @Get('suggestions')
-  async getSuggestions(
-    @Query('search') search: string = '',
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 8,
-  ) {
-    return this.idiomsService.fetchSuggestions(
-      search,
-      Number(page),
-      Number(limit),
-    );
+  async getSuggestions(@Query() query: PaginationQueryDto) {
+    return this.idiomsService.fetchSuggestions(query);
   }
 
   @Get('daily')

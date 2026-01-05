@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UserDataQueryDto } from './dto/user-data-query.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -46,12 +47,8 @@ export class UserDataService {
     return { isSaved: count > 0 };
   }
 
-  async getSavedIdioms(
-    userId: string,
-    page: number = 1,
-    limit: number = 12,
-    sort: string = 'createdAt,DESC',
-  ) {
+  async getSavedIdioms(userId: string, query: UserDataQueryDto) {
+    const { page = 1, limit = 12, sort = 'createdAt,DESC' } = query;
     const skip = (page - 1) * limit;
 
     const [sortField, sortOrder] = sort.split(',');
@@ -98,12 +95,8 @@ export class UserDataService {
     return this.srsRepository.save(progress);
   }
 
-  async getSRSData(
-    userId: string,
-    page: number = 1,
-    limit: number = 50,
-    sort: string = 'createdAt,DESC',
-  ) {
+  async getSRSData(userId: string, query: UserDataQueryDto) {
+    const { page = 1, limit = 50, sort = 'createdAt,DESC' } = query;
     const skip = (page - 1) * limit;
 
     const [sortField, sortOrder] = sort.split(',');
@@ -153,13 +146,13 @@ export class UserDataService {
     return this.historyRepository.save(history);
   }
 
-  async getHistory(
-    userId: string,
-    page: number = 1,
-    limit: number = 20,
-    sort: string = 'createdAt,DESC',
-    search: string = '',
-  ) {
+  async getHistory(userId: string, query: UserDataQueryDto) {
+    const {
+      page = 1,
+      limit = 20,
+      sort = 'createdAt,DESC',
+      search = '',
+    } = query;
     const skip = (page - 1) * limit;
     const [sortField, sortOrder] = sort.split(',');
     const order = (sortOrder?.toUpperCase() as 'ASC' | 'DESC') || 'DESC';

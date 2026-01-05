@@ -20,6 +20,7 @@ import {
   UpdateCommentStatusDto,
   CommentQueryDto,
 } from './dto/idiom-comment.dto';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
 
 @Controller('idiom-comments')
 export class IdiomCommentsController {
@@ -29,16 +30,9 @@ export class IdiomCommentsController {
   @Get('idiom/:idiomId')
   async getCommentsByIdiom(
     @Param('idiomId') idiomId: string,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
-    @Query('sort') sort: string = 'createdAt,DESC',
+    @Query() query: PaginationQueryDto,
   ) {
-    return this.commentsService.findByIdiom(
-      idiomId,
-      Number(page),
-      Number(limit),
-      sort,
-    );
+    return this.commentsService.findByIdiom(idiomId, query);
   }
 
   // User endpoint - Tạo comment mới (cần đăng nhập)

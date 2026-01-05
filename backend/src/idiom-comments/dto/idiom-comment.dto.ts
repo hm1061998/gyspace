@@ -4,11 +4,10 @@ import {
   MinLength,
   IsEnum,
   IsOptional,
-  IsInt,
-  Min,
 } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { CommentStatus } from '../entities/idiom-comment.entity';
+import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 
 export class CreateCommentDto {
   @IsNotEmpty({ message: 'Nội dung không được để trống' })
@@ -26,7 +25,7 @@ export class UpdateCommentStatusDto {
   status: CommentStatus;
 }
 
-export class CommentQueryDto {
+export class CommentQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsEnum(CommentStatus)
   status?: CommentStatus;
@@ -40,30 +39,6 @@ export class CommentQueryDto {
   userId?: string;
 
   @IsOptional()
-  @IsString()
-  search?: string;
-
-  @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
   onlyReported?: boolean;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  limit?: number;
-
-  @IsOptional()
-  @IsString()
-  filter?: string;
-
-  @IsOptional()
-  @IsString()
-  sort?: string;
 }

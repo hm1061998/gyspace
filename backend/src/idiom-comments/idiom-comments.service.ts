@@ -18,6 +18,7 @@ import {
   UpdateCommentStatusDto,
   CommentQueryDto,
 } from './dto/idiom-comment.dto';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class IdiomCommentsService {
@@ -63,12 +64,8 @@ export class IdiomCommentsService {
     return await this.commentRepository.save(comment);
   }
 
-  async findByIdiom(
-    idiomId: string,
-    page: number = 1,
-    limit: number = 10,
-    sort: string = 'createdAt,DESC',
-  ) {
+  async findByIdiom(idiomId: string, query: PaginationQueryDto) {
+    const { page = 1, limit = 10, sort = 'createdAt,DESC' } = query;
     const skip = (page - 1) * limit;
 
     const [sortField, sortOrder] = sort.split(',');
