@@ -12,8 +12,6 @@ import {
 } from "@/services/api/idiomService";
 import type { Idiom, SearchMode } from "@/types";
 import IdiomDetail from "@/components/idiom/IdiomDetail";
-import HandwritingPad from "@/components/game/HandwritingPad";
-import FeaturedComments from "@/components/idiom/FeaturedComments";
 import DailySuggestions from "@/components/idiom/DailySuggestions";
 import {
   SearchIcon,
@@ -37,7 +35,6 @@ const Home: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [searchMode, setSearchMode] = useState<SearchMode>("database");
-  const [isHandwritingPadOpen, setIsHandwritingPadOpen] = useState(false);
   const [voiceLang, setVoiceLang] = useState<"vi-VN" | "zh-CN">("vi-VN");
   const { isLoggedIn } = useOutletContext<{ isLoggedIn: boolean }>();
 
@@ -482,15 +479,6 @@ const Home: React.FC = () => {
             />
           </div>
         )}
-
-        {/* {isCenteredMode && (
-          <FeaturedComments
-            onSearch={(t) => {
-              setQuery(t);
-              handleSearch(t, "database");
-            }}
-          />
-        )} */}
       </div>
 
       {isLoading ? (
@@ -568,12 +556,6 @@ const Home: React.FC = () => {
           </button>
         </div>
       )}
-
-      <HandwritingPad
-        isOpen={isHandwritingPadOpen}
-        onClose={() => setIsHandwritingPadOpen(false)}
-        onCharacterSelect={(c) => setQuery((p) => p + c)}
-      />
     </div>
   );
 };

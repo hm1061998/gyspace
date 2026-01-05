@@ -40,9 +40,7 @@ const IdiomComments: React.FC<IdiomCommentsProps> = ({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [sortBy, setSortBy] = useState<"createdAt" | "likes">("createdAt");
 
-  const { user, isAuthenticated } = useSelector(
-    (state: RootState) => state.auth
-  );
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     setComments([]);
