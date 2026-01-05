@@ -7,8 +7,6 @@ import {
   HistoryIcon,
   ChevronRightIcon,
   FireIcon,
-  PhotoIcon,
-  ClockIcon,
   FlagIcon,
   ChatBubbleIcon,
   CheckCircleIcon,
@@ -21,9 +19,6 @@ import {
   getCommentStats,
   fetchReportStats,
 } from "@/redux/adminSlice";
-import { toast } from "@/libs/Toast";
-import { LoaderIcon } from "lucide-react";
-
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
@@ -269,13 +264,11 @@ const AdminDashboard: React.FC = () => {
         <div className="dashboard-section-half">
           <Section
             title="Cập nhật gần đây"
-            icon={<HistoryIcon className="section-header-icon blue" />}
+            icon={<HistoryIcon className="section-header-icon text-blue-500" />}
             action={
               <button
-                onClick={() =>
-                  onNavigate("/admin/idiom/list?sort=createdAt&order=DESC")
-                }
-                className="section-action-btn blue"
+                onClick={() => onNavigate("/admin/idiom/list")}
+                className="section-action-btn text-blue-500"
               >
                 Xem tất cả <ChevronRightIcon className="section-action-icon" />
               </button>
@@ -300,11 +293,11 @@ const AdminDashboard: React.FC = () => {
         <div className="dashboard-section-half">
           <Section
             title="Nội dung cần rà soát"
-            icon={<FlagIcon className="section-header-icon red" />}
+            icon={<FlagIcon className="section-header-icon text-red-500" />}
             action={
               <button
                 onClick={() => onNavigate("/admin/reports")}
-                className="section-action-btn red"
+                className="section-action-btn text-red-500"
               >
                 Xem tất cả <ChevronRightIcon className="section-action-icon" />
               </button>
