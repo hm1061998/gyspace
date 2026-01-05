@@ -88,7 +88,7 @@ const AdminDashboard: React.FC = () => {
             className={`btn-refresh ${loading ? "button-disabled" : ""}`}
           >
             {loading ? (
-              <LoaderIcon className="dashboard-action-icon animate-spin" />
+              <SpinnerIcon className="dashboard-action-icon" />
             ) : (
               <HistoryIcon className={`dashboard-action-icon `} />
             )}
@@ -214,7 +214,7 @@ const AdminDashboard: React.FC = () => {
         <div className="dashboard-section-col-1">
           <Section
             title="Phân bố cấp độ"
-            icon={<BrainIcon className="section-header-icon indigo" />}
+            icon={<BrainIcon className="section-header-icon text-indigo-500" />}
           >
             <div className="space-y-2-5">
               {stats?.levelStats?.slice(0, 3).map((level: any) => {
@@ -242,11 +242,11 @@ const AdminDashboard: React.FC = () => {
         <div className="dashboard-section-col-2">
           <Section
             title="Tìm kiếm bị bỏ lỡ"
-            icon={<FireIcon className="section-header-icon orange" />}
+            icon={<FireIcon className="section-header-icon text-orange-500" />}
             action={
               <button
                 onClick={() => onNavigate("/admin/search-logs")}
-                className="section-action-btn orange"
+                className="section-action-btn text-orange-500"
               >
                 Tất cả <ChevronRightIcon className="section-action-icon" />
               </button>
