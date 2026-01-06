@@ -50,14 +50,14 @@ const Pagination: React.FC<PaginationProps> = ({
         </div>
       )}
 
-      <div className="flex items-center gap-1.5">
+      <div className="pagination-btn-wrapper">
         <button
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
           className="pagination-btn-arrow"
           aria-label="Trang trước"
         >
-          <ArrowLeftIcon className="w-4 h-4" />
+          <ArrowLeftIcon className="dashboard-action-icon" />
         </button>
 
         <div className="flex items-center gap-1">
@@ -87,7 +87,7 @@ const Pagination: React.FC<PaginationProps> = ({
           className="pagination-btn-arrow"
           aria-label="Trang sau"
         >
-          <ChevronRightIcon className="w-4 h-4" />
+          <ChevronRightIcon className="dashboard-action-icon text-red-600" />
         </button>
       </div>
     </div>

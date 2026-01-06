@@ -22,18 +22,18 @@ const BulkActionBar: React.FC<BulkActionBarProps> = ({
 
   return (
     <div className={`bulk-bar ${className}`}>
-      <div className="flex items-center gap-2">
-        <CheckCircleIcon className="w-5 h-5 text-indigo-600" />
+      <div className="bulk-bar-left">
+        <CheckCircleIcon className="bulk-bar-icon text-indigo-600" />
         <span className="bulk-bar-text">
           Đã chọn {selectedCount} {label}
         </span>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="bulk-bar-right">
         <button onClick={onClearSelection} className="bulk-btn-clear">
           Bỏ chọn
         </button>
         <button onClick={onDelete} className="bulk-btn-delete">
-          <TrashIcon className="w-4 h-4" />
+          <TrashIcon className="bulk-bar-icon" />
           {deleteLabel}
         </button>
       </div>

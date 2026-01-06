@@ -36,6 +36,7 @@
   --red-500: #ef4444;
   --red-600: #dc2626;
   --red-700: #b91c1c;
+  --red-800: #991b1b;
 
   /* Raw Colors (Indigo) */
   --indigo-50: #eef2ff;
@@ -49,6 +50,8 @@
   --amber-200: #fde68a;
   --amber-300: #fcd34d;
   --emerald-500: #22c55d;
+  --emerald-600: #16a34a;
+  --emerald-700: #15803d;
 
   /* Typography */
   --font-sans: "Inter", sans-serif;

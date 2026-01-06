@@ -248,7 +248,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
                   className="vocab-back-btn"
                   title="Quay lại"
                 >
-                  <ArrowLeftIcon className="w-5 h-5" />
+                  <ArrowLeftIcon className="dashboard-action-icon" />
                 </button>
               )}
               <h1 className="vocab-page-title">
@@ -343,7 +343,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
         <div className="vocab-list-inner">
           {loading ? (
             <div className="vocab-loading">
-              <SpinnerIcon className="w-8 h-8 text-red-600" />
+              <SpinnerIcon className="dashboard-action-icon text-red-600" />
             </div>
           ) : error ? (
             <div className="vocab-error">{error}</div>
@@ -412,7 +412,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
                       </div>
                       {/* Mobile-only actions */}
                       <div className="vocab-card-mobile-actions">
-                        <PencilIcon className="w-4 h-4 text-slate-400" />
+                        <PencilIcon className="dashboard-action-icon text-slate-400" />
                       </div>
                     </div>
                     <p className="vocab-card-pinyin">{item.pinyin}</p>
@@ -430,7 +430,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
       {/* Bottom Section: Fixed Pagination */}
       {totalPages > 1 && (
         <div className="vocab-footer">
-          <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+          <div className="w-full px-4">
             <Pagination
               currentPage={page}
               totalPages={totalPages}
