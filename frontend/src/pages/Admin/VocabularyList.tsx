@@ -27,6 +27,7 @@ import FormSelect from "@/components/common/FormSelect";
 import Pagination from "@/components/common/Pagination";
 import BulkActionBar from "@/components/common/BulkActionBar";
 import SelectAllCheckbox from "@/components/common/SelectAllCheckbox";
+import ProcessingOverlay from "@/components/common/ProcessingOverlay";
 
 interface VocabularyListProps {
   onBack: () => void;
@@ -44,9 +45,13 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
 
   const [idioms, setIdioms] = useState<Idiom[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isImporting, setIsImporting] = useState(false);
-  const [importProgress, setImportProgress] = useState(0);
-  const [importStatus, setImportStatus] = useState("");
+
+  // Processing State (Import/Export)
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processProgress, setProcessProgress] = useState(0);
+  const [processStatus, setProcessStatus] = useState("");
+  const [processType, setProcessType] = useState<"import" | "export">("import");
+  const [processTitle, setProcessTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -78,38 +83,23 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
     loadIdioms();
   }, [page, debouncedFilter, selectedLevel, selectedType]);
 
-  // Simulated progress for import
+  // Simulated progress for processing
   useEffect(() => {
     let interval: any;
-    if (isImporting) {
-      setImportProgress(0);
-      setImportStatus("Đang đọc file Excel...");
+    if (isProcessing) {
       interval = setInterval(() => {
-        setImportProgress((prev) => {
-          if (prev < 30) {
-            setImportStatus("Đang phân tích dữ liệu...");
+        setProcessProgress((prev) => {
+          if (prev < 90) {
             return prev + Math.random() * 5;
-          }
-          if (prev < 70) {
-            setImportStatus("Đang chuẩn bị gửi lên máy chủ...");
-            return prev + Math.random() * 3;
-          }
-          if (prev < 95) {
-            setImportStatus("Đang lưu vào cơ sở dữ liệu...");
-            return prev + Math.random() * 1;
           }
           return prev;
         });
-      }, 500);
-    } else {
-      setImportProgress(0);
-      setImportStatus("");
-      if (interval) clearInterval(interval);
+      }, 400);
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isImporting]);
+  }, [isProcessing]);
 
   const loadIdioms = async () => {
     setLoading(true);
@@ -139,7 +129,11 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsImporting(true);
+    setIsProcessing(true);
+    setProcessType("import");
+    setProcessTitle("Đang nhập dữ liệu");
+    setProcessProgress(10);
+    setProcessStatus("Đang đọc file Excel...");
 
     const reader = new FileReader();
     reader.onload = async (evt) => {
@@ -153,7 +147,8 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
         if (data.length === 0)
           throw new Error("File trống hoặc sai định dạng.");
 
-        setImportStatus(`Tìm thấy ${data.length} hàng dữ liệu...`);
+        setProcessProgress(30);
+        setProcessStatus(`Tìm thấy ${data.length} hàng dữ liệu. Đang xử lý...`);
 
         const mappedData = data
           .map((row) => {
@@ -192,21 +187,23 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
         if (mappedData.length === 0)
           throw new Error("Không tìm thấy dữ liệu hợp lệ.");
 
+        setProcessProgress(60);
+        setProcessStatus("Đang lưu vào hệ thống...");
         await bulkCreateIdioms(mappedData);
-        setImportProgress(100);
-        setImportStatus("Hoàn tất!");
 
-        // Wait a bit to show 100% before closing
+        setProcessProgress(100);
+        setProcessStatus("Hoàn tất!");
+
         setTimeout(() => {
           toast.success(`Đã import thành công ${mappedData.length} từ vựng!`);
-          setIsImporting(false);
+          setIsProcessing(false);
           loadIdioms();
         }, 800);
       } catch (err: any) {
         toast.error(
           "Lỗi khi đọc file: " + (err.message || "Định dạng không hợp lệ.")
         );
-        setIsImporting(false);
+        setIsProcessing(false);
       } finally {
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
@@ -284,47 +281,14 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-slate-50 relative">
-      {/* Import Overlay */}
-      {isImporting && (
-        <div className="absolute inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white rounded-4xl p-8 sm:p-12 shadow-2xl max-w-md w-full mx-4 flex flex-col items-center text-center space-y-6 transform animate-in zoom-in-95 duration-300">
-            <div className="relative">
-              <div className="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center animate-pulse">
-                <DocumentIcon className="w-10 h-10 text-emerald-600" />
-              </div>
-              <div className="absolute -bottom-2 -right-2 bg-white p-1.5 rounded-xl shadow-lg">
-                <SpinnerIcon className="w-6 h-6 text-emerald-600" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-2xl font-black text-slate-800 tracking-tight">
-                Đang xử lý dữ liệu
-              </h3>
-              <p className="text-slate-500 font-bold text-xs uppercase tracking-widest min-h-[1rem]">
-                {importStatus}
-              </p>
-            </div>
-
-            <div className="w-full space-y-3">
-              <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-50">
-                <div
-                  className="h-full bg-linear-to-r from-emerald-500 to-teal-500 transition-all duration-300 ease-out shadow-lg shadow-emerald-100"
-                  style={{ width: `${importProgress}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                <span>Tiến trình</span>
-                <span>{Math.round(importProgress)}%</span>
-              </div>
-            </div>
-
-            <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
-              Vui lòng không đóng cửa sổ này cho đến khi quá trình hoàn tất.
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Processing Overlay */}
+      <ProcessingOverlay
+        isOpen={isProcessing}
+        progress={processProgress}
+        status={processStatus}
+        title={processTitle}
+        type={processType}
+      />
 
       {/* Top Section: Title & Actions & Filters */}
       <div className="flex-none bg-white border-b border-slate-200 shadow-sm z-10 transition-all">
@@ -404,11 +368,11 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
                   <label
                     htmlFor="excel-upload-list"
                     className={`flex items-center justify-center gap-2 px-3 h-10 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-xl hover:bg-emerald-100 transition-all cursor-pointer font-bold text-xs ${
-                      isImporting ? "opacity-75 cursor-not-allowed" : ""
+                      isProcessing ? "opacity-75 cursor-not-allowed" : ""
                     }`}
                     title="Nhập từ Excel"
                   >
-                    {isImporting ? (
+                    {isProcessing ? (
                       <SpinnerIcon className="w-4 h-4" />
                     ) : (
                       <UploadIcon className="w-4 h-4" />
