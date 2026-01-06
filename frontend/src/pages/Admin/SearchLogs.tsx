@@ -5,6 +5,7 @@ import {
   SearchIcon,
   SpinnerIcon,
   TrashIcon,
+  CloseIcon,
 } from "@/components/common/icons";
 import Pagination from "@/components/common/Pagination";
 import DateRangePicker from "@/components/common/DateRangePicker";
@@ -119,9 +120,10 @@ const SearchLogs: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   return (
     <div className="h-full flex flex-col overflow-hidden bg-slate-50">
       {/* Fixed Top Section */}
-      <div className="flex-none bg-white border-b border-slate-200 shadow-sm z-10">
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Fixed Top Section: Header, Stats, Toolbar */}
+      <div className="flex-none bg-white border-b border-slate-200 shadow-sm z-10 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4">
+          <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-2 sm:gap-3">
               {onBack && (
                 <button
@@ -133,28 +135,54 @@ const SearchLogs: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 </button>
               )}
               <div>
-                <h1 className="text-lg sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-                  <FireIcon className="w-5 h-5 sm:w-8 sm:h-8 text-orange-500 shrink-0" />
+                <h1 className="text-lg sm:text-2xl font-bold text-slate-800 flex items-center">
+                  <FireIcon className="w-5 h-5 sm:w-8 sm:h-8 mr-2 sm:mr-3 text-red-600 shrink-0" />
                   <span className="truncate">Yêu cầu tìm kiếm</span>
                 </h1>
                 <p className="text-slate-500 text-[10px] sm:text-xs hidden sm:block">
-                  Các từ khóa người dùng tìm kiếm nhưng chưa có trong hệ thống
+                  Các từ khóa người dùng quan tâm nhưng chưa có trong hệ thống
                 </p>
+              </div>
+            </div>
+
+            {/* Quick Stats optional: could show logs.length but totalPages/totalItems would be better if available */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              <div className="px-2 py-0.5 bg-orange-50 rounded-lg border border-orange-100 flex items-center gap-1.5">
+                <span className="text-[9px] font-bold text-orange-600 uppercase">
+                  MỚI
+                </span>
+                <span className="text-xs font-black text-orange-700">
+                  {logs.length || 0}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Filter Bar */}
-          <div className="mt-3 flex flex-col lg:flex-row gap-2 sm:gap-3">
+          {/* Search & Filter Toolbar */}
+          <div className="flex flex-col lg:flex-row gap-3 mb-3">
             <div className="relative flex-1 group">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-red-500 transition-colors" />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <SearchIcon className="h-4 w-4 text-slate-400 group-focus-within:text-red-500 transition-colors" />
+              </div>
               <input
                 type="text"
                 placeholder="Tìm từ khóa..."
+                className="block w-full pl-9 pr-9 h-10 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all font-medium"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-10 pl-9 pr-4 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all font-medium text-slate-700 text-sm"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch("");
+                    setPage(1);
+                  }}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <CloseIcon className="h-3.5 w-3.5 text-slate-400 hover:text-slate-600 cursor-pointer" />
+                </button>
+              )}
             </div>
 
             <DateRangePicker

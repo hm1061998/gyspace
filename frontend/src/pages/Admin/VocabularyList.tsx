@@ -9,6 +9,9 @@ import {
   TrashIcon,
   PlusIcon,
   UploadIcon,
+  DocumentIcon,
+  ListBulletIcon,
+  CloseIcon,
 } from "@/components/common/icons";
 import {
   fetchStoredIdioms,
@@ -21,7 +24,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { modalService } from "@/libs/Modal";
 import { toast } from "@/libs/Toast";
 import FormSelect from "@/components/common/FormSelect";
-import Input from "@/components/common/Input";
 import Pagination from "@/components/common/Pagination";
 import BulkActionBar from "@/components/common/BulkActionBar";
 import SelectAllCheckbox from "@/components/common/SelectAllCheckbox";
@@ -43,6 +45,8 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
   const [idioms, setIdioms] = useState<Idiom[]>([]);
   const [loading, setLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importStatus, setImportStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -73,6 +77,39 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
   useEffect(() => {
     loadIdioms();
   }, [page, debouncedFilter, selectedLevel, selectedType]);
+
+  // Simulated progress for import
+  useEffect(() => {
+    let interval: any;
+    if (isImporting) {
+      setImportProgress(0);
+      setImportStatus("Đang đọc file Excel...");
+      interval = setInterval(() => {
+        setImportProgress((prev) => {
+          if (prev < 30) {
+            setImportStatus("Đang phân tích dữ liệu...");
+            return prev + Math.random() * 5;
+          }
+          if (prev < 70) {
+            setImportStatus("Đang chuẩn bị gửi lên máy chủ...");
+            return prev + Math.random() * 3;
+          }
+          if (prev < 95) {
+            setImportStatus("Đang lưu vào cơ sở dữ liệu...");
+            return prev + Math.random() * 1;
+          }
+          return prev;
+        });
+      }, 500);
+    } else {
+      setImportProgress(0);
+      setImportStatus("");
+      if (interval) clearInterval(interval);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isImporting]);
 
   const loadIdioms = async () => {
     setLoading(true);
@@ -115,6 +152,9 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
 
         if (data.length === 0)
           throw new Error("File trống hoặc sai định dạng.");
+
+        setImportStatus(`Tìm thấy ${data.length} hàng dữ liệu...`);
+
         const mappedData = data
           .map((row) => {
             const hanzi = row["QUÁN DỤNG TỪ"] || row["CHỮ HÁN"] || row["hanzi"];
@@ -153,14 +193,21 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
           throw new Error("Không tìm thấy dữ liệu hợp lệ.");
 
         await bulkCreateIdioms(mappedData);
-        toast.success(`Đã import thành công ${mappedData.length} từ vựng!`);
-        loadIdioms();
+        setImportProgress(100);
+        setImportStatus("Hoàn tất!");
+
+        // Wait a bit to show 100% before closing
+        setTimeout(() => {
+          toast.success(`Đã import thành công ${mappedData.length} từ vựng!`);
+          setIsImporting(false);
+          loadIdioms();
+        }, 800);
       } catch (err: any) {
         toast.error(
           "Lỗi khi đọc file: " + (err.message || "Định dạng không hợp lệ.")
         );
-      } finally {
         setIsImporting(false);
+      } finally {
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
     };
@@ -236,11 +283,53 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
     selectedIds.length > 0 && selectedIds.length < idioms.length;
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-slate-50">
+    <div className="h-full flex flex-col overflow-hidden bg-slate-50 relative">
+      {/* Import Overlay */}
+      {isImporting && (
+        <div className="absolute inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-4xl p-8 sm:p-12 shadow-2xl max-w-md w-full mx-4 flex flex-col items-center text-center space-y-6 transform animate-in zoom-in-95 duration-300">
+            <div className="relative">
+              <div className="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center animate-pulse">
+                <DocumentIcon className="w-10 h-10 text-emerald-600" />
+              </div>
+              <div className="absolute -bottom-2 -right-2 bg-white p-1.5 rounded-xl shadow-lg">
+                <SpinnerIcon className="w-6 h-6 text-emerald-600" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black text-slate-800 tracking-tight">
+                Đang xử lý dữ liệu
+              </h3>
+              <p className="text-slate-500 font-bold text-xs uppercase tracking-widest min-h-[1rem]">
+                {importStatus}
+              </p>
+            </div>
+
+            <div className="w-full space-y-3">
+              <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-50">
+                <div
+                  className="h-full bg-linear-to-r from-emerald-500 to-teal-500 transition-all duration-300 ease-out shadow-lg shadow-emerald-100"
+                  style={{ width: `${importProgress}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <span>Tiến trình</span>
+                <span>{Math.round(importProgress)}%</span>
+              </div>
+            </div>
+
+            <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
+              Vui lòng không đóng cửa sổ này cho đến khi quá trình hoàn tất.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Top Section: Title & Actions & Filters */}
-      <div className="flex-none bg-white border-b border-slate-200 shadow-sm z-10">
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+      <div className="flex-none bg-white border-b border-slate-200 shadow-sm z-10 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4">
+          <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-2 sm:gap-3">
               {onBack && (
                 <button
@@ -251,69 +340,102 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
                   <ArrowLeftIcon className="w-5 h-5" />
                 </button>
               )}
-              <h1 className="text-lg sm:text-2xl font-hanzi font-bold text-slate-800">
-                Kho từ vựng{" "}
-                <span className="text-slate-400 font-sans text-xs sm:text-lg font-normal">
-                  ({totalItems})
-                </span>
-              </h1>
+              <div>
+                <h1 className="text-lg sm:text-2xl font-bold text-slate-800 flex items-center">
+                  <ListBulletIcon className="w-5 h-5 sm:w-8 sm:h-8 mr-2 sm:mr-3 text-red-600 shrink-0" />
+                  <span className="truncate">Kho từ vựng</span>
+                </h1>
+                <p className="text-slate-500 text-[10px] sm:text-xs hidden sm:block">
+                  Quản lý và tra cứu toàn bộ danh sách từ vựng trong hệ thống
+                </p>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <div className="relative flex-1 sm:flex-initial">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleExcelImport}
-                  accept=".xlsx, .xls"
-                  className="hidden"
-                  id="excel-upload-list"
-                />
-                <label
-                  htmlFor="excel-upload-list"
-                  className={`flex items-center justify-center gap-2 px-4 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all cursor-pointer shadow-md font-bold text-[10px] sm:text-xs ${
-                    isImporting ? "opacity-75 cursor-not-allowed" : ""
-                  }`}
-                >
-                  {isImporting ? (
-                    <SpinnerIcon className="w-3 h-3 sm:w-4 sm:h-4" />
-                  ) : (
-                    <UploadIcon className="w-3 h-3 sm:w-4 sm:h-4" />
-                  )}
-                  <span className="whitespace-nowrap uppercase tracking-wider">
-                    Nhập Excel
-                  </span>
-                </label>
+            {/* Quick Stats */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              <div className="px-2 py-0.5 bg-slate-100 rounded-lg border border-slate-200 flex items-center gap-1.5">
+                <span className="text-[9px] font-bold text-slate-400 uppercase">
+                  TỔNG
+                </span>
+                <span className="text-xs font-black text-slate-700">
+                  {totalItems || 0}
+                </span>
               </div>
-
-              <button
-                onClick={() => {
-                  navigate("/admin/idiom/insert");
-                }}
-                className="flex-1 sm:flex-initial flex items-center justify-center px-4 h-10 bg-red-700 hover:bg-red-800 text-white rounded-xl transition-all shadow-md font-bold text-[10px] sm:text-xs group"
-              >
-                <div className="flex items-center space-x-2">
-                  <PlusIcon className="w-3 h-3 sm:w-4 sm:h-4 transition-transform group-hover:rotate-90" />
-                  <span className="whitespace-nowrap uppercase tracking-wider">
-                    Thêm
-                  </span>
-                </div>
-              </button>
             </div>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-2 sm:gap-3">
-            <div className="relative flex-1 group">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-red-500 transition-colors" />
-              <input
-                type="text"
-                placeholder="Tìm từ vựng..."
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="w-full h-10 pl-9 pr-4 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all font-medium text-slate-700 text-[10px] sm:text-sm"
-              />
+          {/* Toolbar: Search, Filters & Main Actions */}
+          <div className="flex flex-col gap-3 mb-3">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <SearchIcon className="h-4 w-4 text-slate-400 group-focus-within:text-red-500 transition-colors" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Tìm từ vựng..."
+                  className="block w-full pl-9 pr-9 h-10 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all font-medium"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                />
+                {filter && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilter("");
+                    }}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    <CloseIcon className="h-3.5 w-3.5 text-slate-400 hover:text-slate-600 cursor-pointer" />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleExcelImport}
+                    accept=".xlsx, .xls"
+                    className="hidden"
+                    id="excel-upload-list"
+                  />
+                  <label
+                    htmlFor="excel-upload-list"
+                    className={`flex items-center justify-center gap-2 px-3 h-10 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-xl hover:bg-emerald-100 transition-all cursor-pointer font-bold text-xs ${
+                      isImporting ? "opacity-75 cursor-not-allowed" : ""
+                    }`}
+                    title="Nhập từ Excel"
+                  >
+                    {isImporting ? (
+                      <SpinnerIcon className="w-4 h-4" />
+                    ) : (
+                      <UploadIcon className="w-4 h-4" />
+                    )}
+                    <span className="hidden sm:inline uppercase tracking-wider">
+                      Excel
+                    </span>
+                  </label>
+                </div>
+
+                <button
+                  onClick={() => navigate("/admin/idiom/insert")}
+                  className="flex items-center justify-center gap-2 px-3 sm:px-4 h-10 bg-red-700 text-white rounded-xl font-bold text-xs hover:bg-red-800 transition-all shadow-lg shadow-red-100 active:scale-95"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  <span className="hidden sm:inline uppercase tracking-wider">
+                    Thêm từ mới
+                  </span>
+                  <span className="sm:hidden uppercase tracking-wider">
+                    Thêm
+                  </span>
+                </button>
+              </div>
             </div>
-            <div className="grid grid-cols-2 lg:flex gap-2 sm:gap-3">
+
+            {/* Sub-Filters */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
               <FormSelect
                 value={selectedLevel}
                 onChange={(e) => {
@@ -326,7 +448,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
                   { value: "Trung cấp", label: "Trung cấp" },
                   { value: "Cao cấp", label: "Cao cấp" },
                 ]}
-                className="lg:min-w-[120px] h-10 text-[10px] sm:text-xs"
+                className="min-w-[100px] h-8 bg-slate-50 border-slate-200 rounded-lg text-[10px] font-bold"
               />
               <FormSelect
                 value={selectedType}
@@ -340,7 +462,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
                   { value: "Thành ngữ (Chengyu)", label: "Thành ngữ" },
                   { value: "Tiếng lóng", label: "Tiếng lóng" },
                 ]}
-                className="lg:min-w-[140px] h-10 text-[10px] sm:text-xs"
+                className="min-w-[120px] h-8 bg-slate-50 border-slate-200 rounded-lg text-[10px] font-bold"
               />
             </div>
           </div>
@@ -444,7 +566,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
 
       {/* Bottom Section: Fixed Pagination */}
       {totalPages > 1 && (
-        <div className="flex-none bg-white border-t border-slate-200 py-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <div className="flex-none bg-white border-t border-slate-200 py-3 shadow-[0_-4px_6_rgba(0,0,0,0.05)]">
           <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
             <Pagination
               currentPage={page}
