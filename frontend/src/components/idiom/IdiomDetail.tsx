@@ -191,10 +191,7 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
                 <p className="text-2xl md:text-4xl text-red-600 font-black font-sans tracking-widest bg-red-50 px-3 md:px-4 py-1 rounded-xl md:rounded-2xl border border-red-100/50 w-fit">
                   {idiom.pinyin}
                 </p>
-                <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
-                <p className="text-xl md:text-3xl font-black text-slate-700 tracking-tight leading-tight">
-                  {idiom.vietnameseMeaning}
-                </p>
+                {/* <div className="h-6 w-px bg-slate-200 hidden sm:block"></div> */}
               </div>
 
               {idiom.usageContext && (
@@ -263,15 +260,15 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
                 Nghĩa Trung
               </span>
               <p className="text-base md:text-lg font-bold text-slate-800 leading-relaxed">
-                {idiom.chineseDefinition}
+                {idiom.chineseDefinition || "Chưa có dữ liệu"}
               </p>
             </div>
             <div className="space-y-1 md:space-y-2">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Giải nghĩa bóng
+                Nghĩa Việt
               </span>
               <p className="text-base md:text-lg font-bold text-slate-800 italic leading-relaxed">
-                "{idiom.figurativeMeaning || idiom.literalMeaning}"
+                {idiom.vietnameseMeaning || "Chưa có dữ liệu"}
               </p>
             </div>
           </div>

@@ -25,9 +25,9 @@ const HomeActionCards: React.FC = () => {
           <h3 className="text-2xl font-bold text-white mb-2">
             Ôn tập Flashcard
           </h3>
-          <p className="text-red-100 text-sm opacity-90 leading-relaxed">
+          {/* <p className="text-red-100 text-sm opacity-90 leading-relaxed">
             Ôn tập hiệu quả bằng thuật toán ghi nhớ thông minh nhất.
-          </p>
+          </p> */}
           <div className="mt-6 inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 text-[10px] font-bold text-white uppercase tracking-widest">
             <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
             Đang mở ôn tập
@@ -47,9 +47,9 @@ const HomeActionCards: React.FC = () => {
             <PuzzlePieceIcon className="w-7 h-7 text-white" />
           </div>
           <h3 className="text-2xl font-bold text-white mb-2">Game Tìm Chữ</h3>
-          <p className="text-sky-100 text-sm opacity-90 leading-relaxed">
+          {/* <p className="text-sky-100 text-sm opacity-90 leading-relaxed">
             Thử thách nhãn quan và ghi nhớ từ vựng qua trò chơi.
-          </p>
+          </p> */}
           <div className="mt-6 inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 text-[10px] font-bold text-white uppercase tracking-widest">
             Thử thách tuần
           </div>

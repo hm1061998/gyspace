@@ -97,9 +97,9 @@ const DailySuggestions: React.FC<DailySuggestionsProps> = ({ onSelect }) => {
           <div className="absolute -top-4 -right-4 text-yellow-400 animate-bounce delay-700">
             <SparklesIcon className="w-6 h-6" />
           </div>
-          <p className="text-slate-500 text-xs md:text-sm max-w-md mx-auto">
+          {/* <p className="text-slate-500 text-xs md:text-sm max-w-md mx-auto">
             Khám phá những từ khóa nổi bật dành riêng cho bạn
-          </p>
+          </p> */}
         </div>
 
         {/* Grid of Chips */}
