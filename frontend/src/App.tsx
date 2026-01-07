@@ -14,6 +14,9 @@ import AdminComments from "@/pages/Admin/AdminComments";
 import SearchLogs from "@/pages/Admin/SearchLogs";
 import AdminReports from "@/pages/Admin/AdminReports";
 import Auth from "@/pages/Auth";
+import ExerciseManagement from "@/pages/Admin/ExerciseManagement";
+import ExerciseForm from "@/pages/Admin/ExerciseForm";
+import ExercisePlay from "@/pages/ExercisePlay";
 import RequireAuth from "@/context/RequireAuth";
 import AdminLayout from "@/layouts/AdminLayout";
 import MainLayout from "@/layouts/MainLayout";
@@ -29,10 +32,7 @@ const AdminInsertWrapper: React.FC<{ navigate: (path: string) => void }> = ({
   const { idiomId } = useParams<{ idiomId: string }>();
   // Trong Admin Layout mới, nút Back UI của Insert component có thể không cần thiết hoặc dẫn về list
   return (
-    <AdminInsert
-      onBack={() => navigate("/admin/idiom/list")}
-      idiomId={idiomId}
-    />
+    <AdminInsert onBack={() => navigate("/admin/idiom")} idiomId={idiomId} />
   );
 };
 
@@ -122,6 +122,7 @@ const App: React.FC = () => {
               }
             />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/exercises" element={<ExercisePlay />} />
           </Route>
 
           {/* Fallback cho các route không khớp trong User scope */}
@@ -133,7 +134,7 @@ const App: React.FC = () => {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
             <Route
-              path="idiom/list"
+              path="idiom"
               element={
                 <VocabularyList
                   onBack={() => navigate("/admin")}
@@ -150,9 +151,7 @@ const App: React.FC = () => {
             />
             <Route
               path="idiom/insert"
-              element={
-                <AdminInsert onBack={() => navigate("/admin/idiom/list")} />
-              }
+              element={<AdminInsert onBack={() => navigate("/admin/idiom")} />}
             />
             <Route
               path="comments"
@@ -166,6 +165,9 @@ const App: React.FC = () => {
               path="reports"
               element={<AdminReports onBack={() => navigate("/admin")} />}
             />
+            <Route path="exercises" element={<ExerciseManagement />} />
+            <Route path="exercises/new" element={<ExerciseForm />} />
+            <Route path="exercises/edit/:id" element={<ExerciseForm />} />
           </Route>
         </Route>
       </Routes>

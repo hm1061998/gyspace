@@ -33,6 +33,7 @@ interface UserSidebarProps {
       | "list"
       | "history"
       | "word_search"
+      | "exercises"
   ) => void;
   onLogin: () => void;
   onLogout: () => void;
@@ -286,26 +287,6 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
                 isActive={isPathActive("/")}
                 onClick={() => {
                   onViewChange("home");
-                  onClose();
-                }}
-              />
-              <MenuButton
-                icon={<CardIcon className="w-5 h-5" />}
-                label="Thẻ từ (SRS)"
-                badge="Luyện trí nhớ dài hạn"
-                isActive={isPathActive("/flashcards")}
-                onClick={() => {
-                  onViewChange("flashcards");
-                  onClose();
-                }}
-              />
-              <MenuButton
-                icon={<PuzzlePieceIcon className="w-5 h-5" />}
-                label="Game tìm chữ"
-                badge="Học qua giải trí"
-                isActive={isPathActive("/word_search")}
-                onClick={() => {
-                  onViewChange("word_search");
                   onClose();
                 }}
               />

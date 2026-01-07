@@ -79,3 +79,20 @@ export interface PaginatedResponse<T> {
     hasMore?: boolean;
   };
 }
+export enum ExerciseType {
+  MATCHING = "MATCHING",
+  MULTIPLE_CHOICE = "MULTIPLE_CHOICE",
+  FILL_BLANKS = "FILL_BLANKS",
+}
+
+export interface Exercise {
+  id: string;
+  title: string;
+  description?: string;
+  type: ExerciseType;
+  content: any;
+  difficulty: "easy" | "medium" | "hard";
+  points: number;
+  createdAt: string;
+  updatedAt: string;
+}

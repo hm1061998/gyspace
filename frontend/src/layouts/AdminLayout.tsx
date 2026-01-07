@@ -13,6 +13,7 @@ import {
   FireIcon,
   ChevronDownIcon,
   ExclamationIcon,
+  PuzzlePieceIcon,
 } from "@/components/common/icons";
 import { fetchCommentStats } from "@/services/api/commentService";
 import { getReportStats } from "@/services/api/reportService";
@@ -203,15 +204,15 @@ const AdminLayout: React.FC = () => {
               label="Bảng điều khiển"
             />
             <NavItem
-              to="/admin/idiom/list"
+              to="/admin/idiom"
               icon={<ListBulletIcon />}
               label="Kho từ vựng"
             />
-            <NavItem
+            {/* <NavItem
               to="/admin/idiom/insert"
               icon={<PlusIcon />}
               label="Thêm từ mới"
-            />
+            /> */}
             <NavItem
               to="/admin/comments"
               icon={<ChatBubbleIcon />}
@@ -228,6 +229,11 @@ const AdminLayout: React.FC = () => {
               to="/admin/search-logs"
               icon={<FireIcon />}
               label="Mọi người đã tìm"
+            />
+            <NavItem
+              to="/admin/exercises"
+              icon={<PuzzlePieceIcon />}
+              label="Quản lý bài tập"
             />
           </nav>
         </div>
