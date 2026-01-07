@@ -40,7 +40,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async refresh(@Req() req, @Res({ passthrough: true }) response: Response) {
     const refreshToken = req.cookies?.refresh;
-    if (!refreshToken) throw new UnauthorizedException('No refresh token');
+    if (!refreshToken) {
+      this.clearCookies(response);
+      throw new UnauthorizedException('No refresh token');
+    }
 
     try {
       const payload = await this.authService.verifyRefreshToken(refreshToken);
@@ -51,6 +54,7 @@ export class AuthController {
       this.setCookies(response, tokens.accessToken, tokens.refreshToken);
       return { success: true };
     } catch {
+      this.clearCookies(response);
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
@@ -59,10 +63,26 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   async logout(@Req() req, @Res({ passthrough: true }) response: Response) {
-    await this.authService.logout(req.user.id);
-    response.clearCookie('session', { path: '/' });
-    response.clearCookie('refresh', { path: '/' });
+    if (req.user?.id) {
+      await this.authService.logout(req.user.id);
+    }
+    this.clearCookies(response);
     return { message: 'Logged out successfully' };
+  }
+
+  private clearCookies(response: Response) {
+    const isProd = process.env.NODE_ENV === 'production';
+    const commonOptions = {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'lax' as const,
+    };
+
+    response.clearCookie('session', { ...commonOptions, path: '/' });
+    response.clearCookie('refresh', {
+      ...commonOptions,
+      path: '/api/auth/refresh',
+    });
   }
 
   private setCookies(
@@ -71,19 +91,20 @@ export class AuthController {
     refreshToken: string,
   ) {
     const isProd = process.env.NODE_ENV === 'production';
-
-    response.cookie('session', accessToken, {
+    const commonOptions = {
       httpOnly: true,
       secure: isProd,
-      sameSite: 'lax',
+      sameSite: 'lax' as const,
+    };
+
+    response.cookie('session', accessToken, {
+      ...commonOptions,
       path: '/',
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
     response.cookie('refresh', refreshToken, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: 'lax',
+      ...commonOptions,
       path: '/api/auth/refresh', // Restricted path for security
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
