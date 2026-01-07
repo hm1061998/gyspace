@@ -235,6 +235,11 @@ const AdminLayout: React.FC = () => {
               icon={<PuzzlePieceIcon />}
               label="Quản lý bài tập"
             />
+            <NavItem
+              to="/admin/users"
+              icon={<UserIcon />}
+              label="Quản lý người dùng"
+            />
           </nav>
         </div>
 

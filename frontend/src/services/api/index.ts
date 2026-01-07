@@ -15,5 +15,8 @@ export * from "./userDataService";
 // Comment Services
 export * from "./commentService";
 
+// User Management Services
+export * from "./userService";
+
 // HTTP Client
 export { http } from "./httpService";

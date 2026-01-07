@@ -13,6 +13,7 @@ import Dashboard from "@/pages/Admin/Dashboard";
 import AdminComments from "@/pages/Admin/AdminComments";
 import SearchLogs from "@/pages/Admin/SearchLogs";
 import AdminReports from "@/pages/Admin/AdminReports";
+import UserManagement from "@/pages/Admin/UserManagement";
 import Auth from "@/pages/Auth";
 import ExerciseManagement from "@/pages/Admin/ExerciseManagement";
 import ExerciseForm from "@/pages/Admin/ExerciseForm";
@@ -165,6 +166,7 @@ const App: React.FC = () => {
               path="reports"
               element={<AdminReports onBack={() => navigate("/admin")} />}
             />
+            <Route path="users" element={<UserManagement />} />
             <Route path="exercises" element={<ExerciseManagement />} />
             <Route path="exercises/new" element={<ExerciseForm />} />
             <Route path="exercises/edit/:id" element={<ExerciseForm />} />
