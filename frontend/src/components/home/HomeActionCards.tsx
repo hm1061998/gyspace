@@ -5,8 +5,9 @@ import {
   CardIcon,
   PuzzlePieceIcon,
 } from "@/components/common/icons";
+import { toast } from "@/libs/Toast";
 
-const HomeActionCards: React.FC = () => {
+const HomeActionCards: React.FC = ({ isLoggedIn }) => {
   const navigate = useNavigate();
 
   return (
@@ -57,7 +58,13 @@ const HomeActionCards: React.FC = () => {
       </button>
 
       <button
-        onClick={() => navigate("exercises")}
+        onClick={() => {
+          if (!isLoggedIn) {
+            toast.error("Vui lòng đăng nhập để sử dụng tính năng này");
+            return;
+          }
+          navigate("exercises");
+        }}
         className="group relative bg-gradient-to-br from-purple-600 to-fuchsia-700 p-8 rounded-[2.5rem] text-left overflow-hidden shadow-2xl hover:shadow-purple-200 hover:-translate-y-1.5 transition-all duration-300"
       >
         <div className="absolute -right-8 -bottom-8 opacity-10 group-hover:scale-125 transition-transform duration-700">

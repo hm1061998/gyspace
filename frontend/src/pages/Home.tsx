@@ -188,7 +188,7 @@ const Home: React.FC = () => {
           <p className="text-red-600 font-bold">{error}</p>
         </div>
       ) : (
-        <HomeActionCards />
+        <HomeActionCards isLoggedIn={isLoggedIn} />
       )}
     </div>
   );
