@@ -11,7 +11,8 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserDataService } from './user-data.service';
-import { UserDataQueryDto, UpdateSRSDto } from './dto/user-data-query.dto';
+import { UserDataQueryDto } from './dto/user-data-query.dto';
+import { UpdateSRSDto } from './dto/user-data.dto';
 
 @Controller('user-data')
 @UseGuards(JwtAuthGuard)
