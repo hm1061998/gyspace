@@ -7,6 +7,7 @@ import {
 } from "@/services/api/userDataService";
 import type { Idiom } from "@/types";
 import { toast } from "@/libs/Toast";
+import { loadingService } from "@/libs/Loading";
 
 interface SRSProgress {
   interval: number;
@@ -97,18 +98,56 @@ export const useFlashcards = (isLoggedIn: boolean, source: "all" | "saved") => {
   const handleRate = async (rating: 1 | 2 | 3) => {
     if (!currentCard || !currentCard.id) return;
 
-    const existing = srsData[currentCard.hanzi] || {
-      interval: 0,
-      repetition: 0,
-      efactor: 2.5,
-      nextReviewDate: 0,
-    };
-    let { interval, repetition, efactor } = existing;
-    let nextReviewDate = Date.now();
+    loadingService.show("Đang đồng bộ...");
+    try {
+      const existing = srsData[currentCard.hanzi] || {
+        interval: 0,
+        repetition: 0,
+        efactor: 2.5,
+        nextReviewDate: 0,
+      };
+      let { interval, repetition, efactor } = existing;
+      let nextReviewDate = Date.now();
 
-    if (rating === 1) {
-      repetition = 0;
-      interval = 0;
+      if (rating === 1) {
+        repetition = 0;
+        interval = 0;
+        try {
+          await updateSRSProgress(currentCard.id, {
+            interval,
+            repetition,
+            efactor,
+            nextReviewDate,
+          });
+        } catch (err) {
+          console.error("SRS sync error", err);
+        }
+
+        setSrsData((prev) => ({
+          ...prev,
+          [currentCard.hanzi]: {
+            interval,
+            repetition,
+            efactor,
+            nextReviewDate,
+          },
+        }));
+        setReviewQueue((prev) => [...prev.slice(1), currentCard]);
+        return;
+      }
+
+      if (repetition === 0) interval = 1;
+      else if (repetition === 1) interval = 6;
+      else interval = Math.round(interval * efactor);
+
+      if (rating === 3) {
+        efactor += 0.15;
+        interval = Math.round(interval * 1.3);
+      }
+      if (efactor < 1.3) efactor = 1.3;
+      repetition += 1;
+      nextReviewDate += interval * 24 * 60 * 60 * 1000;
+
       try {
         await updateSRSProgress(currentCard.id, {
           interval,
@@ -119,42 +158,14 @@ export const useFlashcards = (isLoggedIn: boolean, source: "all" | "saved") => {
       } catch (err) {
         console.error("SRS sync error", err);
       }
-
       setSrsData((prev) => ({
         ...prev,
         [currentCard.hanzi]: { interval, repetition, efactor, nextReviewDate },
       }));
-      setReviewQueue((prev) => [...prev.slice(1), currentCard]);
-      return;
+      setReviewQueue((prev) => prev.slice(1));
+    } finally {
+      loadingService.hide();
     }
-
-    if (repetition === 0) interval = 1;
-    else if (repetition === 1) interval = 6;
-    else interval = Math.round(interval * efactor);
-
-    if (rating === 3) {
-      efactor += 0.15;
-      interval = Math.round(interval * 1.3);
-    }
-    if (efactor < 1.3) efactor = 1.3;
-    repetition += 1;
-    nextReviewDate += interval * 24 * 60 * 60 * 1000;
-
-    try {
-      await updateSRSProgress(currentCard.id, {
-        interval,
-        repetition,
-        efactor,
-        nextReviewDate,
-      });
-    } catch (err) {
-      console.error("SRS sync error", err);
-    }
-    setSrsData((prev) => ({
-      ...prev,
-      [currentCard.hanzi]: { interval, repetition, efactor, nextReviewDate },
-    }));
-    setReviewQueue((prev) => prev.slice(1));
   };
 
   const getNextIntervalLabel = (rating: 1 | 2 | 3) => {

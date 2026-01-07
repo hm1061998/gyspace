@@ -21,6 +21,7 @@ import {
   toggleSaveIdiom,
   updateSRSProgress,
 } from "@/services/api/userDataService";
+import { loadingService } from "@/libs/Loading";
 
 interface IdiomDetailProps {
   idiom: Idiom;
@@ -143,6 +144,7 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
     }
     if (!idiom.id) return;
 
+    loadingService.show("Đang cài đặt lại tiến độ...");
     try {
       await updateSRSProgress(idiom.id, {
         interval: 0,
@@ -153,6 +155,8 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
       toast.success("Đã cài đặt lại tiến độ học tập!");
     } catch (e) {
       toast.error("Không thể cập nhật tiến độ học.");
+    } finally {
+      loadingService.hide();
     }
   };
 

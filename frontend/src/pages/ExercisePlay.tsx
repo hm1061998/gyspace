@@ -21,6 +21,7 @@ import {
 } from "@/services/api/exerciseService";
 import { Exercise, ExerciseType } from "@/types";
 import { toast } from "@/libs/Toast";
+import { loadingService } from "@/libs/Loading";
 import MultipleChoiceExercise from "@/components/Exercises/MultipleChoiceExercise";
 import MatchingExercise from "@/components/Exercises/MatchingExercise";
 import FillBlanksExercise from "@/components/Exercises/FillBlanksExercise";
@@ -144,6 +145,7 @@ const ExercisePlay: React.FC = () => {
   };
 
   const handleRestart = async () => {
+    loadingService.show("Đang làm mới tiến độ...");
     try {
       setLoading(true);
       await resetUserProgress();
@@ -155,6 +157,8 @@ const ExercisePlay: React.FC = () => {
     } catch (e) {
       toast.error("Không thể làm mới tiến độ");
       setLoading(false);
+    } finally {
+      loadingService.hide();
     }
   };
 
@@ -212,11 +216,15 @@ const ExercisePlay: React.FC = () => {
     setActiveBlankIndex(null); // Clear focus
 
     if (exercise.id) {
+      loadingService.show("Đang lưu tiến độ...");
       try {
         await saveProgress(exercise.id, currentScore);
         setTotalScore((prev) => prev + currentScore);
       } catch (e) {
         console.error("Failed to save progress", e);
+        toast.error("Không thể lưu tiến độ. Vui lòng thử lại sau.");
+      } finally {
+        loadingService.hide();
       }
     }
 
