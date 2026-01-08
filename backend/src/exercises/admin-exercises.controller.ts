@@ -23,6 +23,11 @@ export class AdminExercisesController {
     return this.exercisesService.create(createExerciseDto);
   }
 
+  @Post('bulk')
+  bulkCreate(@Body() createExerciseDtos: Partial<ExerciseEntity>[]) {
+    return this.exercisesService.bulkCreate(createExerciseDtos);
+  }
+
   @Get()
   findAll() {
     return this.exercisesService.findAll();

@@ -26,6 +26,11 @@ export const createExercise = async (data: Partial<Exercise>) => {
   return response.data;
 };
 
+export const bulkCreateExercises = async (data: Partial<Exercise>[]) => {
+  const response = await http.post<Exercise[]>("/admin/exercises/bulk", data);
+  return response.data;
+};
+
 export const updateExercise = async (id: string, data: Partial<Exercise>) => {
   const response = await http.patch<Exercise>(`/admin/exercises/${id}`, data);
   return response.data;

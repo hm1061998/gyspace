@@ -32,6 +32,11 @@ export class ExercisesService {
     return await this.exerciseRepository.save(exercise);
   }
 
+  async bulkCreate(data: Partial<ExerciseEntity>[]) {
+    const exercises = this.exerciseRepository.create(data);
+    return await this.exerciseRepository.save(exercises);
+  }
+
   async update(id: string, data: Partial<ExerciseEntity>) {
     const exercise = await this.findOne(id);
     Object.assign(exercise, data);
