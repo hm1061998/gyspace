@@ -262,8 +262,8 @@ const ExercisePlay: React.FC = () => {
     }
     if (exercise.type === ExerciseType.FILL_BLANKS) {
       // Must fill all blanks
-      const filledCount = Object.keys(userAnswers).filter((k) =>
-        k.startsWith("blank_")
+      const filledCount = Object.values(userAnswers).filter(
+        (v: any) => v !== undefined && v !== null && v !== ""
       ).length;
 
       //lấy số lượng ký tự cần fill dựa vào '[number]' trong exercise.content.text

@@ -25,8 +25,12 @@ const FillBlanksExercise: React.FC<FillBlanksExerciseProps> = ({
     return bank.sort(() => Math.random() - 0.5);
   }, [exercise.id || exercise.content.text]); // Re-shuffle if it's a new exercise
 
-  // Get number of blanks from text
-  const numberOfBlanks = exercise.content.text.match(/\[\d+\]/g)?.length || 0;
+  // Extract blank indices from text ensuring we respect the actual IDs (e.g., [1], [2])
+  const blankIndices = React.useMemo(() => {
+    const matches = exercise.content.text.match(/\[(\d+)\]/g);
+    if (!matches) return [];
+    return matches.map((m) => parseInt(m.match(/\d+/)?.[0] || "0"));
+  }, [exercise.content.text]);
 
   const handleWordBankClick = (word: string) => {
     if (submitted) return;
@@ -37,10 +41,9 @@ const FillBlanksExercise: React.FC<FillBlanksExerciseProps> = ({
         [`blank_${activeBlankIndex}`]: word,
       }));
       // Auto move to next empty blank
-      const nextEmpty = Array.from(
-        { length: numberOfBlanks },
-        (_, i) => i
-      ).find((i) => i > activeBlankIndex && !userAnswers[`blank_${i}`]);
+      const nextEmpty = blankIndices.find(
+        (i) => i > activeBlankIndex && !userAnswers[`blank_${i}`]
+      );
       if (nextEmpty !== undefined) {
         setActiveBlankIndex(nextEmpty);
       } else {
@@ -48,16 +51,13 @@ const FillBlanksExercise: React.FC<FillBlanksExerciseProps> = ({
       }
     } else {
       // Find first empty blank
-      const firstEmpty = Array.from(
-        { length: numberOfBlanks },
-        (_, i) => i
-      ).find((i) => !userAnswers[`blank_${i}`]);
+      const firstEmpty = blankIndices.find((i) => !userAnswers[`blank_${i}`]);
       if (firstEmpty !== undefined) {
         setUserAnswers((prev: any) => ({
           ...prev,
           [`blank_${firstEmpty}`]: word,
         }));
-        const next = Array.from({ length: numberOfBlanks }, (_, i) => i).find(
+        const next = blankIndices.find(
           (i) => i > firstEmpty && !userAnswers[`blank_${i}`]
         );
         if (next !== undefined) setActiveBlankIndex(next);
@@ -157,11 +157,25 @@ const FillBlanksExercise: React.FC<FillBlanksExerciseProps> = ({
           </p>
           <div className="flex flex-wrap gap-2">
             {shuffledWordBank.map((word: string, wIdx: number) => {
+              const isUsed = Object.values(userAnswers).includes(word);
+              const isSelected =
+                activeBlankIndex !== null &&
+                userAnswers[`blank_${activeBlankIndex}`] === word;
+
               return (
                 <button
                   key={wIdx}
                   onClick={() => handleWordBankClick(word)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-900 hover:text-white rounded-xl font-bold text-slate-700 transition-all active:scale-95 shadow-sm border border-slate-200"
+                  className={`
+                    px-4 py-2 rounded-xl font-bold transition-all active:scale-95 shadow-sm border
+                    ${
+                      isSelected
+                        ? "bg-slate-900 text-white border-slate-900 ring-4 ring-slate-200"
+                        : isUsed
+                        ? "bg-slate-100 text-slate-400 border-slate-200"
+                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                    }
+                  `}
                 >
                   {word}
                 </button>

@@ -12,15 +12,67 @@ interface MatchingExerciseProps {
   submitted: boolean;
 }
 
-const PAIR_COLORS = [
-  "bg-orange-100 border-orange-200 text-orange-900 shadow-orange-100",
-  "bg-blue-100 border-blue-200 text-blue-900 shadow-blue-100",
-  "bg-purple-100 border-purple-200 text-purple-900 shadow-purple-100",
-  "bg-emerald-100 border-emerald-200 text-emerald-900 shadow-emerald-100",
-  "bg-rose-100 border-rose-200 text-rose-900 shadow-rose-100",
-  "bg-amber-100 border-amber-200 text-amber-900 shadow-amber-100",
-  "bg-cyan-100 border-cyan-200 text-cyan-900 shadow-cyan-100",
-  "bg-indigo-100 border-indigo-200 text-indigo-900 shadow-indigo-100",
+const DISTINCT_PAIRS = [
+  // 1. Red
+  {
+    line: "#dc2626",
+    box: "bg-red-100 border-red-200 text-red-900 shadow-red-100",
+  },
+  // 2. Orange
+  {
+    line: "#ea580c",
+    box: "bg-orange-100 border-orange-200 text-orange-900 shadow-orange-100",
+  },
+  // 3. Amber
+  {
+    line: "#d97706",
+    box: "bg-amber-100 border-amber-200 text-amber-900 shadow-amber-100",
+  },
+  // 4. Lime
+  {
+    line: "#65a30d",
+    box: "bg-lime-100 border-lime-200 text-lime-900 shadow-lime-100",
+  },
+  // 5. Emerald
+  {
+    line: "#059669",
+    box: "bg-emerald-100 border-emerald-200 text-emerald-900 shadow-emerald-100",
+  },
+  // 6. Teal
+  {
+    line: "#0d9488",
+    box: "bg-teal-100 border-teal-200 text-teal-900 shadow-teal-100",
+  },
+  // 7. Cyan
+  {
+    line: "#0891b2",
+    box: "bg-cyan-100 border-cyan-200 text-cyan-900 shadow-cyan-100",
+  },
+  // 8. Blue
+  {
+    line: "#2563eb",
+    box: "bg-blue-100 border-blue-200 text-blue-900 shadow-blue-100",
+  },
+  // 9. Indigo
+  {
+    line: "#4f46e5",
+    box: "bg-indigo-100 border-indigo-200 text-indigo-900 shadow-indigo-100",
+  },
+  // 10. Violet
+  {
+    line: "#7c3aed",
+    box: "bg-violet-100 border-violet-200 text-violet-900 shadow-violet-100",
+  },
+  // 11. Fuchsia
+  {
+    line: "#c026d3",
+    box: "bg-fuchsia-100 border-fuchsia-200 text-fuchsia-900 shadow-fuchsia-100",
+  },
+  // 12. Rose
+  {
+    line: "#e11d48",
+    box: "bg-rose-100 border-rose-200 text-rose-900 shadow-rose-100",
+  },
 ];
 
 const MatchingExercise: React.FC<MatchingExerciseProps> = ({
@@ -73,17 +125,8 @@ const MatchingExercise: React.FC<MatchingExerciseProps> = ({
           const x2 = rightRect.left - wrapperRect.left;
           const y2 = rightRect.top + rightRect.height / 2 - wrapperRect.top;
 
-          const colors = [
-            "#c2410c",
-            "#1d4ed8",
-            "#7e22ce",
-            "#047857",
-            "#be123c",
-            "#b45309",
-            "#0e7490",
-            "#4338ca",
-          ];
-          const strokeColor = colors[leftIdx % colors.length];
+          const strokeColor =
+            DISTINCT_PAIRS[leftIdx % DISTINCT_PAIRS.length].line;
 
           // Check if this specific line is wrong
           const isWrong = submitted && leftIdx !== rightIdx;
@@ -216,7 +259,7 @@ const MatchingExercise: React.FC<MatchingExerciseProps> = ({
             const isSelected = selectedLeft === i;
 
             const colorClass = isMatched
-              ? PAIR_COLORS[i % PAIR_COLORS.length]
+              ? DISTINCT_PAIRS[i % DISTINCT_PAIRS.length].box
               : "";
             const badgeNumber = i + 1;
 
@@ -306,7 +349,7 @@ const MatchingExercise: React.FC<MatchingExerciseProps> = ({
 
             const isMatched = matchedLeftIndex !== undefined;
             const colorClass = isMatched
-              ? PAIR_COLORS[matchedLeftIndex % PAIR_COLORS.length]
+              ? DISTINCT_PAIRS[matchedLeftIndex % DISTINCT_PAIRS.length].box
               : "";
             const badgeNumber = isMatched ? matchedLeftIndex + 1 : null;
 
