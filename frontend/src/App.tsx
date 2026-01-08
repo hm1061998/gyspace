@@ -1,5 +1,11 @@
 import React from "react";
-import { Routes, Route, useNavigate, useParams } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  useNavigate,
+  useParams,
+  Navigate,
+} from "react-router-dom";
 import Home from "@/pages/Home";
 import AdminInsert from "@/pages/Admin/AdminInsert";
 import VocabularyList from "@/pages/Admin/VocabularyList";
@@ -55,6 +61,10 @@ const AuthWrapper: React.FC = () => {
   };
 
   return <Auth onLoginSuccess={handleSuccess} onBack={() => navigate("/")} />;
+};
+
+const FallbackWrapper: React.FC = () => {
+  return <Navigate to="/" replace />;
 };
 
 const App: React.FC = () => {
@@ -127,7 +137,7 @@ const App: React.FC = () => {
           </Route>
 
           {/* Fallback cho các route không khớp trong User scope */}
-          <Route path="*" element={<Home />} />
+          <Route path="*" element={<FallbackWrapper />} />
         </Route>
 
         {/* Admin Routes - Tách biệt với AdminLayout */}
@@ -139,9 +149,6 @@ const App: React.FC = () => {
               element={
                 <VocabularyList
                   onBack={() => navigate("/admin")}
-                  onSelect={(hanzi) =>
-                    navigate(`/?query=${encodeURIComponent(hanzi)}`)
-                  }
                   onEdit={(id) => navigate(`/admin/idiom/detail/${id}`)}
                 />
               }
