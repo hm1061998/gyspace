@@ -6,8 +6,8 @@ import {
   SavedIdiomEntity,
   SRSProgressEntity,
   HistoryEntity,
-} from 'src/user-data/entities/user-data.entity';
-import { IdiomEntity } from 'src/idioms/entities/idiom.entity';
+} from './entities/user-data.entity';
+import { IdiomEntity } from '../idioms/entities/idiom.entity';
 
 @Injectable()
 export class UserDataService {
