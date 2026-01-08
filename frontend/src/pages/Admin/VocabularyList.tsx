@@ -9,6 +9,7 @@ import {
   TrashIcon,
   PlusIcon,
   UploadIcon,
+  DownloadIcon,
   DocumentIcon,
   ListBulletIcon,
   CloseIcon,
@@ -35,6 +36,8 @@ interface VocabularyListProps {
   onEdit: (id: string) => void;
 }
 
+import ImportModal from "@/components/admin/ImportModal";
+
 const VocabularyList: React.FC<VocabularyListProps> = ({
   onBack,
   onSelect,
@@ -55,6 +58,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Pagination State
   const [page, setPage] = useState(1);
@@ -125,8 +129,42 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
     }
   };
 
-  const handleExcelImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleExportTemplate = () => {
+    const templateData = [
+      {
+        "QUÁN DỤNG TỪ": "不客气",
+        PINYIN: "bù kè qi",
+        "NGHĨA TIẾNG VIỆT": "Đừng khách sáo",
+        "NGHĨA TIẾNG TRUNG": "不用谢",
+        "VỊ TRÍ XUẤT HIỆN": "HSK 1",
+        "CẤP ĐỘ": "Sơ cấp",
+        "NGUỒN GỐC (NẾU CÓ)": "",
+        "VÍ DỤ": "A: 谢谢! - B: 不客气。",
+        "HÌNH ẢNH": "",
+        "LINK BÁO/VIDEO": "",
+      },
+      {
+        "QUÁN DỤNG TỪ": "Hướng dẫn sử dụng (Xóa khi nhập)",
+        PINYIN: "Dành cho trường bắt buộc",
+        "NGHĨA TIẾNG VIỆT": "Bắt buộc",
+        "NGHĨA TIẾNG TRUNG": "Tùy chọn",
+        "VỊ TRÍ XUẤT HIỆN": "Tùy chọn",
+        "CẤP ĐỘ": "Sơ cấp / Trung cấp / Cao cấp",
+        "NGUỒN GỐC (NẾU CÓ)": "Tùy chọn",
+        "VÍ DỤ": "Ví dụ đi kèm",
+        "HÌNH ẢNH": "Link ảnh",
+        "LINK BÁO/VIDEO": "Link video",
+      },
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template_Tu_Vung");
+    XLSX.writeFile(wb, "Template_Tu_Vung.xlsx");
+  };
+
+  const handleExcelImport = (file: File) => {
+    setIsImportModalOpen(false);
     if (!file) return;
 
     setIsProcessing(true);
@@ -153,7 +191,8 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
         const mappedData = data
           .map((row) => {
             const hanzi = row["QUÁN DỤNG TỪ"] || row["CHỮ HÁN"] || row["hanzi"];
-            if (!hanzi) return null;
+            if (!hanzi || String(hanzi).includes("Hướng dẫn sử dụng"))
+              return null;
 
             return {
               hanzi: String(hanzi).trim(),
@@ -281,6 +320,15 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-slate-50 relative">
+      {/* Import Modal */}
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onDownloadTemplate={handleExportTemplate}
+        onFileSelect={handleExcelImport}
+        isProcessing={isProcessing}
+      />
+
       {/* Processing Overlay */}
       <ProcessingOverlay
         isOpen={isProcessing}
@@ -355,39 +403,27 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleExcelImport}
-                    accept=".xlsx, .xls"
-                    className="hidden"
-                    id="excel-upload-list"
-                  />
-                  <label
-                    htmlFor="excel-upload-list"
-                    className={`flex items-center justify-center gap-2 px-3 h-10 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-xl hover:bg-emerald-100 transition-all cursor-pointer font-bold text-xs ${
-                      isProcessing ? "opacity-75 cursor-not-allowed" : ""
-                    }`}
-                    title="Nhập từ Excel"
-                  >
-                    {isProcessing ? (
-                      <SpinnerIcon className="w-4 h-4" />
-                    ) : (
-                      <UploadIcon className="w-4 h-4" />
-                    )}
-                    <span className="hidden sm:inline uppercase tracking-wider">
-                      Excel
-                    </span>
-                  </label>
-                </div>
+              {/* Action Buttons Group */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                {/* Import Button */}
+                <button
+                  onClick={() => setIsImportModalOpen(true)}
+                  className="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-xl hover:bg-emerald-100 transition-all font-bold text-xs shadow-sm active:scale-95"
+                  title="Nhập từ Excel"
+                >
+                  <UploadIcon className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  <span className="hidden sm:inline">Import</span>
+                </button>
 
+                {/* Divider */}
+                <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
+
+                {/* Add New Button */}
                 <button
                   onClick={() => navigate("/admin/idiom/insert")}
-                  className="flex items-center justify-center gap-2 px-3 sm:px-4 h-10 bg-red-700 text-white rounded-xl font-bold text-xs hover:bg-red-800 transition-all shadow-lg shadow-red-100 active:scale-95"
+                  className="flex items-center justify-center gap-2 px-3 sm:px-4 h-10 bg-red-600 text-white rounded-xl font-bold text-xs hover:bg-red-700 transition-all shadow-lg shadow-red-100 active:scale-95"
                 >
-                  <PlusIcon className="w-4 h-4" />
+                  <PlusIcon className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
                   <span className="hidden sm:inline uppercase tracking-wider">
                     Thêm từ mới
                   </span>

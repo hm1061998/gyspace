@@ -9,7 +9,6 @@ import {
   CheckCircle2Icon,
   LayoutGridIcon,
   DownloadIcon,
-  UploadIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -23,6 +22,7 @@ import { modalService } from "@/libs/Modal";
 import { toast } from "@/libs/Toast";
 import ProcessingOverlay from "@/components/common/ProcessingOverlay";
 import ImportModal from "@/components/admin/ImportModal";
+import { UploadIcon } from "@/components/common/icons";
 
 const ExerciseManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -352,10 +352,7 @@ const ExerciseManagement: React.FC = () => {
                 className="group flex items-center gap-2 px-4 py-2.5 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl font-bold text-sm hover:bg-emerald-100 hover:border-emerald-200 transition-all cursor-pointer shadow-sm hover:shadow-md active:scale-95"
                 title="Nhập dữ liệu từ file Excel"
               >
-                <UploadIcon
-                  size={18}
-                  className="text-emerald-600 group-hover:scale-110 transition-transform"
-                />
+                <UploadIcon className="w-4 h-4 group-hover:scale-110 transition-transform" />
                 <span>Import</span>
               </button>
 
