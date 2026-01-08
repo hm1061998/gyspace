@@ -401,23 +401,6 @@ const ExerciseManagement: React.FC = () => {
                 Hãy tạo bài tập đầu tiên để người dùng luyện tập
               </p>
               <div className="flex justify-center gap-3">
-                <div className="relative">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleExcelImport}
-                    accept=".xlsx, .xls"
-                    className="hidden"
-                    id="excel-upload-empty"
-                  />
-                  <label
-                    htmlFor="excel-upload-empty"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-50 text-emerald-600 rounded-2xl font-bold hover:bg-emerald-100 transition-all cursor-pointer"
-                  >
-                    <UploadIcon className="w-5 h-5" />
-                    Import Excel
-                  </label>
-                </div>
                 <button
                   onClick={() => navigate("/admin/exercises/new")}
                   className="inline-flex items-center gap-2 px-6 py-3 bg-red-50 text-red-600 rounded-2xl font-bold hover:bg-red-100 transition-all"

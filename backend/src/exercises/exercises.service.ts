@@ -45,6 +45,8 @@ export class ExercisesService {
 
   async remove(id: string) {
     const exercise = await this.findOne(id);
+    // Delete related history first to avoid FK constraint error
+    await this.historyRepository.delete({ exerciseId: id });
     return await this.exerciseRepository.remove(exercise);
   }
 
