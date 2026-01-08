@@ -480,9 +480,9 @@ const ExercisePlay: React.FC = () => {
   if (!exercise) return null;
 
   return (
-    <div className="h-full bg-slate-50 pb-20 font-inter">
+    <div className="flex flex-col h-screen bg-slate-50 font-inter overflow-hidden">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm/50 backdrop-blur-md bg-white/80">
+      <div className="bg-white border-b border-slate-200 z-20 shadow-sm/50 flex-none">
         <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
           <button
             onClick={() => navigate("/")}
@@ -529,87 +529,94 @@ const ExercisePlay: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="bg-white rounded-[30px] p-6 sm:p-8 shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden min-h-[400px]">
-          <div className="absolute top-0 right-0 p-8 opacity-5">
-            <TargetIcon size={80} />
-          </div>
+      {/* Main Scrollable Content */}
+      <div className="flex-1 overflow-y-auto p-4 pb-40">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-[30px] p-6 sm:p-8 shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden min-h-[400px]">
+            <div className="absolute top-0 right-0 p-8 opacity-5">
+              <TargetIcon size={80} />
+            </div>
 
-          <div className="mb-6 relative z-10">
-            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 leading-tight font-hanzi">
-              {exercise.description}
-            </h2>
-            <div className="mt-1 text-slate-400 font-medium text-xs flex items-center gap-2">
-              <LightbulbIcon size={14} />
-              <span>Câu hỏi số {currentExerciseIndex + 1}</span>
+            <div className="mb-6 relative z-10">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 leading-tight font-hanzi">
+                {exercise.description}
+              </h2>
+              <div className="mt-1 text-slate-400 font-medium text-xs flex items-center gap-2">
+                <LightbulbIcon size={14} />
+                <span>Câu hỏi số {currentExerciseIndex + 1}</span>
+              </div>
+            </div>
+
+            {/* Gameplay Area */}
+            <div className="relative z-10">
+              {exercise.type === ExerciseType.MULTIPLE_CHOICE && (
+                <MultipleChoiceExercise
+                  exercise={exercise}
+                  userAnswers={userAnswers}
+                  setUserAnswers={setUserAnswers}
+                  submitted={submitted}
+                />
+              )}
+
+              {exercise.type === ExerciseType.MATCHING && (
+                <MatchingExercise
+                  exercise={exercise}
+                  matches={matches}
+                  setMatches={setMatches}
+                  selectedLeft={selectedLeft}
+                  setSelectedLeft={setSelectedLeft}
+                  submitted={submitted}
+                />
+              )}
+
+              {exercise.type === ExerciseType.FILL_BLANKS && (
+                <FillBlanksExercise
+                  exercise={exercise}
+                  userAnswers={userAnswers}
+                  setUserAnswers={setUserAnswers}
+                  activeBlankIndex={activeBlankIndex}
+                  setActiveBlankIndex={setActiveBlankIndex}
+                  submitted={submitted}
+                />
+              )}
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Gameplay Area */}
-          <div className="mb-12 relative z-10">
-            {exercise.type === ExerciseType.MULTIPLE_CHOICE && (
-              <MultipleChoiceExercise
-                exercise={exercise}
-                userAnswers={userAnswers}
-                setUserAnswers={setUserAnswers}
-                submitted={submitted}
-              />
-            )}
-
-            {exercise.type === ExerciseType.MATCHING && (
-              <MatchingExercise
-                exercise={exercise}
-                matches={matches}
-                setMatches={setMatches}
-                selectedLeft={selectedLeft}
-                setSelectedLeft={setSelectedLeft}
-                submitted={submitted}
-              />
-            )}
-
-            {exercise.type === ExerciseType.FILL_BLANKS && (
-              <FillBlanksExercise
-                exercise={exercise}
-                userAnswers={userAnswers}
-                setUserAnswers={setUserAnswers}
-                activeBlankIndex={activeBlankIndex}
-                setActiveBlankIndex={setActiveBlankIndex}
-                submitted={submitted}
-              />
-            )}
-          </div>
-
-          <div className="flex flex-col mt-auto pt-10 border-t border-slate-50 items-center justify-center relative z-20">
-            {!submitted ? (
-              <button
-                onClick={checkAnswer}
-                disabled={!isFullyAnswered}
-                className={`w-full sm:w-64 py-4 rounded-[2rem] font-black text-lg shadow-2xl transition-all flex items-center justify-center gap-3 uppercase tracking-wider
+      {/* Fixed Bottom Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-slate-200 p-4 z-30 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
+        <div className="max-w-4xl mx-auto flex flex-col items-center">
+          {!submitted ? (
+            <button
+              onClick={checkAnswer}
+              disabled={!isFullyAnswered}
+              className={`w-full sm:w-80 py-4 rounded-3xl font-black text-lg shadow-2xl transition-all flex items-center justify-center gap-3 uppercase tracking-wider
                   ${
                     isFullyAnswered
-                      ? "bg-red-600 text-white shadow-red-200 hover:bg-red-700 active:scale-95"
+                      ? "bg-red-600 text-white shadow-red-200 hover:bg-red-700 active:scale-95 translate-y-0"
                       : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
                   }
                 `}
-              >
-                <CheckIcon size={24} />
-                Nộp bài
-              </button>
-            ) : (
-              <div className="w-full animate-[fade-in_0.5s_ease-out]">
+            >
+              <CheckIcon size={24} />
+              Nộp bài
+            </button>
+          ) : (
+            <div className="w-full animate-[slide-up_0.3s_ease-out]">
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                {/* Result Summary Mini-View */}
                 <div
-                  className={`p-6 rounded-3xl mb-8 flex flex-col items-center text-center
-                    ${
-                      isPerfect
-                        ? "bg-green-50 border border-green-100"
-                        : isLowScore
-                        ? "bg-rose-50 border border-rose-100"
-                        : "bg-blue-50 border border-blue-100"
-                    }
-                `}
+                  className={`flex-1 w-full p-4 rounded-2xl flex items-center gap-4 ${
+                    isPerfect
+                      ? "bg-green-50 border border-green-100"
+                      : isLowScore
+                      ? "bg-rose-50 border border-rose-100"
+                      : "bg-blue-50 border border-blue-100"
+                  }`}
                 >
                   <div
-                    className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-sm border-4 border-white ${
+                    className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm border-2 border-white shrink-0 ${
                       isPerfect
                         ? "bg-green-500 text-white"
                         : isLowScore
@@ -618,68 +625,50 @@ const ExercisePlay: React.FC = () => {
                     }`}
                   >
                     {isPerfect ? (
-                      <TrophyIcon size={40} />
+                      <TrophyIcon size={20} />
                     ) : isLowScore ? (
-                      <TargetIcon size={40} />
+                      <TargetIcon size={20} />
                     ) : (
-                      <CheckCircle2Icon size={40} />
+                      <CheckCircle2Icon size={20} />
                     )}
                   </div>
-
-                  <h2
-                    className={`text-2xl font-black mb-1
-                    ${
-                      isPerfect
-                        ? "text-green-800"
-                        : isLowScore
-                        ? "text-rose-800"
-                        : "text-blue-800"
-                    }
-                  `}
-                  >
-                    {isPerfect
-                      ? "Xuất sắc!"
-                      : isLowScore
-                      ? "Cần cố gắng thêm!"
-                      : "Hoàn thành!"}
-                  </h2>
-
-                  <p className="text-slate-500 font-medium">
-                    Bạn đã đạt được{" "}
-                    <span
-                      className={`font-black text-lg mx-1 ${
+                  <div>
+                    <h3
+                      className={`font-black text-sm ${
                         isPerfect
-                          ? "text-green-700"
+                          ? "text-green-800"
                           : isLowScore
-                          ? "text-rose-700"
-                          : "text-blue-700"
+                          ? "text-rose-800"
+                          : "text-blue-800"
                       }`}
                     >
-                      {score}
-                    </span>{" "}
-                    / {exercise.points} điểm
-                  </p>
+                      {isPerfect ? "Xuất sắc!" : "Hoàn thành"}
+                    </h3>
+                    <p className="text-slate-500 text-xs font-medium">
+                      +{score} điểm
+                    </p>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                {/* Actions */}
+                <div className="flex gap-2 w-full sm:w-auto">
                   <button
                     onClick={handleReplayCurrent}
-                    className="w-full py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
+                    className="flex-1 sm:flex-none px-6 py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-all active:scale-95"
                   >
                     <RotateCcwIcon size={20} />
-                    Làm lại bài này
                   </button>
                   <button
                     onClick={handleNextExercise}
-                    className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2"
+                    className="flex-[2] sm:flex-none px-8 py-4 bg-red-600 text-white rounded-2xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2 active:scale-95"
                   >
                     Tiếp tục
                     <ArrowRightIcon size={20} />
                   </button>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
