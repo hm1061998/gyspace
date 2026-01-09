@@ -18,5 +18,8 @@ export * from "./commentService";
 // User Management Services
 export * from "./userService";
 
+// Exam Paper Services
+export * from "./examPaperService";
+
 // HTTP Client
 export { http } from "./httpService";

@@ -23,8 +23,13 @@ import UserManagement from "@/pages/Admin/UserManagement";
 import Auth from "@/pages/Auth";
 import ExerciseManagement from "@/pages/Admin/ExerciseManagement";
 import ExerciseForm from "@/pages/Admin/ExerciseForm";
+import ExamPaperManagement from "@/pages/Admin/ExamPaperManagement";
+import ExamDetail from "@/pages/Admin/ExamDetail";
+import ExamQuestionForm from "@/pages/Admin/ExamQuestionForm";
 import ExercisePlay from "@/pages/ExercisePlay";
 import RequireAuth from "@/context/RequireAuth";
+import ExamList from "@/pages/ExamList";
+import ExamPlay from "@/pages/ExamPlay";
 import AdminLayout from "@/layouts/AdminLayout";
 import MainLayout from "@/layouts/MainLayout";
 import { useDispatch, useSelector } from "react-redux";
@@ -101,7 +106,7 @@ const App: React.FC = () => {
           />
 
           <Route path="/auth" element={<AuthWrapper />} />
-
+          <Route path="/exams" element={<ExamPlay />} />
           {/* chức năng cần login */}
           <Route element={<RequireAuth />}>
             <Route
@@ -133,7 +138,7 @@ const App: React.FC = () => {
               }
             />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/exercises" element={<ExercisePlay />} />
+            {/* <Route path="/exercises" element={<ExercisePlay />} /> */}
           </Route>
 
           {/* Fallback cho các route không khớp trong User scope */}
@@ -174,9 +179,19 @@ const App: React.FC = () => {
               element={<AdminReports onBack={() => navigate("/admin")} />}
             />
             <Route path="users" element={<UserManagement />} />
-            <Route path="exercises" element={<ExerciseManagement />} />
+            {/* <Route path="exercises" element={<ExerciseManagement />} />
             <Route path="exercises/new" element={<ExerciseForm />} />
-            <Route path="exercises/edit/:id" element={<ExerciseForm />} />
+            <Route path="exercises/edit/:id" element={<ExerciseForm />} /> */}
+            <Route path="exams" element={<ExamPaperManagement />} />
+            <Route path="exams/:id" element={<ExamDetail />} />
+            <Route
+              path="exams/:id/questions/new"
+              element={<ExamQuestionForm />}
+            />
+            <Route
+              path="exams/:id/questions/:questionId"
+              element={<ExamQuestionForm />}
+            />
           </Route>
         </Route>
       </Routes>

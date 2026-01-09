@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   UserIcon,
   PlusIcon,
@@ -21,9 +21,9 @@ import { toast } from "@/libs/Toast";
 import { modalService } from "@/libs/Modal";
 import { loadingService } from "@/libs/Loading";
 
-import Pagination from "@/components/common/Pagination";
 import Tooltip from "@/components/common/Tooltip";
 import Table from "@/components/common/Table";
+import { debounce } from "lodash";
 
 interface User {
   id: string;
@@ -74,21 +74,23 @@ const UserManagement: React.FC = () => {
     fetchUsers(searchTerm, page);
   }, [page]);
 
-  // Debounced search
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (page === 1) {
-        fetchUsers(searchTerm, 1);
-      } else {
-        setPage(1); // This will trigger the first useEffect
-      }
-    }, 500);
+  const reloadData = () => {
+    setSearchTerm("");
+    setPage(1);
+    fetchUsers("", 1);
+  };
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm]);
+  const debouncedFetch = useMemo(() => {
+    return debounce((value) => {
+      setPage(1);
+      fetchUsers(value, 1);
+    }, 500); // 500ms delay
+  }, []);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    setSearchTerm(event.target.value);
+    debouncedFetch(event.target.value);
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -161,169 +163,179 @@ const UserManagement: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="h-full flex flex-col overflow-hidden bg-slate-50 relative">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-800 flex items-center gap-3">
-            <UserIcon className="w-8 h-8 text-red-600" />
-            Quản lý người dùng
-          </h1>
-          <p className="text-slate-500 mt-1 font-medium italic">
-            Danh sách và quyền hạn người dùng hệ thống
-          </p>
-        </div>
-        <Tooltip content="Thêm tài khoản mới" position="left">
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-red-600 text-white px-6 py-3 rounded-2xl font-black transition-all shadow-xl shadow-slate-900/10 active:scale-95 group"
-          >
-            <PlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-            Thêm người dùng
-          </button>
-        </Tooltip>
-      </div>
+      <div className="flex-none bg-white border-b border-slate-200 shadow-sm z-10 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-3">
+          <div className="flex flex-col gap-3">
+            {/* Title and Top Actions */}
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h1 className="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-3">
+                  <UserIcon className="w-6 h-6 sm:w-8 sm:h-8 text-red-600" />
+                  Quản lý người dùng
+                </h1>
+                <p className="text-slate-500 mt-1 font-medium italic text-[10px] sm:text-xs hidden sm:block">
+                  Danh sách và quyền hạn người dùng hệ thống
+                </p>
+              </div>
+              <Tooltip content="Thêm tài khoản mới" position="left">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-red-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl font-black transition-all shadow-xl shadow-slate-900/10 active:scale-95 group text-sm"
+                >
+                  <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-90 transition-transform" />
+                  <span className="hidden sm:inline">Thêm người dùng</span>
+                  <span className="sm:hidden">Thêm</span>
+                </button>
+              </Tooltip>
+            </div>
 
-      {/* Filter Bar */}
-      <div className="bg-white p-4 rounded-3xl shadow-xs border border-slate-100 flex flex-col md:flex-row gap-4 items-center">
-        <form onSubmit={handleSearch} className="relative flex-1 w-full">
-          <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm tài khoản hoặc tên hiển thị..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-12 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-red-500/20 transition-all font-medium"
-          />
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-            {loading && !!searchTerm && (
-              <RefreshIcon className="w-4 h-4 text-slate-300 animate-spin" />
-            )}
-            {!!searchTerm && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchTerm("");
-                  setPage(1);
-                }}
-                className="p-1 hover:bg-slate-200 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
-                title="Xóa tìm kiếm"
-              >
-                <CloseIcon className="w-4 h-4" />
-              </button>
-            )}
+            {/* Filter Bar */}
+            <div className="flex gap-4 items-center">
+              <form className="relative flex-1 w-full group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <SearchIcon className="h-4 w-4 text-slate-400 group-focus-within:text-red-500 transition-colors" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm tài khoản hoặc tên hiển thị..."
+                  value={searchTerm}
+                  onChange={handleSearch}
+                  className="block w-full pl-9 pr-9 h-10 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all font-medium"
+                />
+                <div className="absolute inset-y-0 right-0 pr-2 flex items-center gap-1">
+                  {loading && !!searchTerm && (
+                    <RefreshIcon className="w-4 h-4 text-slate-300 animate-spin" />
+                  )}
+                  {!!searchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        reloadData();
+                      }}
+                      className="p-1 hover:bg-slate-200 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
+                      title="Xóa tìm kiếm"
+                    >
+                      <CloseIcon className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </form>
+              <div className="flex items-center gap-2">
+                <Tooltip content="Làm mới dữ liệu">
+                  <button
+                    onClick={() => fetchUsers()}
+                    className="p-2.5 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-colors border border-slate-200"
+                  >
+                    <RefreshIcon
+                      className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                        loading ? "animate-spin" : ""
+                      }`}
+                    />
+                  </button>
+                </Tooltip>
+              </div>
+            </div>
           </div>
-        </form>
-        <div className="flex items-center gap-2">
-          <Tooltip content="Làm mới dữ liệu">
-            <button
-              onClick={fetchUsers}
-              className="p-3 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 transition-colors"
-            >
-              <RefreshIcon
-                className={`w-5 h-5 ${loading ? "animate-spin" : ""}`}
-              />
-            </button>
-          </Tooltip>
         </div>
       </div>
 
-      {/* Users Table */}
-      <Table<User>
-        loading={loading}
-        data={users}
-        keyExtractor={(user) => user.id}
-        emptyImage={<UserIcon className="w-16 h-16" />}
-        emptyMessage="Không tìm thấy người dùng nào"
-        columns={[
-          {
-            header: "Người dùng",
-            cell: (user) => (
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-bold group-hover:from-red-500 group-hover:to-red-600 group-hover:text-white transition-all">
-                  {user.username.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-black text-slate-800 leading-none mb-1">
-                    {user.username}
-                  </p>
-                  <p className="text-xs text-slate-400 font-medium">
-                    {user.displayName || "Chưa đặt tên hiển thị"}
-                  </p>
-                </div>
-              </div>
-            ),
-          },
-          {
-            header: "Vai trò",
-            cell: (user) =>
-              user.isAdmin ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-wide border border-red-100">
-                  <ShieldCheckIcon className="w-3 h-3" />
-                  Admin
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-wide border border-slate-200">
-                  Thành viên
-                </span>
-              ),
-          },
-          {
-            header: "Ngày tham gia",
-            cell: (user) => (
-              <p className="text-sm font-medium text-slate-500">
-                {new Date(user.createdAt).toLocaleDateString("vi-VN")}
-              </p>
-            ),
-          },
-          {
-            header: "Thao tác",
-            className: "text-right",
-            cell: (user) => (
-              <div className="flex items-center justify-end gap-2">
-                <Tooltip content="Xóa phiên đăng nhập" position="top">
-                  <button
-                    onClick={() => handleRevokeSession(user.id, user.username)}
-                    className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all"
-                  >
-                    <LogoutIcon className="w-5 h-5" />
-                  </button>
-                </Tooltip>
-                <Tooltip content="Đặt lại mật khẩu" position="top">
-                  <button
-                    onClick={() => {
-                      setSelectedUser(user);
-                      setIsResetModalOpen(true);
-                    }}
-                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                  >
-                    <KeyIcon className="w-5 h-5" />
-                  </button>
-                </Tooltip>
-                <Tooltip content="Xóa tài khoản" position="top">
-                  <button
-                    onClick={() => handleDeleteUser(user.id, user.username)}
-                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                  >
-                    <TrashIcon className="w-5 h-5" />
-                  </button>
-                </Tooltip>
-              </div>
-            ),
-          },
-        ]}
-      />
-
-      {/* Pagination component */}
-      {!loading && lastPage > 1 && (
-        <div className="flex justify-center mt-6">
-          <Pagination
+      {/* Main Content (Scrollable) */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="max-w-7xl mx-auto w-full h-full px-4 sm:px-6 lg:px-8 py-6 flex flex-col">
+          <Table<User>
+            className="flex-1 min-h-0"
+            loading={loading}
+            data={users}
+            keyExtractor={(user) => user.id}
             currentPage={page}
             totalPages={lastPage}
             onPageChange={setPage}
+            emptyImage={<UserIcon className="w-16 h-16" />}
+            emptyMessage="Không tìm thấy người dùng nào"
+            columns={[
+              {
+                header: "Người dùng",
+                cell: (user) => (
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-linear-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-bold group-hover:from-red-500 group-hover:to-red-600 group-hover:text-white transition-all">
+                      {user.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-black text-slate-800 leading-none mb-1">
+                        {user.username}
+                      </p>
+                      <p className="text-xs text-slate-400 font-medium">
+                        {user.displayName || "Chưa đặt tên hiển thị"}
+                      </p>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                header: "Vai trò",
+                cell: (user) =>
+                  user.isAdmin ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-wide border border-red-100">
+                      <ShieldCheckIcon className="w-3 h-3" />
+                      Admin
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-wide border border-slate-200">
+                      Thành viên
+                    </span>
+                  ),
+              },
+              {
+                header: "Ngày tham gia",
+                cell: (user) => (
+                  <p className="text-sm font-medium text-slate-500">
+                    {new Date(user.createdAt).toLocaleDateString("vi-VN")}
+                  </p>
+                ),
+              },
+              {
+                header: "Thao tác",
+                className: "text-right",
+                cell: (user) => (
+                  <div className="flex items-center justify-end gap-2">
+                    <Tooltip content="Xóa phiên đăng nhập" position="top">
+                      <button
+                        onClick={() =>
+                          handleRevokeSession(user.id, user.username)
+                        }
+                        className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all"
+                      >
+                        <LogoutIcon className="w-5 h-5" />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Đặt lại mật khẩu" position="top">
+                      <button
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setIsResetModalOpen(true);
+                        }}
+                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                      >
+                        <KeyIcon className="w-5 h-5" />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Xóa tài khoản" position="top">
+                      <button
+                        onClick={() => handleDeleteUser(user.id, user.username)}
+                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                      >
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
+                    </Tooltip>
+                  </div>
+                ),
+              },
+            ]}
           />
         </div>
-      )}
+      </div>
 
       {/* Create User Modal */}
       {isModalOpen && (
@@ -411,7 +423,7 @@ const UserManagement: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    className="flex-[2] px-6 py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-red-600 transition-all shadow-lg active:scale-95"
+                    className="flex-2 px-6 py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-red-600 transition-all shadow-lg active:scale-95"
                   >
                     Tạo tài khoản
                   </button>
@@ -468,7 +480,7 @@ const UserManagement: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    className="flex-[2] px-4 py-3.5 bg-amber-500 text-white font-black rounded-2xl hover:bg-amber-600 transition-all shadow-lg active:scale-95"
+                    className="flex-2 px-4 py-3.5 bg-amber-500 text-white font-black rounded-2xl hover:bg-amber-600 transition-all shadow-lg active:scale-95"
                   >
                     Cập nhật
                   </button>

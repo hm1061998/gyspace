@@ -59,11 +59,11 @@ const HomeActionCards: React.FC = ({ isLoggedIn }) => {
 
       <button
         onClick={() => {
-          if (!isLoggedIn) {
-            toast.error("Vui lòng đăng nhập để sử dụng tính năng này");
-            return;
-          }
-          navigate("exercises");
+          // if (!isLoggedIn) {
+          //   toast.error("Vui lòng đăng nhập để sử dụng tính năng này");
+          //   return;
+          // }
+          navigate("exams");
         }}
         className="group relative bg-gradient-to-br from-purple-600 to-fuchsia-700 p-8 rounded-[2.5rem] text-left overflow-hidden shadow-2xl hover:shadow-purple-200 hover:-translate-y-1.5 transition-all duration-300"
       >
