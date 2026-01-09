@@ -187,3 +187,14 @@ label {
   background: #b91c1c;
   /* red-700 */
 }
+
+
+button:disabled {
+  /* Darker gray text */
+  cursor: not-allowed;
+  /* Change cursor to a "not allowed" symbol */
+  opacity: 0.5;
+  /* Optional: reduce opacity to emphasize the state */
+  pointer-events: none;
+  /* Prevents click events in browsers that support it */
+}

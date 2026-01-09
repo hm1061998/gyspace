@@ -138,7 +138,7 @@ const App: React.FC = () => {
               }
             />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/exercises" element={<ExercisePlay />} />
+            {/* <Route path="/exercises" element={<ExercisePlay />} /> */}
           </Route>
 
           {/* Fallback cho các route không khớp trong User scope */}
@@ -179,9 +179,9 @@ const App: React.FC = () => {
               element={<AdminReports onBack={() => navigate("/admin")} />}
             />
             <Route path="users" element={<UserManagement />} />
-            <Route path="exercises" element={<ExerciseManagement />} />
+            {/* <Route path="exercises" element={<ExerciseManagement />} />
             <Route path="exercises/new" element={<ExerciseForm />} />
-            <Route path="exercises/edit/:id" element={<ExerciseForm />} />
+            <Route path="exercises/edit/:id" element={<ExerciseForm />} /> */}
             <Route path="exams" element={<ExamPaperManagement />} />
             <Route path="exams/:id" element={<ExamDetail />} />
             <Route

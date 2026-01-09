@@ -10,6 +10,7 @@ import {
   CharacterAnalysisEntity,
   ExampleSentenceEntity,
 } from './idioms/entities/idiom.entity';
+import { SearchLogEntity } from './idioms/entities/search-log.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { IdiomsModule } from './idioms/idioms.module';
@@ -69,6 +70,7 @@ const isProd = process.env.NODE_ENV === 'production';
           ExerciseEntity,
           ExamPaperEntity,
           ExamQuestionEntity,
+          SearchLogEntity,
         ],
         synchronize: !isProd, // Production: FALSE (use migrations). Dev: TRUE (auto sync).
         ssl: isProd

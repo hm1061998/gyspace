@@ -17,6 +17,7 @@ import { ExerciseEntity } from './exercises/entities/exercise.entity';
 import { ExamPaperEntity } from './exam-papers/entities/exam-paper.entity';
 import { ExamQuestionEntity } from './exam-papers/entities/exam-question.entity';
 import { IpBlockEntity } from './common/security/ip-block.entity';
+import { SearchLogEntity } from './idioms/entities/search-log.entity';
 
 dotenv.config();
 
@@ -36,11 +37,12 @@ export const AppDataSource = new DataSource({
     SRSProgressEntity,
     HistoryEntity,
     IdiomCommentEntity,
+    IpBlockEntity,
     DictionaryReportEntity,
     ExerciseEntity,
     ExamPaperEntity,
     ExamQuestionEntity,
-    IpBlockEntity,
+    SearchLogEntity,
   ],
   migrations: ['src/migrations/*.ts'],
   synchronize: false, // Always false for migrations

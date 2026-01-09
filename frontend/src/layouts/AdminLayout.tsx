@@ -231,15 +231,15 @@ const AdminLayout: React.FC = () => {
               icon={<FireIcon />}
               label="Mọi người đã tìm"
             />
-            <NavItem
+            {/* <NavItem
               to="/admin/exercises"
               icon={<PuzzlePieceIcon />}
               label="Quản lý bài tập"
-            />
+            /> */}
             <NavItem
               to="/admin/exams"
               icon={<DocumentIcon />}
-              label="Quản lý Đề Thi"
+              label="Quản lý bài tập"
             />
             <NavItem
               to="/admin/users"

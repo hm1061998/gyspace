@@ -17,7 +17,7 @@ const ExamList: React.FC = () => {
         if (recommended && recommended.id) {
           navigate(`/exams/${recommended.id}`);
         } else {
-          toast.error("Không tìm thấy đề thi phù hợp.");
+          toast.error("Không tìm thấy bài tập phù hợp.");
         }
       } catch (error) {
         console.error(error);
@@ -41,13 +41,13 @@ const ExamList: React.FC = () => {
             Đang phân tích dữ liệu...
           </h1>
           <p className="text-slate-500 text-lg mb-8 leading-relaxed">
-            Hệ thống AI đang tìm kiếm đề thi phù hợp nhất với trình độ hiện tại
+            Hệ thống AI đang tìm kiếm bài tập phù hợp nhất với trình độ hiện tại
             của bạn. Vui lòng chờ trong giây lát.
           </p>
 
           <div className="flex items-center justify-center gap-3 text-indigo-600 font-bold bg-indigo-50 py-3 px-6 rounded-2xl">
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Đang tìm đề thi...</span>
+            <span>Đang tìm bài tập...</span>
           </div>
         </div>
       </div>

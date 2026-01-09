@@ -33,7 +33,7 @@ const ExamDetail: React.FC = () => {
       const response: any = await examPaperService.getOne(id);
       setPaper(response);
     } catch (error) {
-      toast.error("Không thể tải thông tin đề thi");
+      toast.error("Không thể tải thông tin bài tập");
       navigate("/admin/exams");
     } finally {
       setLoading(false);
@@ -89,7 +89,7 @@ const ExamDetail: React.FC = () => {
           <div>
             <h1 className="text-2xl font-black text-slate-800 flex items-center gap-3">
               <DocumentIcon className="w-8 h-8 text-blue-600" />
-              {paper?.title || "Chi tiết đề thi"}
+              {paper?.title || "Chi tiết bài tập"}
             </h1>
             <p className="text-slate-500 mt-1 font-medium italic">
               {paper?.description || "Quản lý danh sách câu hỏi"}

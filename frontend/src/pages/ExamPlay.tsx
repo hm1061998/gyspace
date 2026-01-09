@@ -18,6 +18,7 @@ import MatchingExercise from "@/components/Exercises/MatchingExercise";
 import FillBlanksExercise from "@/components/Exercises/FillBlanksExercise";
 import { Exercise, ExerciseType } from "@/types";
 import { modalService } from "@/libs/Modal/services/modalService";
+import { FileTextIcon } from "@/components/common/icons";
 
 const ExamPlay: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -83,7 +84,7 @@ const ExamPlay: React.FC = () => {
       setQuestions(sortedQuestions);
     } catch (error) {
       console.error(error);
-      toast.error("Không tìm thấy đề thi phù hợp.");
+      toast.error("Không tìm thấy bài tập phù hợp.");
       // If specific ID failed, maybe go back to main list (which is now auto-recommend, so careful)
       if (id) navigate("/exams");
     } finally {
@@ -93,7 +94,7 @@ const ExamPlay: React.FC = () => {
 
   const handleStart = () => {
     if (questions.length === 0) {
-      toast.error("Đề thi này chưa có câu hỏi nào.");
+      toast.error("Bài tập này chưa có câu hỏi nào.");
       return;
     }
     setStarted(true);
@@ -134,7 +135,7 @@ const ExamPlay: React.FC = () => {
   const handleSubmitConfirm = async () => {
     const confirmed = await modalService.confirm(
       "Bạn có chắc chắn muốn nộp bài? Hãy kiểm tra kỹ các câu trả lời trước khi xác nhận.",
-      "Nộp bài thi"
+      "Nộp bài tập"
     );
     if (confirmed) {
       saveCurrentAnswer(); // Save last one
@@ -221,6 +222,46 @@ const ExamPlay: React.FC = () => {
 
   const getMatches = () => currentAnswer.matches || {};
 
+  // Validation Check
+  const canProceed = () => {
+    if (submitted) return true; // Always allow navigation in review mode without checking answers
+
+    // Check if current question is answered
+    if (currentQ.type === "MULTIPLE_CHOICE") {
+      return !!currentAnswer.selectedOptionId;
+    }
+
+    if (currentQ.type === "MATCHING") {
+      // Must match at least one pair? Or all pairs?
+      // Strict exam: match ALL pairs.
+      const matches = currentAnswer.matches || {};
+      const pairsCount = currentQ.content.pairs?.length || 0;
+
+      if (pairsCount === 0) return true;
+
+      // Ensure all left items have a match
+      // But actually matching logic is Object.keys(matches).length === pairsCount
+      // BUT, keys are indices.
+      return Object.keys(matches).length === pairsCount;
+    }
+
+    if (currentQ.type === "FILL_BLANKS") {
+      // Must fill ALL blanks
+      const correctAnswers = currentQ.content.correctAnswers || [];
+      const totalBlanks = correctAnswers.length;
+
+      // If no blanks defined, technically it's weird, but return true? No, return false.
+      if (totalBlanks === 0) return true;
+
+      const allFilled = correctAnswers.every(
+        (ans: any) => !!currentAnswer[`blank_${ans.position}`]
+      );
+      return allFilled;
+    }
+
+    return true; // Default allow for other types (unknown)
+  };
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-slate-50">
@@ -238,7 +279,7 @@ const ExamPlay: React.FC = () => {
         <div className="bg-white rounded-[32px] p-8 max-w-lg w-full shadow-xl border border-slate-100 text-center">
           <TrophyIcon className="w-20 h-20 text-yellow-500 mx-auto mb-6" />
           <h2 className="text-3xl font-black text-slate-800 mb-2">
-            Hoàn thành bài thi!
+            Hoàn thành bài tập!
           </h2>
           <p className="text-slate-500 mb-8">{exam.title}</p>
 
@@ -256,10 +297,24 @@ const ExamPlay: React.FC = () => {
 
           <div className="flex gap-4">
             <button
+              onClick={() => {
+                setShowResult(false);
+                setCurrentQuestionIndex(0);
+                if (questions.length > 0) {
+                  const firstQ = questions[0];
+                  setCurrentAnswer(allAnswers[firstQ.id] || {});
+                  setLocalState({});
+                }
+              }}
+              className="flex-1 py-3 bg-white border-2 border-indigo-100 text-indigo-600 rounded-xl font-bold hover:bg-indigo-50"
+            >
+              Xem đáp án
+            </button>
+            <button
               onClick={() => (window.location.href = "/exams")}
               className="flex-1 py-3 bg-white border-2 border-slate-100 rounded-xl font-bold text-slate-600 hover:bg-slate-50"
             >
-              Làm đề khác
+              Làm bài khác
             </button>
             <button
               onClick={() => window.location.reload()}
@@ -317,10 +372,14 @@ const ExamPlay: React.FC = () => {
       <div className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 sm:px-8 shrink-0">
         <button
           onClick={() => {
+            if (submitted) {
+              navigate("/exams");
+              return;
+            }
             modalService
               .confirm(
                 "Tiến trình làm bài sẽ không được lưu. Bạn có chắc muốn thoát?",
-                "Thoát bài thi"
+                "Thoát bài tập"
               )
               .then((ok) => {
                 if (ok) navigate("/exams");
@@ -362,7 +421,7 @@ const ExamPlay: React.FC = () => {
                   exercise={mockExercise}
                   userAnswers={currentAnswer}
                   setUserAnswers={setCurrentAnswer}
-                  submitted={false}
+                  submitted={submitted}
                 />
               )}
               {currentQ.type === "MATCHING" && (
@@ -374,7 +433,7 @@ const ExamPlay: React.FC = () => {
                   setSelectedLeft={(val) =>
                     setLocalState({ ...localState, selectedLeft: val })
                   }
-                  submitted={false}
+                  submitted={submitted}
                 />
               )}
               {currentQ.type === "FILL_BLANKS" && (
@@ -386,7 +445,7 @@ const ExamPlay: React.FC = () => {
                   setActiveBlankIndex={(val) =>
                     setLocalState({ ...localState, activeBlankIndex: val })
                   }
-                  submitted={false}
+                  submitted={submitted}
                 />
               )}
             </div>
@@ -404,19 +463,28 @@ const ExamPlay: React.FC = () => {
               Quay lại
             </button>
 
-            {currentQuestionIndex === questions.length - 1 ? (
+            {currentQuestionIndex < questions.length - 1 ? (
               <button
-                onClick={handleSubmitConfirm}
+                onClick={handleNext}
+                disabled={!submitted && !canProceed()}
+                className={`flex-1 sm:flex-none px-8 py-3 font-bold rounded-2xl transition-colors bg-slate-900 text-white hover:bg-slate-800`}
+              >
+                Tiếp theo
+              </button>
+            ) : submitted ? (
+              <button
+                onClick={() => setShowResult(true)}
                 className="flex-1 sm:flex-none px-8 py-3 bg-indigo-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transform active:scale-95 transition-all"
               >
-                Nộp bài
+                Xem tổng kết
               </button>
             ) : (
               <button
-                onClick={handleNext}
-                className="flex-1 sm:flex-none px-8 py-3 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-colors"
+                onClick={handleSubmitConfirm}
+                disabled={!canProceed()}
+                className="flex-1 sm:flex-none px-8 py-3 bg-indigo-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transform active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Tiếp theo
+                Nộp bài
               </button>
             )}
           </div>
@@ -425,22 +493,4 @@ const ExamPlay: React.FC = () => {
     </div>
   );
 };
-// Icon Fix
-const FileTextIcon = ({ className }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-    />
-  </svg>
-);
-
 export default ExamPlay;

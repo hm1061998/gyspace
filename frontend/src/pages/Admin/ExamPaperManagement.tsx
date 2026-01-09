@@ -49,7 +49,7 @@ const ExamPaperManagement: React.FC = () => {
       }
     } catch (error) {
       console.error(error);
-      toast.error("Không thể tải danh sách đề thi");
+      toast.error("Không thể tải danh sách bài tập");
     } finally {
       setLoading(false);
     }
@@ -65,15 +65,15 @@ const ExamPaperManagement: React.FC = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      loadingService.show("Đang tạo đề thi...");
+      loadingService.show("Đang tạo bài tập...");
       const newPaper: any = await examPaperService.create(formData);
-      toast.success("Đã tạo đề thi mới");
+      toast.success("Đã tạo bài tập mới");
       setIsModalOpen(false);
       setFormData({ title: "", description: "" });
       // Navigate to add question immediately
       navigate(`/admin/exams/${newPaper.id}/questions/new`);
     } catch (error: any) {
-      toast.error(error.message || "Lỗi khi tạo đề thi");
+      toast.error(error.message || "Lỗi khi tạo bài tập");
     } finally {
       loadingService.hide();
     }
@@ -81,7 +81,7 @@ const ExamPaperManagement: React.FC = () => {
 
   const handleDelete = async (id: string, title: string) => {
     const confirmed = await modalService.danger(
-      `Xóa đề thi "${title}"? Hành động này không thể hoàn tác.`,
+      `Xóa bài tập "${title}"? Hành động này không thể hoàn tác.`,
       "Xác nhận xóa"
     );
     if (!confirmed) return;
@@ -89,10 +89,10 @@ const ExamPaperManagement: React.FC = () => {
     try {
       loadingService.show("Đang xóa...");
       await examPaperService.delete(id);
-      toast.success("Đã xóa đề thi");
+      toast.success("Đã xóa bài tập");
       fetchPapers();
     } catch (error: any) {
-      toast.error("Không thể xóa đề thi");
+      toast.error("Không thể xóa bài tập");
     } finally {
       loadingService.hide();
     }
@@ -105,19 +105,19 @@ const ExamPaperManagement: React.FC = () => {
         <div>
           <h1 className="text-2xl font-black text-slate-800 flex items-center gap-3">
             <FileTextIcon className="w-8 h-8 text-blue-600" />
-            Quản lý Đề Thi
+            Quản lý Bài Tập
           </h1>
           <p className="text-slate-500 mt-1 font-medium italic">
-            Danh sách đề thi và câu hỏi
+            Danh sách bài tập và câu hỏi
           </p>
         </div>
-        <Tooltip content="Thêm đề thi mới" position="left">
+        <Tooltip content="Thêm bài tập mới" position="left">
           <button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-blue-600 text-white px-6 py-3 rounded-2xl font-black transition-all shadow-xl shadow-slate-900/10 active:scale-95 group"
           >
             <PlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-            Tạo đề thi
+            Tạo bài tập
           </button>
         </Tooltip>
       </div>
@@ -128,7 +128,7 @@ const ExamPaperManagement: React.FC = () => {
           <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input
             type="text"
-            placeholder="Tìm kiếm đề thi..."
+            placeholder="Tìm kiếm bài tập..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-12 pr-12 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
@@ -155,10 +155,10 @@ const ExamPaperManagement: React.FC = () => {
         loading={loading}
         data={papers}
         keyExtractor={(item) => item.id}
-        emptyMessage="Chưa có đề thi nào"
+        emptyMessage="Chưa có bài tập nào"
         columns={[
           {
-            header: "Tên Đề Thi",
+            header: "Tên Bài Tập",
             cell: (item) => (
               <div>
                 <p className="font-black text-slate-800 leading-none mb-1">
@@ -226,12 +226,12 @@ const ExamPaperManagement: React.FC = () => {
           <div className="relative bg-white w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
             <div className="p-8">
               <h2 className="text-2xl font-black text-slate-800 mb-6">
-                Tạo đề thi mới
+                Tạo bài tập mới
               </h2>
               <form onSubmit={handleCreate} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-400 mb-2">
-                    Tên đề thi *
+                    Tên bài tập *
                   </label>
                   <input
                     required
