@@ -29,7 +29,7 @@ export class LoggingInterceptor implements NestInterceptor {
         const statusCode = response.statusCode;
         const delay = Date.now() - now;
 
-        this.logger.log(
+        this.logger.debug(
           `[${requestId}] ${method} ${url} ${statusCode} - ${delay}ms`,
         );
       }),
