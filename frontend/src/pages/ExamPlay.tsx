@@ -20,6 +20,15 @@ import { Exercise, ExerciseType } from "@/types";
 import { modalService } from "@/libs/Modal/services/modalService";
 import { FileTextIcon } from "@/components/common/icons";
 
+const shuffleArray = (array: any[]) => {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+};
+
 const ExamPlay: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -78,10 +87,13 @@ const ExamPlay: React.FC = () => {
 
       setExam(data);
       // Sort questions by order
-      const sortedQuestions = (data.questions || []).sort(
-        (a: any, b: any) => a.order - b.order
-      );
-      setQuestions(sortedQuestions);
+      // const sortedQuestions = (data.questions || []).sort(
+      //   (a: any, b: any) => a.order - b.order
+      // );
+      // setQuestions(sortedQuestions);
+
+      const shuffledQuestions = shuffleArray(data.questions || []);
+      setQuestions(shuffledQuestions);
     } catch (error) {
       console.error(error);
       toast.error("Không tìm thấy bài tập phù hợp.");
