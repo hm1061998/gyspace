@@ -8,6 +8,7 @@ import {
   TrashIcon,
   CloseIcon,
   ListBulletIcon,
+  PencilIcon,
 } from "@/components/common/icons";
 import { examPaperService, ExamPaper } from "@/services/api";
 import { toast } from "@/libs/Toast";
@@ -26,6 +27,7 @@ const ExamPaperManagement: React.FC = () => {
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Create Form State
   const [formData, setFormData] = useState({
@@ -79,21 +81,39 @@ const ExamPaperManagement: React.FC = () => {
     debouncedFetch(event.target.value);
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      loadingService.show("Đang tạo bài tập...");
-      const newPaper: any = await examPaperService.create(formData);
-      toast.success("Đã tạo bài tập mới");
+      loadingService.show(
+        editingId ? "Đang cập nhật..." : "Đang tạo bài tập..."
+      );
+      if (editingId) {
+        await examPaperService.update(editingId, formData);
+        toast.success("Đã cập nhật bài tập");
+        fetchPapers(searchTerm, page);
+      } else {
+        const newPaper: any = await examPaperService.create(formData);
+        toast.success("Đã tạo bài tập mới");
+        // Navigate to add question immediately only on create
+        navigate(`/admin/exams/${newPaper.id}/questions/new`);
+      }
       setIsModalOpen(false);
       setFormData({ title: "", description: "" });
-      // Navigate to add question immediately
-      navigate(`/admin/exams/${newPaper.id}/questions/new`);
+      setEditingId(null);
     } catch (error: any) {
-      toast.error(error.message || "Lỗi khi tạo bài tập");
+      toast.error(error.message || "Lỗi khi lưu bài tập");
     } finally {
       loadingService.hide();
     }
+  };
+
+  const handleEdit = (paper: ExamPaper) => {
+    setEditingId(paper.id);
+    setFormData({
+      title: paper.title,
+      description: paper.description || "",
+    });
+    setIsModalOpen(true);
   };
 
   const handleDelete = async (id: string, title: string) => {
@@ -134,7 +154,11 @@ const ExamPaperManagement: React.FC = () => {
               </div>
               <Tooltip content="Thêm bài tập mới" position="left">
                 <button
-                  onClick={() => setIsModalOpen(true)}
+                  onClick={() => {
+                    setEditingId(null);
+                    setFormData({ title: "", description: "" });
+                    setIsModalOpen(true);
+                  }}
                   className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-blue-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-2xl font-black transition-all shadow-xl shadow-slate-900/10 active:scale-95 group text-xs sm:text-sm"
                 >
                   <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-90 transition-transform" />
@@ -232,6 +256,14 @@ const ExamPaperManagement: React.FC = () => {
                 className: "text-right",
                 cell: (item) => (
                   <div className="flex justify-end gap-2">
+                    <Tooltip content="Chỉnh sửa">
+                      <button
+                        onClick={() => handleEdit(item)}
+                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                      >
+                        <PencilIcon className="w-5 h-5" />
+                      </button>
+                    </Tooltip>
                     <Tooltip content="Quản lý câu hỏi">
                       <button
                         onClick={() => navigate(`/admin/exams/${item.id}`)}
@@ -279,9 +311,9 @@ const ExamPaperManagement: React.FC = () => {
           <div className="relative bg-white w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
             <div className="p-8">
               <h2 className="text-2xl font-black text-slate-800 mb-6">
-                Tạo bài tập mới
+                {editingId ? "Cập nhật bài tập" : "Tạo bài tập mới"}
               </h2>
-              <form onSubmit={handleCreate} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-400 mb-2">
                     Tên bài tập *
@@ -319,7 +351,7 @@ const ExamPaperManagement: React.FC = () => {
                     type="submit"
                     className="flex-[2] py-3 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-200"
                   >
-                    Tạo ngay
+                    {editingId ? "Lưu thay đổi" : "Tạo ngay"}
                   </button>
                 </div>
               </form>
