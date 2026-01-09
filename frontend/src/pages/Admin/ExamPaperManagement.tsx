@@ -229,14 +229,19 @@ const ExamPaperManagement: React.FC = () => {
             data={papers}
             keyExtractor={(item) => item.id}
             emptyMessage="Chưa có bài tập nào"
+            currentPage={page}
+            totalPages={lastPage}
+            onPageChange={setPage}
             columns={[
               {
                 header: "Tên Bài Tập",
                 cell: (item) => (
                   <div>
-                    <p className="font-black text-slate-800 leading-none mb-1">
-                      {item.title}
-                    </p>
+                    <button onClick={() => navigate(`/admin/exams/${item.id}`)}>
+                      <p className="font-black text-slate-800 leading-none mb-1">
+                        {item.title}
+                      </p>
+                    </button>
                     <p className="text-xs text-slate-400 font-medium line-clamp-1">
                       {item.description}
                     </p>
@@ -287,19 +292,6 @@ const ExamPaperManagement: React.FC = () => {
           />
         </div>
       </div>
-
-      {/* Pagination component */}
-      {!loading && lastPage > 1 && (
-        <div className="flex-none bg-white border-t border-slate-200 py-3 shadow-[0_-4px_6_rgba(0,0,0,0.05)]">
-          <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
-            <Pagination
-              currentPage={page}
-              totalPages={lastPage}
-              onPageChange={setPage}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Modal Create */}
       {isModalOpen && (
