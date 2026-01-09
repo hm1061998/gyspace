@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class MigrateExercisesToExamPaper1767938982070 implements MigrationInterface {
+export class MigrateExercisesToExamPaper1767948061003 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // 1. Get all exercises
     // Check if table exists first to avoid errors if run in blank DB (though unlikely if specific migration)
