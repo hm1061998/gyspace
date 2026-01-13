@@ -26,7 +26,7 @@ type ResponseInterceptor = <T>(
 type ErrorInterceptor = (error: any) => any;
 
 class HttpService {
-  private baseURL: string = "/api";
+  private baseURL: string = import.meta.env.VITE_API_BASE_URL || "/api";
   private requestInterceptors: RequestInterceptor[] = [];
   private responseInterceptors: ResponseInterceptor[] = [];
   private errorInterceptors: ErrorInterceptor[] = [];
