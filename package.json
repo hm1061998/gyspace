@@ -1,18 +1,23 @@
 {
-    "private": true,
-    "scripts": {
-        "dev": "concurrently \"npm --prefix backend run start:dev\" \"npm --prefix frontend run dev\"",
-        "build:fe": "cd frontend && npm install && npm run build",
-        "build:be": "cd backend && npm install && npm run build",
-        "clean:fe": "rimraf backend/public/dist",
-        "copy:fe": "copyfiles -u 1 \"frontend/dist/**/*\" backend/public",
-        "build": "npm run build:fe && npm run build:be && npm run clean:fe && npm run copy:fe",
-        "start": "cross-env NODE_ENV=production npm --prefix backend run start:prod"
-    },
-    "devDependencies": {
-        "concurrently": "^9.2.1",
-        "copyfiles": "^2.4.1",
-        "cross-env": "^10.1.0",
-        "rimraf": "^6.1.2"
-    }
+  "name": "gyspace",
+  "version": "0.0.1",
+  "description": "",
+  "author": "",
+  "homepage": "https://hm1061998.github.io/gyspace/",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm --prefix backend run start:dev\" \"npm --prefix frontend run dev\"",
+    "build:fe": "cd frontend && npm install && npm run build",
+    "build:be": "cd backend && npm install && npm run build",
+    "clean:fe": "rimraf backend/public/dist",
+    "copy:fe": "copyfiles -u 1 \"frontend/dist/**/*\" backend/public",
+    "build": "npm run build:fe && npm run build:be && npm run clean:fe && npm run copy:fe",
+    "start": "cross-env NODE_ENV=production npm --prefix backend run start:prod"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "copyfiles": "^2.4.1",
+    "cross-env": "^10.1.0",
+    "rimraf": "^6.1.2"
+  }
 }
