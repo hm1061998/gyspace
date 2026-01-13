@@ -16,4 +16,4 @@ jobs:
         # Bạn cũng có thể dùng Secrets: ${{ secrets.BACKEND_url }}
         run: |
           echo "Pinging backend to prevent sleep..."
-          curl -I ${{ secrets.BACKEND_url }} || echo "Ping failed or URL not set"
+          curl -I https://gyspace.onrender.com/api/health || echo "Ping failed or URL not set"
