@@ -118,7 +118,7 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
       const result = await toggleSaveIdiom(idiom.id);
       setIsSaved(result.saved);
       if (result.saved) {
-        toast.success(`Đã lưu "${idiom.hanzi}" vào thư viện!`);
+        toast.success(`Đã lưu "${idiom.hanzi}" vào Sổ tay cá nhân!`);
       } else {
         toast.info(`Đã bỏ lưu "${idiom.hanzi}"`);
       }

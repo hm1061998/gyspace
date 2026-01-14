@@ -1,10 +1,10 @@
 import React from "react";
 import {
-  BookmarkIconFilled,
   SearchIcon,
   DownloadIcon,
   DocumentIcon,
   SpinnerIcon,
+  BookOpenIcon,
 } from "@/components/common/icons";
 
 interface SavedHeaderProps {
@@ -31,8 +31,8 @@ const SavedHeader: React.FC<SavedHeaderProps> = ({
       <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="flex items-center w-full sm:w-auto">
           <h1 className="text-xl sm:text-2xl font-hanzi font-bold text-slate-800 flex items-center gap-2">
-            <BookmarkIconFilled className="w-6 h-6 text-red-600" />
-            Sổ tay từ vựng
+            <BookOpenIcon className="w-6 h-6 text-red-600" />
+            Sổ tay cá nhân
             <span className="ml-2 px-2 py-0.5 bg-red-50 text-red-600 text-[10px] rounded-full border border-red-100 uppercase tracking-widest font-black">
               {totalItems} mục
             </span>

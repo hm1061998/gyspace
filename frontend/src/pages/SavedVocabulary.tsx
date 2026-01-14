@@ -70,14 +70,14 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = () => {
 
       const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Từ vựng đã lưu");
+      XLSX.utils.book_append_sheet(wb, ws, "Sổ tay cá nhân");
 
       setProcessProgress(90);
       setProcessStatus("Đang tải dữ liệu xuống...");
 
       XLSX.writeFile(
         wb,
-        `Sổ_tay_từ_vựng_${new Date().toISOString().slice(0, 10)}.xlsx`
+        `So_tay_ca_nhan_${new Date().toISOString().slice(0, 10)}.xlsx`
       );
 
       setProcessProgress(100);
@@ -111,10 +111,10 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = () => {
 
       await exportPDF(
         {
-          title: "Sổ tay từ vựng của tôi",
+          title: "Sổ tay cá nhân của tôi",
           columns,
           rows,
-          filename: `So_tay_tu_vung_${new Date().toISOString().slice(0, 10)}`,
+          filename: `So_tay_ca_nhan_${new Date().toISOString().slice(0, 10)}`,
         },
         (prog, status) => {
           setProcessProgress(prog);
@@ -171,7 +171,7 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = () => {
                 selectedCount={selectedIds.length}
                 onDelete={handleBulkDelete}
                 onClearSelection={() => setSelectedIds([])}
-                label="từ vựng"
+                label="mục"
                 deleteLabel="Bỏ lưu đã chọn"
               />
 

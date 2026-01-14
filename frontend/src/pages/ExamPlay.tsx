@@ -148,9 +148,9 @@ const ExamPlay: React.FC = () => {
 
     return {
       id: "saved_exam",
-      title: "Luyện tập từ đã lưu",
+      title: "Luyện tập Sổ tay cá nhân",
       description:
-        "Bài tập được tổng hợp từ danh sách từ vựng cá nhân của bạn.",
+        "Bài tập được luyện tập dành riêng cho bạn dựa trên dữ liệu Sổ tay cá nhân.",
       questions: qList,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -640,7 +640,7 @@ const ExamPlay: React.FC = () => {
           </div>
           <h1 className="text-3xl font-black text-slate-800 mb-2 leading-tight">
             {mode === "saved"
-              ? "Luyện tập từ đã lưu"
+              ? "Luyện tập Sổ tay cá nhân"
               : exam?.title || "Đang tải bài tập..."}
           </h1>
           <p className="text-slate-500 mb-8 max-w-md mx-auto">
@@ -696,7 +696,7 @@ const ExamPlay: React.FC = () => {
               </div>
               <div>
                 <div className="font-bold text-sm text-slate-800">
-                  Từ đã lưu
+                  Sổ tay cá nhân
                 </div>
                 <div className="text-[10px] text-slate-400 uppercase font-black tracking-widest">
                   Cá nhân hóa
