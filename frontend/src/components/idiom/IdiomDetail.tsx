@@ -67,6 +67,26 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
 }) => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [learningTip, setLearningTip] = useState("");
+
+  const learningTips = [
+    "Học đi đôi với hành.",
+    "Có công mài sắt, có ngày nên kim.",
+    "Học một biết mười.",
+    "Muốn biết phải hỏi, muốn giỏi phải học.",
+    "Học tập là hạt giống của kiến thức, kiến thức là hạt giống của hạnh phúc.",
+    "Tri thức là sức mạnh.",
+    "Kỉ luật là cầu nối giữa mục tiêu và thành tựu.",
+    "Thành công không phải là chìa khóa mở cửa hạnh phúc.",
+    "Đam mê là nguồn động lực lớn nhất của sự sáng tạo.",
+    "Bắt đầu từ nơi bạn đứng. Sử dụng những gì bạn có. Làm những gì bạn có thể.",
+  ];
+
+  useEffect(() => {
+    const randomTip =
+      learningTips[Math.floor(Math.random() * learningTips.length)];
+    setLearningTip(randomTip);
+  }, [idiom.id]);
 
   useEffect(() => {
     if (isLoggedIn && idiom.id) {
@@ -106,6 +126,31 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
       toast.error("Lỗi đồng bộ dữ liệu.");
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const [grammarAnswers, setGrammarAnswers] = useState<string[]>([]);
+  const [grammarChecked, setGrammarChecked] = useState(false);
+  const [isGrammarCorrect, setIsGrammarCorrect] = useState<boolean | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (idiom.hanzi) {
+      setGrammarAnswers(new Array(idiom.hanzi.length).fill(""));
+      setGrammarChecked(false);
+      setIsGrammarCorrect(null);
+    }
+  }, [idiom.id, idiom.hanzi]);
+
+  const checkGrammarResult = () => {
+    const isCorrect = grammarAnswers.join("") === idiom.hanzi;
+    setIsGrammarCorrect(isCorrect);
+    setGrammarChecked(true);
+    if (isCorrect) {
+      toast.success("Chính xác! Bạn giỏi quá!");
+    } else {
+      toast.error("Chưa đúng rồi, thử lại nhé!");
     }
   };
 
@@ -330,18 +375,80 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
           {/* Origin & Grammar Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             <InfoCard
-              title="Điển tích"
+              title="Nguồn gốc"
               className="md:order-1"
               icon={<ChevronRightIcon />}
             >
               {idiom.origin}
             </InfoCard>
             <InfoCard
-              title="Ngữ pháp"
+              title="Luyện tập ngữ pháp"
               className="md:order-2"
               icon={<PencilIcon />}
             >
-              {idiom.grammar}
+              <div className="space-y-4">
+                <p className="text-slate-500 italic text-xs mb-2">
+                  Hãy thử điền các chữ Hán còn thiếu:
+                </p>
+                <div className="flex flex-wrap justify-center gap-2 mb-4">
+                  {idiom.hanzi.split("").map((_, idx) => (
+                    <input
+                      key={idx}
+                      type="text"
+                      maxLength={1}
+                      value={grammarAnswers[idx] || ""}
+                      readOnly={grammarChecked && isGrammarCorrect === true}
+                      onChange={(e) => {
+                        const newAns = [...grammarAnswers];
+                        newAns[idx] = e.target.value;
+                        setGrammarAnswers(newAns);
+                        // Auto focus next field
+                        if (e.target.value && idx < idiom.hanzi.length - 1) {
+                          const nextInput = e.target.parentElement?.children[
+                            idx + 1
+                          ] as HTMLInputElement;
+                          nextInput?.focus();
+                        }
+                      }}
+                      className={`w-10 h-10 md:w-12 md:h-12 border-2 rounded-xl text-center font-hanzi text-xl md:text-2xl transition-all outline-none ${
+                        grammarChecked
+                          ? isGrammarCorrect
+                            ? "border-emerald-500 bg-emerald-50 text-emerald-700 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                            : "border-red-500 bg-red-50 text-red-700 animate-shake"
+                          : "border-slate-100 bg-slate-50 focus:border-indigo-400 focus:bg-white focus:shadow-lg"
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                {!grammarChecked || !isGrammarCorrect ? (
+                  <button
+                    onClick={checkGrammarResult}
+                    className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <CheckCircleIcon className="w-4 h-4" />
+                    Kiểm tra đáp án
+                  </button>
+                ) : (
+                  <div className="py-3 bg-emerald-100 text-emerald-700 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 animate-bounce">
+                    <CheckCircleIcon className="w-4 h-4" />
+                    Tuyệt vời!
+                  </div>
+                )}
+
+                <details className="group mt-4 cursor-pointer">
+                  <summary className="text-indigo-600 font-bold text-sm list-none flex items-center gap-2 group-open:hidden">
+                    <span>Xem gợi ý & ứng dụng</span>
+                    <ChevronRightIcon className="w-4 h-4" />
+                  </summary>
+                  <div className="mt-3 pl-4 border-l-2 border-indigo-100 animate-fadeIn text-sm">
+                    <p className="font-bold text-slate-800 mb-2">
+                      Đáp án chính xác: {idiom.hanzi}
+                    </p>
+                    {idiom.grammar}
+                  </div>
+                </details>
+              </div>
             </InfoCard>
           </div>
 
@@ -363,7 +470,7 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
             </div>
 
             <div className="space-y-6 md:space-y-8">
-              {idiom.examples.map((ex, idx) => (
+              {idiom.examples.slice(0, 2).map((ex, idx) => (
                 <div key={idx} className="relative pl-6 md:pl-10 group/ex">
                   <div className="absolute left-0 top-0 w-px h-full bg-white/10"></div>
                   <div className="absolute left-[-3px] md:left-[-4px] top-0 w-1.5 md:w-2 h-1.5 md:h-2 rounded-full bg-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]"></div>
@@ -457,8 +564,7 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
                 Tip học tập
               </h5>
               <p className="text-base md:text-lg font-bold leading-relaxed mb-3 md:mb-5">
-                Nhớ lâu hơn 300% với phương pháp{" "}
-                <span className="text-amber-400">Spaced Repetition</span>.
+                {learningTip}
               </p>
               <div className="flex items-center gap-2 text-[10px] font-black text-white/40 uppercase">
                 <CheckCircleIcon className="w-4 h-4" /> Hệ thống GYSpace

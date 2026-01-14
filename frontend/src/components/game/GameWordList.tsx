@@ -1,16 +1,19 @@
 import React from "react";
 import type { Idiom } from "@/types";
+import { GameDifficulty } from "@/hooks/useWordSearchGame";
 
 interface GameWordListProps {
   words: Idiom[];
   foundWords: string[];
   onNewGame: () => void;
+  difficulty: GameDifficulty;
 }
 
 const GameWordList: React.FC<GameWordListProps> = ({
   words,
   foundWords,
   onNewGame,
+  difficulty,
 }) => {
   const isFinished = words.length > 0 && foundWords.length === words.length;
 
@@ -30,29 +33,39 @@ const GameWordList: React.FC<GameWordListProps> = ({
               return (
                 <div
                   key={w.id}
-                  className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                  className={`flex flex-col p-3 rounded-xl border transition-all ${
                     isFound
                       ? "bg-emerald-50 border-emerald-200 opacity-60"
                       : "bg-slate-50 border-slate-100 hover:border-red-200"
                   }`}
                 >
-                  <div>
-                    <p
-                      className={`font-bold text-sm ${
-                        isFound
-                          ? "text-emerald-700 line-through"
-                          : "text-slate-800"
-                      }`}
-                    >
-                      {w.vietnameseMeaning}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-0.5">{w.pinyin}</p>
-                  </div>
-                  {isFound && (
-                    <div className="text-emerald-600 font-hanzi font-bold text-lg">
-                      {w.hanzi}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className={`font-bold text-sm truncate ${
+                          isFound
+                            ? "text-emerald-700 line-through"
+                            : "text-slate-800"
+                        }`}
+                      >
+                        {w.vietnameseMeaning}
+                      </p>
+                      {(difficulty !== "hard" || isFound) && (
+                        <p className="text-xs text-slate-400 mt-0.5 truncate">
+                          {w.pinyin}
+                        </p>
+                      )}
                     </div>
-                  )}
+                    {(difficulty === "easy" || isFound) && (
+                      <div
+                        className={`font-hanzi font-bold text-lg shrink-0 ${
+                          isFound ? "text-emerald-600" : "text-slate-300"
+                        }`}
+                      >
+                        {w.hanzi}
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
