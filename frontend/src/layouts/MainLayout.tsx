@@ -46,6 +46,11 @@ const MainLayout: React.FC = () => {
     });
   };
 
+  const contextValue = React.useMemo(
+    () => ({ isLoggedIn: isAuthenticated, user }),
+    [isAuthenticated, user]
+  );
+
   return (
     <div className="h-screen flex flex-col relative font-sans overflow-hidden bg-slate-50">
       <Header
@@ -58,7 +63,7 @@ const MainLayout: React.FC = () => {
         ref={scrollContainerRef}
         className="flex-1 flex flex-col overflow-y-auto w-full relative scroll-smooth pt-16 md:pt-20"
       >
-        <Outlet context={{ isLoggedIn: isAuthenticated, user }} />
+        <Outlet context={contextValue} />
       </main>
 
       {/* Scroll To Top Button */}

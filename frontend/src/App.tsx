@@ -88,6 +88,30 @@ const App: React.FC = () => {
     }
   }, [dispatch]);
 
+  const handleBackToHome = React.useCallback(() => navigate("/"), [navigate]);
+  const handleBackToAdmin = React.useCallback(
+    () => navigate("/admin"),
+    [navigate]
+  );
+  const handleBackToIdiomList = React.useCallback(
+    () => navigate("/admin/idiom"),
+    [navigate]
+  );
+
+  const handleSelectIdiom = React.useCallback(
+    (idiom: any) => {
+      navigate(`/?query=${encodeURIComponent(idiom.hanzi)}`);
+    },
+    [navigate]
+  );
+
+  const handleSelectReportIdiom = React.useCallback(
+    (item: any) => {
+      navigate(`/?query=${encodeURIComponent(item.idiom?.hanzi)}`);
+    },
+    [navigate]
+  );
+
   if (loading) {
     return <SplashScreen />;
   }
@@ -102,11 +126,11 @@ const App: React.FC = () => {
 
             <Route
               path="/flashcards"
-              element={<FlashcardReview onBack={() => navigate("/")} />}
+              element={<FlashcardReview onBack={handleBackToHome} />}
             />
             <Route
               path="/word_search"
-              element={<WordSearchGame onBack={() => navigate("/")} />}
+              element={<WordSearchGame onBack={handleBackToHome} />}
             />
 
             <Route path="/auth" element={<AuthWrapper />} />
@@ -115,16 +139,14 @@ const App: React.FC = () => {
             <Route element={<RequireAuth />}>
               <Route
                 path="/saved"
-                element={<SavedVocabulary onBack={() => navigate("/")} />}
+                element={<SavedVocabulary onBack={handleBackToHome} />}
               />
               <Route
                 path="/history"
                 element={
                   <HistoryList
-                    onBack={() => navigate("/")}
-                    onSelect={(idiom) => {
-                      navigate(`/?query=${encodeURIComponent(idiom.hanzi)}`);
-                    }}
+                    onBack={handleBackToHome}
+                    onSelect={handleSelectIdiom}
                   />
                 }
               />
@@ -132,12 +154,8 @@ const App: React.FC = () => {
                 path="/reports"
                 element={
                   <UserReportList
-                    onBack={() => navigate("/")}
-                    onSelect={(idiom) => {
-                      navigate(
-                        `/?query=${encodeURIComponent(idiom.idiom?.hanzi)}`
-                      );
-                    }}
+                    onBack={handleBackToHome}
+                    onSelect={handleSelectReportIdiom}
                   />
                 }
               />
@@ -156,7 +174,7 @@ const App: React.FC = () => {
                 path="idiom"
                 element={
                   <VocabularyList
-                    onBack={() => navigate("/admin")}
+                    onBack={handleBackToAdmin}
                     onEdit={(id) => navigate(`/admin/idiom/detail/${id}`)}
                   />
                 }
@@ -167,21 +185,19 @@ const App: React.FC = () => {
               />
               <Route
                 path="idiom/insert"
-                element={
-                  <AdminInsert onBack={() => navigate("/admin/idiom")} />
-                }
+                element={<AdminInsert onBack={handleBackToIdiomList} />}
               />
               <Route
                 path="comments"
-                element={<AdminComments onBack={() => navigate("/admin")} />}
+                element={<AdminComments onBack={handleBackToAdmin} />}
               />
               <Route
                 path="search-logs"
-                element={<SearchLogs onBack={() => navigate("/admin")} />}
+                element={<SearchLogs onBack={handleBackToAdmin} />}
               />
               <Route
                 path="reports"
-                element={<AdminReports onBack={() => navigate("/admin")} />}
+                element={<AdminReports onBack={handleBackToAdmin} />}
               />
               <Route path="users" element={<UserManagement />} />
               <Route path="exams" element={<ExamPaperManagement />} />

@@ -25,8 +25,14 @@ export const NavigationProvider: React.FC<{ children: ReactNode }> = ({
 
   const setBackAction = useCallback(
     (action: (() => void) | null, label: string | null = "Quay lại") => {
-      setBackActionState(() => action);
-      setBackLabel(label);
+      setBackActionState((prevAction) => {
+        if (prevAction === action) return prevAction;
+        return action;
+      });
+      setBackLabel((prevLabel) => {
+        if (prevLabel === label) return prevLabel;
+        return label;
+      });
     },
     []
   );
