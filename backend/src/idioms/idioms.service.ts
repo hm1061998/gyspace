@@ -12,6 +12,7 @@ import { SearchLogEntity } from './entities/search-log.entity';
 import { CreateIdiomDto } from './dto/create-idiom.dto';
 import { IdiomQueryDto, SearchLogQueryDto } from './dto/idiom-query.dto';
 import { PaginationQueryDto } from '../common/dto/pagination.dto';
+import { UserEntity } from '../user/entities/user.entity';
 
 @Injectable()
 export class IdiomsService {
@@ -27,6 +28,8 @@ export class IdiomsService {
     private examplesRepository: Repository<ExampleSentenceEntity>,
     @InjectRepository(SearchLogEntity)
     private searchLogRepository: Repository<SearchLogEntity>,
+    @InjectRepository(UserEntity)
+    private userRepository: Repository<UserEntity>,
     private dataSource: DataSource,
   ) {
     // AI initialization removed
@@ -35,6 +38,8 @@ export class IdiomsService {
   async getAdminStats() {
     try {
       const totalIdioms = await this.idiomRepository.count();
+      const totalUsers = await this.userRepository.count();
+      const totalSearches = await this.searchLogRepository.count();
 
       // 1. Thống kê theo cấp độ (1 query Duy nhất)
       const levelResults = await this.idiomRepository
@@ -82,6 +87,8 @@ export class IdiomsService {
 
       return {
         totalIdioms,
+        totalUsers,
+        totalSearches,
         levelStats,
         typeStats,
         recentIdioms,
@@ -89,10 +96,15 @@ export class IdiomsService {
       };
     } catch (error) {
       this.logger.error('Error getting admin stats:', error);
-      throw new HttpException(
-        'Lỗi khi lấy dữ liệu thống kê.',
-        HttpStatus.BAD_REQUEST,
-      );
+      return {
+        totalIdioms: 0,
+        totalUsers: 0,
+        totalSearches: 0,
+        levelStats: [],
+        typeStats: [],
+        recentIdioms: [],
+        hotKeywords: [],
+      };
     }
   }
 
@@ -554,5 +566,47 @@ export class IdiomsService {
     return { success: true, deleted: ids.length };
   }
 
-  // AI methods removed
+  async getSearchAnalytics() {
+    const last7Days = await this.searchLogRepository
+      .createQueryBuilder('log')
+      .select("DATE_TRUNC('day', log.createdAt)", 'date')
+      .addSelect('COUNT(log.id)', 'count')
+      .where('log.createdAt > :date', {
+        date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      })
+      .groupBy("DATE_TRUNC('day', log.createdAt)")
+      .orderBy('date', 'ASC')
+      .getRawMany();
+
+    return {
+      last7Days: last7Days.map((d) => ({
+        date: new Date(d.date).toLocaleDateString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+        }),
+        count: parseInt(d.count),
+      })),
+    };
+  }
+
+  async getUserGrowth() {
+    const last30Days = await this.userRepository
+      .createQueryBuilder('user')
+      .select("DATE_TRUNC('day', user.createdAt)", 'date')
+      .addSelect('COUNT(user.id)', 'count')
+      .where('user.createdAt > :date', {
+        date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      })
+      .groupBy("DATE_TRUNC('day', user.createdAt)")
+      .orderBy('date', 'ASC')
+      .getRawMany();
+
+    return last30Days.map((d) => ({
+      date: new Date(d.date).toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+      }),
+      count: parseInt(d.count),
+    }));
+  }
 }

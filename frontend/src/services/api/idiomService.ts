@@ -62,6 +62,16 @@ export const fetchAdminStats = async () => {
   return response.data;
 };
 
+export const fetchSearchAnalytics = async () => {
+  const response = await http.get("/idioms/admin/analytics/search");
+  return response.data;
+};
+
+export const fetchUserGrowth = async () => {
+  const response = await http.get("/idioms/admin/analytics/growth");
+  return response.data;
+};
+
 /**
  * Fetch suggestions for search autocomplete
  */

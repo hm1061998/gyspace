@@ -45,53 +45,69 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
     window.speechSynthesis.speak(u);
   };
 
-  if (loading)
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <SpinnerIcon className="w-10 h-10 text-red-600" />
-      </div>
-    );
-
   return (
     <div className="max-w-2xl mx-auto w-full flex flex-col h-full animate-pop p-3">
-      <FlashcardHeader
-        source={source}
-        setSource={setSource}
-        isLoggedIn={isLoggedIn}
-        reviewQueueLength={reviewQueue.length}
-        onSavedClickError={() =>
-          toast.error("Vui lòng đăng nhập để sử dụng tính năng này.")
-        }
-      />
-
-      {!currentCard ? (
-        totalAvailableCards === 0 ? (
-          <FlashcardEmptyState source={source} onBack={onBack} />
-        ) : (
-          <FlashcardCompletionState
-            onReviewMore={() => loadData(true)}
-            onBack={onBack}
-          />
-        )
-      ) : (
-        <div className="flex-1 flex flex-col items-center justify-center pb-8">
-          <FlashcardItem
-            card={currentCard}
-            isFlipped={isFlipped}
-            isTransitioning={isTransitioning}
-            onFlip={() => !isFlipped && setIsFlipped(true)}
-            onSpeak={speak}
-          />
-          <FlashcardRatingControls
-            isFlipped={isFlipped}
-            onFlip={() => setIsFlipped(true)}
-            onRate={async (e, rating) => {
-              e.stopPropagation();
-              await handleRate(rating);
-            }}
-            getNextIntervalLabel={getNextIntervalLabel}
-          />
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <SpinnerIcon className="w-10 h-10 text-red-600" />
         </div>
+      ) : (
+        <>
+          <FlashcardHeader
+            source={source}
+            setSource={setSource}
+            isLoggedIn={isLoggedIn}
+            reviewQueueLength={reviewQueue.length}
+            onSavedClickError={() =>
+              toast.error("Vui lòng đăng nhập để sử dụng tính năng này.")
+            }
+          />
+
+          {!isLoggedIn && (
+            <div className="bg-amber-50 border border-amber-100/50 rounded-2xl p-4 mb-4 flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-amber-500 shadow-sm shrink-0">
+                <span className="font-bold text-lg">!</span>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-amber-800">Chế độ khách</p>
+                <p className="text-[10px] text-amber-600/80 font-medium">
+                  Tiến độ của bạn sẽ chỉ được lưu trên trình duyệt này. Hãy đăng
+                  nhập để đồng bộ hóa dữ liệu.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {!currentCard ? (
+            totalAvailableCards === 0 ? (
+              <FlashcardEmptyState source={source} onBack={onBack} />
+            ) : (
+              <FlashcardCompletionState
+                onReviewMore={() => loadData(true)}
+                onBack={onBack}
+              />
+            )
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <FlashcardItem
+                card={currentCard}
+                isFlipped={isFlipped}
+                isTransitioning={isTransitioning}
+                onFlip={() => !isFlipped && setIsFlipped(true)}
+                onSpeak={speak}
+              />
+              <FlashcardRatingControls
+                isFlipped={isFlipped}
+                onFlip={() => setIsFlipped(true)}
+                onRate={async (e, rating) => {
+                  e.stopPropagation();
+                  await handleRate(rating);
+                }}
+                getNextIntervalLabel={getNextIntervalLabel}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );

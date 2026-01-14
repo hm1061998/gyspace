@@ -8,6 +8,7 @@ import {
   HistoryEntity,
 } from './entities/user-data.entity';
 import { IdiomEntity } from '../idioms/entities/idiom.entity';
+import { UserEntity } from '../user/entities/user.entity';
 
 @Injectable()
 export class UserDataService {
@@ -20,7 +21,23 @@ export class UserDataService {
     private historyRepository: Repository<HistoryEntity>,
     @InjectRepository(IdiomEntity)
     private idiomRepository: Repository<IdiomEntity>,
+    @InjectRepository(UserEntity)
+    private userRepository: Repository<UserEntity>,
   ) {}
+
+  private async awardXP(userId: string, amount: number) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) return;
+
+    user.xp += amount;
+    // Simple level up logic: level = floor(sqrt(xp / 100)) + 1
+    const newLevel = Math.floor(Math.sqrt(user.xp / 100)) + 1;
+    if (newLevel > user.level) {
+      user.level = newLevel;
+    }
+
+    await this.userRepository.save(user);
+  }
 
   async toggleSaveIdiom(userId: string, idiomId: string) {
     const existing = await this.savedRepository.findOne({
@@ -36,6 +53,7 @@ export class UserDataService {
         idiom: { id: idiomId },
       });
       await this.savedRepository.save(saved);
+      await this.awardXP(userId, 10); // 10 XP for saving an idiom
       return { saved: true };
     }
   }
@@ -73,7 +91,17 @@ export class UserDataService {
     };
   }
 
-  async updateSRS(userId: string, idiomId: string, data: any) {
+  async updateSRS(
+    userId: string,
+    idiomId: string,
+    data: {
+      quality?: number;
+      interval?: number;
+      repetition?: number;
+      efactor?: number;
+      nextReviewDate?: string;
+    },
+  ) {
     let progress = await this.srsRepository.findOne({
       where: { user: { id: userId }, idiom: { id: idiomId } },
     });
@@ -82,17 +110,63 @@ export class UserDataService {
       progress = this.srsRepository.create({
         user: { id: userId },
         idiom: { id: idiomId },
+        interval: 0,
+        repetition: 0,
+        efactor: 2.5,
+        nextReviewDate: Date.now().toString(),
       });
     }
 
-    Object.assign(progress, {
-      interval: data.interval,
-      repetition: data.repetition,
-      efactor: data.efactor,
-      nextReviewDate: String(data.nextReviewDate),
-    });
+    if (data.quality !== undefined) {
+      // SM-2 Algorithm Implementation
+      const q = data.quality;
+      let { interval, repetition, efactor } = progress;
 
-    return this.srsRepository.save(progress);
+      if (q >= 3) {
+        if (repetition === 0) {
+          // Special case: Easy (5) for new card jumps further
+          interval = q === 5 ? 4 : 1;
+        } else if (repetition === 1) {
+          interval = 6;
+        } else {
+          interval = Math.ceil(interval * efactor);
+        }
+        repetition += 1;
+      } else {
+        repetition = 0;
+        interval = 1;
+      }
+
+      efactor = efactor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
+      if (efactor < 1.3) efactor = 1.3;
+
+      // Quality < 3 (Again) uses 1-minute interval, otherwise use the calculated interval in days
+      const intervalMs = q < 3 ? 60 * 1000 : interval * 24 * 60 * 60 * 1000;
+      const nextReviewDate = Date.now() + intervalMs;
+
+      Object.assign(progress, {
+        interval,
+        repetition,
+        efactor,
+        nextReviewDate: nextReviewDate.toString(),
+      });
+    } else {
+      // Manual update (fallback)
+      Object.assign(progress, {
+        interval: data.interval ?? progress.interval,
+        repetition: data.repetition ?? progress.repetition,
+        efactor: data.efactor ?? progress.efactor,
+        nextReviewDate: data.nextReviewDate ?? progress.nextReviewDate,
+      });
+    }
+
+    const result = await this.srsRepository.save(progress);
+
+    if (data.quality !== undefined && data.quality >= 3) {
+      await this.awardXP(userId, 20);
+    }
+
+    return result;
   }
 
   async getSRSData(userId: string, query: UserDataQueryDto) {

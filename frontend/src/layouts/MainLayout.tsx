@@ -50,7 +50,7 @@ const MainLayout: React.FC = () => {
 
       <main
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto w-full relative scroll-smooth"
+        className="flex-1 flex flex-col overflow-y-auto w-full relative scroll-smooth"
       >
         <Outlet context={{ isLoggedIn: isAuthenticated, user }} />
       </main>

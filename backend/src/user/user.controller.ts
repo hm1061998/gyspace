@@ -22,6 +22,11 @@ import { PaginationQueryDto } from '../common/dto/pagination.dto';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Get('profile')
+  async getProfile(@Req() req) {
+    return this.userService.findOne(req.user.id);
+  }
+
   @Put('profile')
   async updateProfile(@Req() req, @Body() body: UpdateProfileDto) {
     return this.userService.updateProfile(req.user.id, body);

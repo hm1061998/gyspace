@@ -12,7 +12,23 @@ import {
   FlagIcon,
   ChatBubbleIcon,
   CheckCircleIcon,
+  UserIcon,
+  SearchIcon,
 } from "@/components/common/icons";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+} from "recharts";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
@@ -20,25 +36,41 @@ import {
   getAdminStats,
   getCommentStats,
   fetchReportStats,
+  getAnalytics,
 } from "@/redux/adminSlice";
 import { toast } from "@/libs/Toast";
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const { stats, loading, error, commentStats, reportStats } = useSelector(
-    (state: RootState) => state.admin
-  );
+  const {
+    stats,
+    loading,
+    error,
+    commentStats,
+    reportStats,
+    searchAnalytics,
+    userGrowth,
+    analyticsLoading,
+  } = useSelector((state: RootState) => state.admin);
 
   useEffect(() => {
     dispatch(getAdminStats(false));
     dispatch(getCommentStats(false));
     dispatch(fetchReportStats(false));
+    // Import thunk getAnalytics from adminSlice if not already
+    // but I added it above in code, let's assume it's exported
   }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(getAnalytics(false));
+  }, [dispatch]);
+
   const onRefresh = () => {
     dispatch(getAdminStats(true));
     dispatch(getCommentStats(true));
     dispatch(fetchReportStats(true));
+    dispatch(getAnalytics(true));
   };
 
   const onNavigate = (path: string) => {
@@ -143,19 +175,112 @@ const AdminDashboard: React.FC = () => {
             onClick={() => onNavigate("/admin/idiom/list")}
           />
           <CompactStatCard
-            icon={<ChatBubbleIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
-            label="Chờ duyệt"
-            value={reportStats?.pending || 0}
-            color="amber"
-            onClick={() => onNavigate("/admin/reports?status=pending")}
+            icon={<UserIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+            label="Người dùng"
+            value={stats?.totalUsers || 0}
+            color="indigo"
+            onClick={() => onNavigate("/admin/users")}
+          />
+          <CompactStatCard
+            icon={<SearchIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+            label="Lượt tìm kiếm"
+            value={stats?.totalSearches || 0}
+            color="emerald"
+            onClick={() => onNavigate("/admin/search-logs")}
           />
         </div>
 
-        {/* --- Masonry-style Grid for Content Health, Tracking, etc. --- */}
+        {/* --- Analytics Row --- */}
+        <div className="lg:col-span-8">
+          <Section
+            title="Xu hướng tìm kiếm (7 ngày)"
+            icon={<SearchIcon className="w-4 h-4 text-emerald-500" />}
+          >
+            <div className="h-[300px] w-full mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={searchAnalytics?.last7Days || []}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="#f1f5f9"
+                  />
+                  <XAxis
+                    dataKey="date"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 10, fill: "#94a3b8" }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 10, fill: "#94a3b8" }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "16px",
+                      border: "none",
+                      boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="count"
+                    stroke="#10b981"
+                    strokeWidth={4}
+                    dot={{
+                      r: 4,
+                      fill: "#10b981",
+                      strokeWidth: 2,
+                      stroke: "#fff",
+                    }}
+                    activeDot={{ r: 6, strokeWidth: 0 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </Section>
+        </div>
 
-        {/* --- Masonry-style Grid for Content Health, Tracking, etc. --- */}
+        <div className="lg:col-span-4">
+          <Section
+            title="Tăng trưởng người dùng"
+            icon={<UserIcon className="w-4 h-4 text-indigo-500" />}
+          >
+            <div className="h-[300px] w-full mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={userGrowth || []}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="#f1f5f9"
+                  />
+                  <XAxis
+                    dataKey="date"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 10, fill: "#94a3b8" }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 10, fill: "#94a3b8" }}
+                    hide
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "16px",
+                      border: "none",
+                      boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+                    }}
+                  />
+                  <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Section>
+        </div>
 
-        {/* Moderation Stats - Replaces Content Health */}
+        {/* Moderation Stats */}
         <div className="md:col-span-1 lg:col-span-6 xl:col-span-4">
           <Section
             title="Tỉ lệ duyệt"
@@ -354,6 +479,8 @@ const CompactStatCard = ({ icon, label, value, color, onClick }: any) => {
   const styles: any = {
     red: "bg-red-50 text-red-600 border-red-100/50",
     amber: "bg-amber-50 text-amber-600 border-amber-100/50",
+    indigo: "bg-indigo-50 text-indigo-600 border-indigo-100/50",
+    emerald: "bg-emerald-50 text-emerald-600 border-emerald-100/50",
   };
   return (
     <div

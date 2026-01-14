@@ -294,7 +294,7 @@ const ExamPlay: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-slate-50">
+      <div className="h-full flex items-center justify-center bg-slate-50">
         <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
       </div>
     );
@@ -305,7 +305,7 @@ const ExamPlay: React.FC = () => {
   if (showResult) {
     const maxTotalScore = questions.reduce((sum, q) => sum + q.points, 0);
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-inter">
+      <div className="h-full bg-slate-50 flex items-center justify-center p-6 font-inter">
         <div className="bg-white rounded-[32px] p-8 max-w-lg w-full shadow-xl border border-slate-100 text-center">
           <TrophyIcon className="w-20 h-20 text-yellow-500 mx-auto mb-6" />
           <h2 className="text-3xl font-black text-slate-800 mb-2">
@@ -360,7 +360,7 @@ const ExamPlay: React.FC = () => {
 
   if (!started) {
     return (
-      <div className="min-h-screen bg-white font-inter flex flex-col">
+      <div className="h-full bg-white font-inter flex flex-col">
         {/* Cover Screen */}
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-2xl mx-auto">
           <div className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center mb-8">
@@ -397,7 +397,7 @@ const ExamPlay: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 font-inter overflow-hidden">
+    <div className="flex flex-col h-full bg-slate-50 font-inter overflow-hidden">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 sm:px-8 shrink-0">
         <button

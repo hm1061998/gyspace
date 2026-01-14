@@ -14,6 +14,7 @@ import {
   ExclamationIcon,
   ChatBubbleIcon,
 } from "@/components/common/icons";
+import SpeakButton from "@/components/common/SpeakButton";
 import IdiomComments from "./IdiomComments";
 import { toast } from "@/libs/Toast";
 import {
@@ -108,23 +109,6 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
     }
   };
 
-  const handleSpeak = () => {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(idiom.hanzi);
-      utterance.lang = "zh-CN";
-      utterance.rate = 0.8;
-      const voices = window.speechSynthesis.getVoices();
-      const chineseVoice = voices.find(
-        (v) => v.lang.includes("zh") || v.lang.includes("CN")
-      );
-      if (chineseVoice) utterance.voice = chineseVoice;
-      window.speechSynthesis.speak(utterance);
-    } else {
-      toast.error("Trình duyệt không hỗ trợ đọc văn bản.");
-    }
-  };
-
   const handleAddToFlashcard = async () => {
     if (!isLoggedIn) {
       toast.error("Vui lòng đăng nhập để sử dụng tính năng này.");
@@ -183,12 +167,11 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
                 <h1 className="text-5xl sm:text-7xl md:text-8xl font-hanzi font-black text-slate-800 tracking-tighter drop-shadow-sm leading-tight">
                   {idiom.hanzi}
                 </h1>
-                <button
-                  onClick={handleSpeak}
-                  className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-slate-50 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all duration-300 flex items-center justify-center shrink-0 group/voice"
-                >
-                  <SpeakerWaveIcon className="w-6 h-6 md:w-8 md:h-8 group-hover/voice:scale-110 transition-transform" />
-                </button>
+                <SpeakButton
+                  text={idiom.hanzi}
+                  lang="zh-CN"
+                  className="w-12 h-12 md:w-14 md:h-14 p-0!"
+                />
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
@@ -373,8 +356,9 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
                   Ví dụ minh họa
                 </h3>
               </div>
-              <div className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/40 w-fit">
-                Ứng dụng
+              <div className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/40 w-fit flex items-center gap-2">
+                <span>Ứng dụng</span>
+                <SpeakerWaveIcon className="w-3 h-3" />
               </div>
             </div>
 
@@ -385,16 +369,28 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
                   <div className="absolute left-[-3px] md:left-[-4px] top-0 w-1.5 md:w-2 h-1.5 md:h-2 rounded-full bg-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]"></div>
 
                   <div className="space-y-3 md:space-y-4">
-                    <p className="text-xl md:text-3xl font-hanzi font-medium leading-relaxed">
-                      {ex.chinese}
-                    </p>
+                    <div className="flex items-start justify-between gap-4">
+                      <p className="text-xl md:text-3xl font-hanzi font-medium leading-relaxed flex-1">
+                        {ex.chinese}
+                      </p>
+                      <SpeakButton
+                        text={ex.chinese}
+                        lang="zh-CN"
+                        className="mt-1 bg-white/5 hover:bg-white/10"
+                      />
+                    </div>
                     <p className="text-red-400 font-black font-sans tracking-widest text-xs md:text-sm uppercase opacity-60">
                       {ex.pinyin}
                     </p>
-                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                      <p className="text-white/70 text-sm md:text-base font-medium italic">
+                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between gap-4">
+                      <p className="text-white/70 text-sm md:text-base font-medium italic flex-1">
                         "{ex.vietnamese}"
                       </p>
+                      <SpeakButton
+                        text={ex.vietnamese}
+                        lang="vi-VN"
+                        className="bg-white/5 hover:bg-white/10"
+                      />
                     </div>
                   </div>
                 </div>

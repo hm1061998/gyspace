@@ -29,6 +29,18 @@ export class IdiomsController {
   }
 
   @UseGuards(JwtAuthGuard, AdminGuard)
+  @Get('admin/analytics/search')
+  async getSearchAnalytics() {
+    return this.idiomsService.getSearchAnalytics();
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Get('admin/analytics/growth')
+  async getUserGrowth() {
+    return this.idiomsService.getUserGrowth();
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Get('admin/search-logs')
   async getSearchLogs(@Query() query: SearchLogQueryDto) {
     return this.idiomsService.getSearchLogs(query);
