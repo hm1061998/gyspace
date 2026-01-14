@@ -13,7 +13,6 @@ import {
 } from './user-data/entities/user-data.entity';
 import { IdiomCommentEntity } from './idiom-comments/entities/idiom-comment.entity';
 import { DictionaryReportEntity } from './dictionary-reports/entities/dictionary-report.entity';
-import { ExerciseEntity } from './exercises/entities/exercise.entity';
 import { ExamPaperEntity } from './exam-papers/entities/exam-paper.entity';
 import { ExamQuestionEntity } from './exam-papers/entities/exam-question.entity';
 import { IpBlockEntity } from './common/security/ip-block.entity';
@@ -39,7 +38,6 @@ export const AppDataSource = new DataSource({
     IdiomCommentEntity,
     IpBlockEntity,
     DictionaryReportEntity,
-    ExerciseEntity,
     ExamPaperEntity,
     ExamQuestionEntity,
     SearchLogEntity,

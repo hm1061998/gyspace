@@ -17,7 +17,6 @@ const Home: React.FC = () => {
     currentIdiom,
     isLoading,
     error,
-    searchMode,
     handleSearch,
     isLoggedIn,
   } = useIdiomSearch();
@@ -29,7 +28,7 @@ const Home: React.FC = () => {
     selectedIndex,
     suggestionsListRef,
     handleKeyDown,
-  } = useSuggestions(query, searchMode, !!currentIdiom);
+  } = useSuggestions(query, !!currentIdiom);
 
   const [voiceLang, setVoiceLang] = useState<"vi-VN" | "zh-CN">("vi-VN");
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -120,7 +119,6 @@ const Home: React.FC = () => {
           setQuery={setQuery}
           onSearch={handleSearch}
           isLoading={isLoading}
-          searchMode={searchMode}
           isListening={isListening}
           isSupported={isSupported}
           voiceLang={voiceLang}
@@ -152,11 +150,9 @@ const Home: React.FC = () => {
           )}
         </SearchBar>
 
-        {searchMode === "database" && (
-          <p className="text-center text-slate-400 text-[10px] uppercase tracking-widest mt-4 font-bold">
-            Hỗ trợ tìm kiếm bằng: Tiếng Việt, Pinyin, hoặc Chữ Hán
-          </p>
-        )}
+        <p className="text-center text-slate-400 text-[10px] uppercase tracking-widest mt-4 font-bold">
+          Hỗ trợ tìm kiếm bằng: Tiếng Việt, Pinyin, hoặc Chữ Hán
+        </p>
 
         {isCenteredMode && (
           <div className="mt-8">
@@ -172,15 +168,9 @@ const Home: React.FC = () => {
 
       {isLoading ? (
         <div className="flex flex-col items-center mt-12 text-slate-400 animate-pulse">
-          <div
-            className={`w-12 h-12 border-4 rounded-full border-t-transparent animate-spin mb-4 ${
-              searchMode === "ai" ? "border-purple-600" : "border-red-600"
-            }`}
-          ></div>
+          <div className="w-12 h-12 border-4 rounded-full border-t-transparent animate-spin mb-4 border-red-600"></div>
           <p className="font-bold text-sm tracking-wide uppercase">
-            {searchMode === "ai"
-              ? "AI đang tư duy..."
-              : "Đang lục lại thư viện..."}
+            Đang lục lại thư viện...
           </p>
         </div>
       ) : error ? (

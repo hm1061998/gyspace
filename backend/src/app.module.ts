@@ -29,8 +29,6 @@ import { IdiomCommentsModule } from './idiom-comments/idiom-comments.module';
 import { IdiomCommentEntity } from './idiom-comments/entities/idiom-comment.entity';
 import { DictionaryReportsModule } from './dictionary-reports/dictionary-reports.module';
 import { DictionaryReportEntity } from './dictionary-reports/entities/dictionary-report.entity';
-import { ExercisesModule } from './exercises/exercises.module';
-import { ExerciseEntity } from './exercises/entities/exercise.entity';
 import { ExamPapersModule } from './exam-papers/exam-papers.module';
 import { ExamPaperEntity } from './exam-papers/entities/exam-paper.entity';
 import { ExamQuestionEntity } from './exam-papers/entities/exam-question.entity';
@@ -67,7 +65,6 @@ const isProd = process.env.NODE_ENV === 'production';
           IdiomCommentEntity,
           IpBlockEntity,
           DictionaryReportEntity,
-          ExerciseEntity,
           ExamPaperEntity,
           ExamQuestionEntity,
           SearchLogEntity,
@@ -87,7 +84,6 @@ const isProd = process.env.NODE_ENV === 'production';
     UserModule,
     IdiomCommentsModule,
     DictionaryReportsModule,
-    ExercisesModule,
     ExamPapersModule,
     SecurityModule,
     ThrottlerModule.forRoot([

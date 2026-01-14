@@ -1,5 +1,5 @@
 import { http } from "./httpService";
-import { Idiom, SearchMode, QueryParams, PaginatedResponse } from "@/types";
+import { Idiom, QueryParams, PaginatedResponse } from "@/types";
 import {
   TABLE_IDIOMS,
   TABLE_CHARACTER_ANALYSIS,
@@ -90,13 +90,12 @@ export const fetchDailySuggestions = async (): Promise<Idiom[]> => {
 };
 
 export const fetchIdiomDetails = async (
-  query: string,
-  mode: SearchMode = "database"
+  query: string
 ): Promise<Idiom & { dataSource: string }> => {
   try {
     const response = await http.get<Idiom & { dataSource: string }>(
       "/idioms/search",
-      { query, mode }
+      { query }
     );
     return response.data;
   } catch (error: any) {

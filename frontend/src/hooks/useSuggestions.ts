@@ -1,12 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { fetchSuggestions } from "@/services/api/idiomService";
-import { Idiom, SearchMode } from "@/types";
+import { Idiom } from "@/types";
 
-export const useSuggestions = (
-  query: string,
-  searchMode: SearchMode,
-  isIdiomSelected: boolean
-) => {
+export const useSuggestions = (query: string, isIdiomSelected: boolean) => {
   const [suggestions, setSuggestions] = useState<Idiom[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -14,7 +10,7 @@ export const useSuggestions = (
 
   useEffect(() => {
     const fetchTimer = setTimeout(async () => {
-      if (query.trim() && searchMode === "database" && !isIdiomSelected) {
+      if (query.trim() && !isIdiomSelected) {
         try {
           const { data } = await fetchSuggestions({ search: query });
           setSuggestions(data);
@@ -30,7 +26,7 @@ export const useSuggestions = (
     }, 200);
 
     return () => clearTimeout(fetchTimer);
-  }, [query, searchMode, isIdiomSelected]);
+  }, [query, isIdiomSelected]);
 
   useEffect(() => {
     if (selectedIndex >= 0 && suggestionsListRef.current) {

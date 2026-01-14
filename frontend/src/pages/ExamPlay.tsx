@@ -412,7 +412,7 @@ const ExamPlay: React.FC = () => {
                 "Thoát bài tập"
               )
               .then((ok) => {
-                if (ok) navigate("/exams");
+                if (ok) navigate("/");
               });
           }}
           className="p-2 -ml-2 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors"

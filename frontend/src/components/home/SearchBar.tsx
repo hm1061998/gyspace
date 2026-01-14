@@ -5,14 +5,12 @@ import {
   MicrophoneIcon,
   ArrowLeftIcon,
 } from "@/components/common/icons";
-import { SearchMode } from "@/types";
 
 interface SearchBarProps {
   query: string;
   setQuery: (query: string) => void;
   onSearch: (searchTerm: string) => void;
   isLoading: boolean;
-  searchMode: SearchMode;
   isListening: boolean;
   isSupported: boolean;
   voiceLang: "vi-VN" | "zh-CN";
@@ -31,7 +29,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
   setQuery,
   onSearch,
   isLoading,
-  searchMode,
   isListening,
   isSupported,
   voiceLang,
@@ -54,9 +51,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       ref={searchContainerRef}
     >
       <div
-        className={`absolute -inset-1 rounded-full blur opacity-20 transition duration-1000 ${
-          searchMode === "ai" ? "bg-purple-600" : "bg-red-600"
-        }`}
+        className={`absolute -inset-1 rounded-full blur opacity-20 transition duration-1000 bg-red-600`}
       ></div>
       <div className="relative flex items-center bg-white/90 backdrop-blur-xl rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white transition-all duration-300 group-focus-within:shadow-[0_20px_60px_rgba(239,68,68,0.15)] group-focus-within:border-red-100 group-focus-within:-translate-y-1">
         <div className="relative flex-1 flex items-center overflow-hidden rounded-l-[2rem]">
@@ -69,11 +64,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             onChange={(e) => setQuery(e.target.value)}
             onFocus={onFocus}
             onKeyDown={onKeyDown}
-            placeholder={
-              searchMode === "database"
-                ? "Hán tự, Pinyin, nghĩa Việt..."
-                : "Hỏi AI bất cứ từ nào..."
-            }
+            placeholder={"Hán tự, Pinyin, nghĩa Việt..."}
             className="w-full py-4 md:py-6 pl-4 md:pl-5 pr-4 text-base md:text-xl outline-none text-slate-800 font-semibold bg-transparent placeholder:text-slate-300 placeholder:font-medium"
           />
 
@@ -143,17 +134,13 @@ const SearchBar: React.FC<SearchBarProps> = ({
           <button
             type="submit"
             disabled={isLoading}
-            className={`ml-1 px-6 md:px-8 py-3 md:py-4 rounded-[1.5rem] transition-all shadow-[0_10px_20px_rgba(239,68,68,0.2)] active:scale-95 flex items-center justify-center gap-2 font-bold text-sm md:text-base ${
-              searchMode === "ai"
-                ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:shadow-purple-200"
-                : "bg-red-600 text-white hover:bg-red-700 hover:shadow-red-200"
-            }`}
+            className={`ml-1 px-6 md:px-8 py-3 md:py-4 rounded-[1.5rem] transition-all shadow-[0_10px_20px_rgba(239,68,68,0.2)] active:scale-95 flex items-center justify-center gap-2 font-bold text-sm md:text-base bg-red-600 text-white hover:bg-red-700 hover:shadow-red-200`}
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full" />
             ) : (
               <>
-                <span>{searchMode === "ai" ? "Hỏi AI" : "Tra cứu"}</span>
+                <span>Tra cứu</span>
                 <ArrowLeftIcon className="w-4 h-4 rotate-180" />
               </>
             )}
