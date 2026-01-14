@@ -20,6 +20,17 @@ interface SRSDataMap {
   [hanzi: string]: SRSProgress;
 }
 
+const LOCAL_SRS_KEY = "guest_srs_progress";
+
+const getLocalSRS = (): SRSDataMap => {
+  const stored = localStorage.getItem(LOCAL_SRS_KEY);
+  return stored ? JSON.parse(stored) : {};
+};
+
+const saveLocalSRS = (data: SRSDataMap) => {
+  localStorage.setItem(LOCAL_SRS_KEY, JSON.stringify(data));
+};
+
 export const useFlashcards = (isLoggedIn: boolean, source: "all" | "saved") => {
   const [reviewQueue, setReviewQueue] = useState<Idiom[]>([]);
   const [currentCard, setCurrentCard] = useState<Idiom | null>(null);
@@ -42,6 +53,10 @@ export const useFlashcards = (isLoggedIn: boolean, source: "all" | "saved") => {
               nextReviewDate: Number(item.nextReviewDate),
             };
           });
+        } else {
+          // GUEST MODE: Load from localStorage
+          const localData = getLocalSRS();
+          Object.assign(progressMap, localData);
         }
         setSrsData(progressMap);
 
@@ -95,98 +110,107 @@ export const useFlashcards = (isLoggedIn: boolean, source: "all" | "saved") => {
     }
   }, [reviewQueue]);
 
-  const handleRate = async (rating: 1 | 2 | 3) => {
+  const handleRate = async (quality: number) => {
     if (!currentCard || !currentCard.id) return;
 
     loadingService.show("Đang đồng bộ...");
     try {
-      const existing = srsData[currentCard.hanzi] || {
-        interval: 0,
-        repetition: 0,
-        efactor: 2.5,
-        nextReviewDate: 0,
-      };
-      let { interval, repetition, efactor } = existing;
-      let nextReviewDate = Date.now();
+      if (isLoggedIn) {
+        const result = await updateSRSProgress(currentCard.id, { quality });
 
-      if (rating === 1) {
-        repetition = 0;
-        interval = 0;
-
-        if (isLoggedIn) {
-          try {
-            await updateSRSProgress(currentCard.id, {
-              interval,
-              repetition,
-              efactor,
-              nextReviewDate,
-            });
-          } catch (err) {
-            console.error("SRS sync error", err);
-          }
-        }
-
+        // Update local SRS data with the result from backend
         setSrsData((prev) => ({
           ...prev,
           [currentCard.hanzi]: {
-            interval,
-            repetition,
-            efactor,
-            nextReviewDate,
+            interval: result.interval,
+            repetition: result.repetition,
+            efactor: result.efactor,
+            nextReviewDate: Number(result.nextReviewDate),
           },
         }));
-        setReviewQueue((prev) => [...prev.slice(1), currentCard]);
-        return;
-      }
+      } else {
+        // GUEST MODE: Calculate SM-2 locally
+        const existing = srsData[currentCard.hanzi] || {
+          interval: 0,
+          repetition: 0,
+          efactor: 2.5,
+          nextReviewDate: Date.now(),
+        };
 
-      if (repetition === 0) interval = 1;
-      else if (repetition === 1) interval = 6;
-      else interval = Math.round(interval * efactor);
+        const q = quality;
+        let { interval, repetition, efactor } = existing;
 
-      if (rating === 3) {
-        efactor += 0.15;
-        interval = Math.round(interval * 1.3);
-      }
-      if (efactor < 1.3) efactor = 1.3;
-      repetition += 1;
-      nextReviewDate += interval * 24 * 60 * 60 * 1000;
-
-      if (isLoggedIn) {
-        try {
-          await updateSRSProgress(currentCard.id, {
-            interval,
-            repetition,
-            efactor,
-            nextReviewDate,
-          });
-        } catch (err) {
-          console.error("SRS sync error", err);
+        if (q >= 3) {
+          if (repetition === 0) {
+            // Special case: Easy (5) for new card jumps further
+            interval = q === 5 ? 4 : 1;
+          } else if (repetition === 1) {
+            interval = 6;
+          } else {
+            interval = Math.ceil(interval * efactor);
+          }
+          repetition += 1;
+        } else {
+          repetition = 0;
+          interval = 1;
         }
+
+        if (efactor < 1.3) efactor = 1.3;
+
+        // Quality < 3 (Again) uses 1-minute interval
+        const intervalMs = q < 3 ? 60 * 1000 : interval * 24 * 60 * 60 * 1000;
+        const nextReviewDate = Date.now() + intervalMs;
+        const newProgress = { interval, repetition, efactor, nextReviewDate };
+
+        const allLocal = getLocalSRS();
+        allLocal[currentCard.hanzi] = newProgress;
+        saveLocalSRS(allLocal);
+
+        setSrsData((prev) => ({
+          ...prev,
+          [currentCard.hanzi]: newProgress,
+        }));
       }
 
-      setSrsData((prev) => ({
-        ...prev,
-        [currentCard.hanzi]: { interval, repetition, efactor, nextReviewDate },
-      }));
-      setReviewQueue((prev) => prev.slice(1));
+      // If quality is low, move to end of queue instead of removing
+      if (quality < 3) {
+        setReviewQueue((prev) => [...prev.slice(1), currentCard]);
+      } else {
+        setReviewQueue((prev) => prev.slice(1));
+      }
+    } catch (err) {
+      console.error("SRS sync error", err);
+      toast.error("Không thể lưu kết quả học tập.");
     } finally {
       loadingService.hide();
     }
   };
 
-  const getNextIntervalLabel = (rating: 1 | 2 | 3) => {
+  const getNextIntervalLabel = (quality: number) => {
     if (!currentCard) return "";
     const existing = srsData[currentCard.hanzi] || {
       interval: 0,
       repetition: 0,
       efactor: 2.5,
     };
-    if (rating === 1) return "< 1m";
-    let interval = 1;
-    if (existing.repetition === 0) interval = 1;
-    else if (existing.repetition === 1) interval = 6;
-    else interval = Math.round(existing.interval * existing.efactor);
-    if (rating === 3) interval = Math.round(interval * 1.5);
+
+    if (quality < 3) return "1 phút";
+
+    let interval = 0;
+    if (existing.repetition === 0) {
+      if (quality === 3) interval = 1;
+      else if (quality === 4) interval = 2; // Better for Good
+      else if (quality === 5) interval = 4; // Better for Easy
+    } else if (existing.repetition === 1) {
+      interval = 6;
+      if (quality === 4) interval = Math.ceil(interval * 1.2);
+      if (quality === 5) interval = Math.ceil(interval * 1.5);
+    } else {
+      interval = Math.ceil(existing.interval * existing.efactor);
+      if (quality === 4) interval = Math.ceil(interval * 1.2);
+      if (quality === 5) interval = Math.ceil(interval * 1.5);
+    }
+
     return interval === 1 ? "1 ngày" : `${interval} ngày`;
   };
 

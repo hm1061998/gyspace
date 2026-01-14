@@ -33,6 +33,12 @@ export class UserEntity {
   @CreateDateColumn()
   createdAt: Date;
 
+  @Column({ default: 0 })
+  xp: number;
+
+  @Column({ default: 1 })
+  level: number;
+
   @OneToMany(() => SavedIdiomEntity, (saved) => saved.user)
   savedIdioms: SavedIdiomEntity[];
 

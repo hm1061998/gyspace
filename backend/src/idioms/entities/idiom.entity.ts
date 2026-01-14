@@ -13,11 +13,12 @@ export class IdiomEntity {
   @PrimaryGeneratedColumn()
   id: string;
 
-  @Index() // Index cho tìm kiếm chính xác
+  @Index({ fulltext: true }) // Btree index for exact match
+  @Index('IDX_HANZI_GIN', { synchronize: false }) // Documentation for GIN Trigram index created via migration
   @Column({ unique: true, length: 100 })
   hanzi: string;
 
-  @Index() // Index cho tìm kiếm pinyin
+  @Index('IDX_PINYIN_GIN', { synchronize: false }) // Documentation for GIN Trigram index created via migration
   @Column({ length: 200, nullable: true })
   pinyin: string;
 
@@ -31,6 +32,7 @@ export class IdiomEntity {
   source: string;
 
   // Chuyển sang text vì nghĩa có thể dài
+  @Index('IDX_MEANING_GIN', { synchronize: false }) // Documentation for GIN Trigram index created via migration
   @Column({ type: 'text', nullable: true })
   vietnameseMeaning: string; //nghĩa tiếng Việt
 

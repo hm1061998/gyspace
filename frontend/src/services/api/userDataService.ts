@@ -33,7 +33,16 @@ export const fetchSavedIdioms = async (
   }
 };
 
-export const updateSRSProgress = async (idiomId: string, srsData: any) => {
+export const updateSRSProgress = async (
+  idiomId: string,
+  srsData: {
+    quality?: number;
+    interval?: number;
+    repetition?: number;
+    efactor?: number;
+    nextReviewDate?: string;
+  }
+) => {
   const response = await http.post(`${API_BASE_URL}/srs`, {
     idiomId,
     ...srsData,
@@ -111,5 +120,17 @@ export const updateProfile = async (data: UpdateProfileData) => {
 
 export const changePassword = async (data: ChangePasswordData) => {
   const response = await http.put("/user/change-password", data);
+  return response.data;
+};
+
+export const fetchUserProfile = async () => {
+  const response = await http.get<{
+    id: string;
+    username: string;
+    displayName: string;
+    xp: number;
+    level: number;
+    isAdmin: boolean;
+  }>("/user/profile");
   return response.data;
 };

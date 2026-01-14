@@ -8,6 +8,7 @@ import {
   ExampleSentenceEntity,
 } from './entities/idiom.entity';
 import { SearchLogEntity } from './entities/search-log.entity';
+import { UserEntity } from 'src/user/entities/user.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SearchLogEntity } from './entities/search-log.entity';
       CharacterAnalysisEntity,
       ExampleSentenceEntity,
       SearchLogEntity,
+      UserEntity,
     ]),
   ],
   controllers: [IdiomsController],

@@ -8,6 +8,8 @@ interface User {
   displayName?: string;
   isAdmin: boolean;
   role?: string;
+  xp?: number;
+  level?: number;
 }
 
 interface AuthState {

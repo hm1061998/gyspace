@@ -21,7 +21,7 @@ const FlashcardHeader: React.FC<FlashcardHeaderProps> = ({
   onSavedClickError,
 }) => {
   return (
-    <div className="flex justify-between items-center mb-6">
+    <div className="flex justify-between items-center ">
       <div className="flex bg-white p-1 rounded-full border shadow-sm">
         <button
           onClick={() => setSource("all")}

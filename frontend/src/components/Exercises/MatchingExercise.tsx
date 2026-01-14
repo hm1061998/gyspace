@@ -83,6 +83,7 @@ const MatchingExercise: React.FC<MatchingExerciseProps> = ({
   setSelectedLeft,
   submitted,
 }) => {
+  const [selectedRight, setSelectedRight] = useState<number | null>(null);
   const leftColRef = useRef<HTMLDivElement>(null);
   const rightColRef = useRef<HTMLDivElement>(null);
   const leftRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -196,28 +197,48 @@ const MatchingExercise: React.FC<MatchingExerciseProps> = ({
   const handleMatch = (leftIndex: number, rightIndex: number) => {
     if (submitted) return;
 
+    // 1. Handle Left Item Click
     if (leftIndex !== -1) {
       if (selectedLeft === leftIndex) {
         setSelectedLeft(null);
         return;
       }
-      setSelectedLeft(leftIndex);
+
+      if (selectedRight !== null) {
+        // Complete match from right
+        const newMatches = { ...matches };
+        delete newMatches[leftIndex];
+        newMatches[leftIndex] = selectedRight;
+        setMatches(newMatches);
+        setSelectedRight(null);
+      } else {
+        setSelectedLeft(leftIndex);
+        setSelectedRight(null); // Clear other side selection
+      }
       return;
     }
 
+    // 2. Handle Right Item Click
     if (rightIndex !== -1) {
+      if (selectedRight === rightIndex) {
+        setSelectedRight(null);
+        return;
+      }
+
       if (selectedLeft !== null) {
-        const oldLeft = Object.keys(matches).find(
-          (k) => matches[parseInt(k)] === rightIndex
-        );
+        // Complete match from left
         const newMatches = { ...matches };
+        const oldLeft = Object.keys(newMatches).find(
+          (k) => newMatches[parseInt(k)] === rightIndex
+        );
         if (oldLeft) delete newMatches[parseInt(oldLeft)];
 
         newMatches[selectedLeft] = rightIndex;
         setMatches(newMatches);
         setSelectedLeft(null);
       } else {
-        toast.info("Vui lòng chọn thẻ bên trái trước!");
+        setSelectedRight(rightIndex);
+        setSelectedLeft(null); // Clear other side selection
       }
     }
   };
@@ -284,22 +305,22 @@ const MatchingExercise: React.FC<MatchingExerciseProps> = ({
                     }
                     ${
                       isMatched
-                        ? `${colorClass} border-transparent !opacity-100`
+                        ? `${colorClass} border-transparent opacity-100! fallback-opacity-100`
                         : ""
                     }
                     ${
                       isWrongMatch
-                        ? "!bg-red-50 !border-red-500 !text-red-900"
+                        ? "bg-red-50! border-red-500! text-red-900!"
                         : ""
                     }
                     ${
                       isCorrectMatch
-                        ? "!bg-green-50 !border-green-500 !text-green-900"
+                        ? "bg-green-50! border-green-500! text-green-900!"
                         : ""
                     }
                  `}
               >
-                <span className="font-hanzi text-base sm:text-xl font-bold break-words text-center line-clamp-2">
+                <span className="font-hanzi text-base sm:text-xl font-bold wrap-break-word text-center line-clamp-2">
                   {p.left}
                 </span>
 
@@ -376,18 +397,23 @@ const MatchingExercise: React.FC<MatchingExerciseProps> = ({
                         : "border-slate-100 bg-slate-50/50"
                     }
                     ${
+                      selectedRight === originalIdx
+                        ? "border-slate-900 ring-4 ring-slate-100 bg-white z-20 scale-105 shadow-xl"
+                        : ""
+                    }
+                    ${
                       isMatched
-                        ? `${colorClass} border-transparent !opacity-100 shadow-md`
+                        ? `${colorClass} border-transparent opacity-100! shadow-md`
                         : ""
                     }
                     ${
                       isWrongMatch
-                        ? "!bg-red-50 !border-red-500 !text-red-900"
+                        ? "bg-red-50! border-red-500! text-red-900!"
                         : ""
                     }
                     ${
                       isCorrectMatch
-                        ? "!bg-green-50 !border-green-500 !text-green-900"
+                        ? "bg-green-50! border-green-500! text-green-900!"
                         : ""
                     }
                  `}

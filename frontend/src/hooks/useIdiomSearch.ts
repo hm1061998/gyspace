@@ -5,7 +5,7 @@ import {
   fetchSuggestions,
 } from "@/services/api/idiomService";
 import { addToHistory } from "@/services/api/userDataService";
-import type { Idiom, SearchMode } from "@/types";
+import type { Idiom } from "@/types";
 
 export const useIdiomSearch = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,13 +15,12 @@ export const useIdiomSearch = () => {
   >(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchMode, setSearchMode] = useState<SearchMode>("database");
   const { isLoggedIn } = useOutletContext<{ isLoggedIn: boolean }>();
 
   const searchQuery = searchParams.get("query");
 
   const executeSearch = useCallback(
-    async (searchTerm: string, mode: SearchMode) => {
+    async (searchTerm: string) => {
       if (!searchTerm.trim()) {
         setCurrentIdiom(null);
         setError(null);
@@ -33,7 +32,7 @@ export const useIdiomSearch = () => {
       setCurrentIdiom(null);
 
       try {
-        const result = await fetchIdiomDetails(searchTerm, mode);
+        const result = await fetchIdiomDetails(searchTerm);
         setCurrentIdiom(result);
         if (result?.id && isLoggedIn) {
           addToHistory(result.id);
@@ -50,12 +49,12 @@ export const useIdiomSearch = () => {
   useEffect(() => {
     if (searchQuery) {
       setQuery(searchQuery);
-      executeSearch(searchQuery, searchMode);
+      executeSearch(searchQuery);
     } else {
       setCurrentIdiom(null);
       setError(null);
     }
-  }, [searchQuery, searchMode, executeSearch]);
+  }, [searchQuery, executeSearch]);
 
   const handleSearch = (searchTerm: string) => {
     if (!searchTerm.trim()) {
@@ -72,8 +71,6 @@ export const useIdiomSearch = () => {
     currentIdiom,
     isLoading,
     error,
-    searchMode,
-    setSearchMode,
     handleSearch,
     isLoggedIn,
   };

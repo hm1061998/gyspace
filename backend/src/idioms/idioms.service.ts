@@ -9,16 +9,14 @@ import {
   IdiomEntity,
 } from './entities/idiom.entity';
 import { SearchLogEntity } from './entities/search-log.entity';
-import { GoogleGenAI, Type } from '@google/genai';
 import { CreateIdiomDto } from './dto/create-idiom.dto';
 import { IdiomQueryDto, SearchLogQueryDto } from './dto/idiom-query.dto';
 import { PaginationQueryDto } from '../common/dto/pagination.dto';
-import { SearchMode } from './idioms.controller';
+import { UserEntity } from '../user/entities/user.entity';
 
 @Injectable()
 export class IdiomsService {
   private readonly logger = new Logger(IdiomsService.name);
-  private ai: GoogleGenAI;
   private dailyCache: { date: string; data: any[] } | null = null;
 
   constructor(
@@ -30,16 +28,18 @@ export class IdiomsService {
     private examplesRepository: Repository<ExampleSentenceEntity>,
     @InjectRepository(SearchLogEntity)
     private searchLogRepository: Repository<SearchLogEntity>,
+    @InjectRepository(UserEntity)
+    private userRepository: Repository<UserEntity>,
     private dataSource: DataSource,
   ) {
-    if (process.env.API_KEY) {
-      this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    }
+    // AI initialization removed
   }
 
   async getAdminStats() {
     try {
       const totalIdioms = await this.idiomRepository.count();
+      const totalUsers = await this.userRepository.count();
+      const totalSearches = await this.searchLogRepository.count();
 
       // 1. Thống kê theo cấp độ (1 query Duy nhất)
       const levelResults = await this.idiomRepository
@@ -87,6 +87,8 @@ export class IdiomsService {
 
       return {
         totalIdioms,
+        totalUsers,
+        totalSearches,
         levelStats,
         typeStats,
         recentIdioms,
@@ -94,10 +96,15 @@ export class IdiomsService {
       };
     } catch (error) {
       this.logger.error('Error getting admin stats:', error);
-      throw new HttpException(
-        'Lỗi khi lấy dữ liệu thống kê.',
-        HttpStatus.BAD_REQUEST,
-      );
+      return {
+        totalIdioms: 0,
+        totalUsers: 0,
+        totalSearches: 0,
+        levelStats: [],
+        typeStats: [],
+        recentIdioms: [],
+        hotKeywords: [],
+      };
     }
   }
 
@@ -436,38 +443,34 @@ export class IdiomsService {
     }
   }
 
-  async search(query: string, mode: SearchMode) {
-    if (mode === 'ai') {
-      return this.callGeminiAI(query);
-    } else {
-      const normalizedQuery = query.toLowerCase().trim();
+  async search(query: string) {
+    const normalizedQuery = query.toLowerCase().trim();
 
-      const dbIdiom = await this.idiomRepository.findOne({
-        where: [
-          { hanzi: normalizedQuery },
-          { pinyin: ILike(`%${normalizedQuery}%`) },
-          { vietnameseMeaning: ILike(`%${normalizedQuery}%`) },
-        ],
-        relations: ['analysis', 'examples'],
-      });
+    const dbIdiom = await this.idiomRepository.findOne({
+      where: [
+        { hanzi: normalizedQuery },
+        { pinyin: ILike(`%${normalizedQuery}%`) },
+        { vietnameseMeaning: ILike(`%${normalizedQuery}%`) },
+      ],
+      relations: ['analysis', 'examples'],
+    });
 
-      if (dbIdiom) {
-        // Log thành công
-        await this.searchLogRepository.save({
-          query: normalizedQuery,
-          found: true,
-          mode: 'database',
-        });
-        return { ...dbIdiom, dataSource: 'database' };
-      }
-
-      // Log thất bại
+    if (dbIdiom) {
+      // Log thành công
       await this.searchLogRepository.save({
         query: normalizedQuery,
-        found: false,
+        found: true,
         mode: 'database',
       });
+      return { ...dbIdiom, dataSource: 'database' };
     }
+
+    // Log thất bại
+    await this.searchLogRepository.save({
+      query: normalizedQuery,
+      found: false,
+      mode: 'database',
+    });
 
     throw new HttpException(
       'Không tìm thấy từ này trong thư viện.',
@@ -563,74 +566,47 @@ export class IdiomsService {
     return { success: true, deleted: ids.length };
   }
 
-  private async callGeminiAI(query: string) {
-    const schema = {
-      type: Type.OBJECT,
-      properties: {
-        hanzi: { type: Type.STRING },
-        pinyin: { type: Type.STRING },
-        type: { type: Type.STRING },
-        level: { type: Type.STRING },
-        source: { type: Type.STRING },
-        vietnameseMeaning: { type: Type.STRING },
-        literalMeaning: { type: Type.STRING },
-        figurativeMeaning: { type: Type.STRING },
-        chineseDefinition: { type: Type.STRING },
-        origin: { type: Type.STRING },
-        grammar: { type: Type.STRING },
-        analysis: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              character: { type: Type.STRING },
-              pinyin: { type: Type.STRING },
-              meaning: { type: Type.STRING },
-            },
-          },
-        },
-        examples: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              chinese: { type: Type.STRING },
-              pinyin: { type: Type.STRING },
-              vietnamese: { type: Type.STRING },
-            },
-          },
-        },
-      },
+  async getSearchAnalytics() {
+    const last7Days = await this.searchLogRepository
+      .createQueryBuilder('log')
+      .select("DATE_TRUNC('day', log.createdAt)", 'date')
+      .addSelect('COUNT(log.id)', 'count')
+      .where('log.createdAt > :date', {
+        date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      })
+      .groupBy("DATE_TRUNC('day', log.createdAt)")
+      .orderBy('date', 'ASC')
+      .getRawMany();
+
+    return {
+      last7Days: last7Days.map((d) => ({
+        date: new Date(d.date).toLocaleDateString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+        }),
+        count: parseInt(d.count),
+      })),
     };
+  }
 
-    try {
-      const response = await this.ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Phân tích chuyên sâu quán dụng ngữ/thành ngữ tiếng Trung: "${query}". Trả về kết quả JSON theo schema hỗ trợ người Việt học tập.`,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: schema,
-        },
-      });
+  async getUserGrowth() {
+    const last30Days = await this.userRepository
+      .createQueryBuilder('user')
+      .select("DATE_TRUNC('day', user.createdAt)", 'date')
+      .addSelect('COUNT(user.id)', 'count')
+      .where('user.createdAt > :date', {
+        date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      })
+      .groupBy("DATE_TRUNC('day', user.createdAt)")
+      .orderBy('date', 'ASC')
+      .getRawMany();
 
-      const text = response.text || '{}';
-      // Loại bỏ markdown code block nếu AI lỡ thêm vào (dù đã set json mode)
-      const cleanJson = text.replace(/```json\n?|\n?```/g, '').trim();
-
-      try {
-        const data = JSON.parse(cleanJson);
-        return { ...data, dataSource: 'ai' };
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (err) {
-        this.logger.error('Failed to parse JSON from AI', cleanJson);
-        throw new Error('AI trả về dữ liệu không hợp lệ.');
-      }
-    } catch (err) {
-      this.logger.error('AI Model error or not configured', err);
-      throw new HttpException(
-        'Chưa cấu hình mô hình AI',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    return last30Days.map((d) => ({
+      date: new Date(d.date).toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+      }),
+      count: parseInt(d.count),
+    }));
   }
 }

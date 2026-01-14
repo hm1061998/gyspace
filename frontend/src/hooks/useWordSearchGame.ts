@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { fetchStoredIdioms } from "@/services/api/idiomService";
+import { fetchSavedIdioms } from "@/services/api/userDataService";
 import type { Idiom } from "@/types";
+
+export type GameDifficulty = "easy" | "medium" | "hard";
+export type GameMode = "all" | "saved";
 
 const GRID_SIZE = 9;
 const RANDOM_CHARS =
@@ -15,8 +19,11 @@ export const useWordSearchGame = () => {
   const [grid, setGrid] = useState<string[][]>([]);
   const [words, setWords] = useState<Idiom[]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [difficulty, setDifficulty] = useState<GameDifficulty>("easy");
+  const [mode, setMode] = useState<GameMode>("all");
+  const [gameStarted, setGameStarted] = useState(false);
 
   const generateGrid = useCallback((gameWords: Idiom[]) => {
     const newGrid = Array(GRID_SIZE)
@@ -82,44 +89,57 @@ export const useWordSearchGame = () => {
     setGrid(newGrid);
   }, []);
 
-  const startNewGame = useCallback(async () => {
-    setLoading(true);
-    setFoundWords([]);
-    setSelection(null);
-    try {
-      // Pass QueryParams object
-      const response = await fetchStoredIdioms({ page: 1, limit: 100 });
-      const allIdioms = response.data.filter(
-        (i: Idiom) => i.hanzi.length <= 4 && /[\u4e00-\u9fa5]+/.test(i.hanzi)
-      );
-
-      const gameWords: Idiom[] = [];
-      const usedIndices = new Set();
-      const maxWords = Math.min(5, allIdioms.length);
-
-      while (
-        gameWords.length < maxWords &&
-        usedIndices.size < allIdioms.length
-      ) {
-        const idx = Math.floor(Math.random() * allIdioms.length);
-        if (!usedIndices.has(idx)) {
-          usedIndices.add(idx);
-          gameWords.push(allIdioms[idx]);
+  const startNewGame = useCallback(
+    async (diff: GameDifficulty, gameMode: GameMode) => {
+      setLoading(true);
+      setFoundWords([]);
+      setSelection(null);
+      setDifficulty(diff);
+      setMode(gameMode);
+      setGameStarted(true);
+      try {
+        let response;
+        if (gameMode === "saved") {
+          response = await fetchSavedIdioms({ page: 1, limit: 100 });
+        } else {
+          response = await fetchStoredIdioms({ page: 1, limit: 100 });
         }
+
+        const allIdioms = response.data.filter(
+          (i: Idiom) => i.hanzi.length <= 4 && /[\u4e00-\u9fa5]+/.test(i.hanzi)
+        );
+
+        const gameWords: Idiom[] = [];
+        const usedIndices = new Set();
+        const maxWords = Math.min(5, allIdioms.length);
+
+        while (
+          gameWords.length < maxWords &&
+          usedIndices.size < allIdioms.length
+        ) {
+          const idx = Math.floor(Math.random() * allIdioms.length);
+          if (!usedIndices.has(idx)) {
+            usedIndices.add(idx);
+            gameWords.push(allIdioms[idx]);
+          }
+        }
+
+        if (gameWords.length === 0) {
+          throw new Error("Không tìm thấy từ vựng phù hợp.");
+        }
+
+        setWords(gameWords);
+        generateGrid(gameWords);
+      } catch (e) {
+        console.error("Game load error", e);
+        setGameStarted(false);
+        throw e;
+      } finally {
+        setLoading(false);
       }
-
-      setWords(gameWords);
-      generateGrid(gameWords);
-    } catch (e) {
-      console.error("Game load error", e);
-    } finally {
-      setLoading(false);
-    }
-  }, [generateGrid]);
-
-  useEffect(() => {
-    startNewGame();
-  }, [startNewGame]);
+    },
+    [generateGrid]
+  );
 
   const checkWord = (
     start: { r: number; c: number },
@@ -207,11 +227,15 @@ export const useWordSearchGame = () => {
     foundWords,
     loading,
     selection,
+    difficulty,
+    mode,
+    gameStarted,
     startNewGame,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     isCellSelected,
     GRID_SIZE,
+    setGameStarted,
   };
 };

@@ -8,6 +8,7 @@ import {
   HistoryEntity,
 } from 'src/user-data/entities/user-data.entity';
 import { IdiomEntity } from 'src/idioms/entities/idiom.entity';
+import { UserEntity } from 'src/user/entities/user.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { IdiomEntity } from 'src/idioms/entities/idiom.entity';
       SRSProgressEntity,
       HistoryEntity,
       IdiomEntity,
+      UserEntity,
     ]),
   ],
   controllers: [UserDataController],

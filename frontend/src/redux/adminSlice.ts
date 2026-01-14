@@ -1,5 +1,9 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { fetchAdminStats } from "@/services/api/idiomService";
+import {
+  fetchAdminStats,
+  fetchSearchAnalytics,
+  fetchUserGrowth,
+} from "@/services/api/idiomService";
 import {
   fetchCommentStats,
   type CommentStats,
@@ -17,33 +21,52 @@ interface Stats {
     missingOrigin: number;
   };
   hotKeywords: Array<{ query: string; count: number }>;
+  totalUsers: number;
+  totalSearches: number;
   [key: string]: any;
+}
+
+interface SearchAnalytics {
+  last7Days: Array<{ date: string; count: number }>;
+}
+
+interface UserGrowth {
+  date: string;
+  count: number;
 }
 
 interface AdminState {
   stats: Stats | null;
   commentStats: CommentStats | null;
   reportStats: { pending: number; topReported: any[] } | null;
+  searchAnalytics: SearchAnalytics | null;
+  userGrowth: UserGrowth[] | null;
   loading: boolean;
   commentLoading: boolean;
   reportLoading: boolean;
+  analyticsLoading: boolean;
   error: string | null;
   lastUpdated: number | null;
   commentsLastUpdated: number | null;
   reportsLastUpdated: number | null;
+  analyticsLastUpdated: number | null;
 }
 
 const initialState: AdminState = {
   stats: null,
   commentStats: null,
   reportStats: null,
+  searchAnalytics: null,
+  userGrowth: null,
   loading: false,
   commentLoading: false,
   reportLoading: false,
+  analyticsLoading: false,
   error: null,
   lastUpdated: null,
   commentsLastUpdated: null,
   reportsLastUpdated: null,
+  analyticsLastUpdated: null,
 };
 
 // Async thunk to fetch admin stats with caching logic
@@ -121,6 +144,39 @@ export const fetchReportStats = createAsyncThunk(
   }
 );
 
+// Async thunk to fetch analytics (search & user growth)
+export const getAnalytics = createAsyncThunk(
+  "admin/getAnalytics",
+  async (force: boolean | undefined, { getState, rejectWithValue }) => {
+    const state = getState() as { admin: AdminState };
+    const { analyticsLastUpdated, searchAnalytics } = state.admin;
+
+    const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+    const isFresh =
+      analyticsLastUpdated &&
+      Date.now() - analyticsLastUpdated < CACHE_DURATION;
+
+    if (!force && searchAnalytics && isFresh) {
+      return {
+        searchAnalytics: state.admin.searchAnalytics,
+        userGrowth: state.admin.userGrowth,
+      };
+    }
+
+    try {
+      const [searchData, growthData] = await Promise.all([
+        fetchSearchAnalytics(),
+        fetchUserGrowth(),
+      ]);
+      return { searchAnalytics: searchData, userGrowth: growthData };
+    } catch (error: any) {
+      return rejectWithValue(
+        error.message || "Không thể tải phân tích dữ liệu"
+      );
+    }
+  }
+);
+
 const adminSlice = createSlice({
   name: "admin",
   initialState,
@@ -172,6 +228,19 @@ const adminSlice = createSlice({
       })
       .addCase(fetchReportStats.rejected, (state) => {
         state.reportLoading = false;
+      })
+      // Analytics
+      .addCase(getAnalytics.pending, (state) => {
+        state.analyticsLoading = true;
+      })
+      .addCase(getAnalytics.fulfilled, (state, action) => {
+        state.analyticsLoading = false;
+        state.searchAnalytics = action.payload.searchAnalytics;
+        state.userGrowth = action.payload.userGrowth;
+        state.analyticsLastUpdated = Date.now();
+      })
+      .addCase(getAnalytics.rejected, (state) => {
+        state.analyticsLoading = false;
       });
   },
 });

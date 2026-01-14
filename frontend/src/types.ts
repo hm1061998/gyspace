@@ -1,5 +1,3 @@
-export type SearchMode = "database" | "ai";
-
 export interface CharacterAnalysisRow {
   id: string;
   idiomId: string;

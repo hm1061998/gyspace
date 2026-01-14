@@ -14,6 +14,7 @@ import {
   ExclamationIcon,
   ChatBubbleIcon,
 } from "@/components/common/icons";
+import SpeakButton from "@/components/common/SpeakButton";
 import IdiomComments from "./IdiomComments";
 import { toast } from "@/libs/Toast";
 import {
@@ -66,6 +67,26 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
 }) => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [learningTip, setLearningTip] = useState("");
+
+  const learningTips = [
+    "Học đi đôi với hành.",
+    "Có công mài sắt, có ngày nên kim.",
+    "Học một biết mười.",
+    "Muốn biết phải hỏi, muốn giỏi phải học.",
+    "Học tập là hạt giống của kiến thức, kiến thức là hạt giống của hạnh phúc.",
+    "Tri thức là sức mạnh.",
+    "Kỉ luật là cầu nối giữa mục tiêu và thành tựu.",
+    "Thành công không phải là chìa khóa mở cửa hạnh phúc.",
+    "Đam mê là nguồn động lực lớn nhất của sự sáng tạo.",
+    "Bắt đầu từ nơi bạn đứng. Sử dụng những gì bạn có. Làm những gì bạn có thể.",
+  ];
+
+  useEffect(() => {
+    const randomTip =
+      learningTips[Math.floor(Math.random() * learningTips.length)];
+    setLearningTip(randomTip);
+  }, [idiom.id]);
 
   useEffect(() => {
     if (isLoggedIn && idiom.id) {
@@ -108,20 +129,28 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
     }
   };
 
-  const handleSpeak = () => {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(idiom.hanzi);
-      utterance.lang = "zh-CN";
-      utterance.rate = 0.8;
-      const voices = window.speechSynthesis.getVoices();
-      const chineseVoice = voices.find(
-        (v) => v.lang.includes("zh") || v.lang.includes("CN")
-      );
-      if (chineseVoice) utterance.voice = chineseVoice;
-      window.speechSynthesis.speak(utterance);
+  const [grammarAnswers, setGrammarAnswers] = useState<string[]>([]);
+  const [grammarChecked, setGrammarChecked] = useState(false);
+  const [isGrammarCorrect, setIsGrammarCorrect] = useState<boolean | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (idiom.hanzi) {
+      setGrammarAnswers(new Array(idiom.hanzi.length).fill(""));
+      setGrammarChecked(false);
+      setIsGrammarCorrect(null);
+    }
+  }, [idiom.id, idiom.hanzi]);
+
+  const checkGrammarResult = () => {
+    const isCorrect = grammarAnswers.join("") === idiom.hanzi;
+    setIsGrammarCorrect(isCorrect);
+    setGrammarChecked(true);
+    if (isCorrect) {
+      toast.success("Chính xác! Bạn giỏi quá!");
     } else {
-      toast.error("Trình duyệt không hỗ trợ đọc văn bản.");
+      toast.error("Chưa đúng rồi, thử lại nhé!");
     }
   };
 
@@ -183,12 +212,11 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
                 <h1 className="text-5xl sm:text-7xl md:text-8xl font-hanzi font-black text-slate-800 tracking-tighter drop-shadow-sm leading-tight">
                   {idiom.hanzi}
                 </h1>
-                <button
-                  onClick={handleSpeak}
-                  className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-slate-50 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all duration-300 flex items-center justify-center shrink-0 group/voice"
-                >
-                  <SpeakerWaveIcon className="w-6 h-6 md:w-8 md:h-8 group-hover/voice:scale-110 transition-transform" />
-                </button>
+                <SpeakButton
+                  text={idiom.hanzi}
+                  lang="zh-CN"
+                  className="w-12 h-12 md:w-14 md:h-14 p-0!"
+                />
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
@@ -347,18 +375,80 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
           {/* Origin & Grammar Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             <InfoCard
-              title="Điển tích"
+              title="Nguồn gốc"
               className="md:order-1"
               icon={<ChevronRightIcon />}
             >
               {idiom.origin}
             </InfoCard>
             <InfoCard
-              title="Ngữ pháp"
+              title="Luyện tập ngữ pháp"
               className="md:order-2"
               icon={<PencilIcon />}
             >
-              {idiom.grammar}
+              <div className="space-y-4">
+                <p className="text-slate-500 italic text-xs mb-2">
+                  Hãy thử điền các chữ Hán còn thiếu:
+                </p>
+                <div className="flex flex-wrap justify-center gap-2 mb-4">
+                  {idiom.hanzi.split("").map((_, idx) => (
+                    <input
+                      key={idx}
+                      type="text"
+                      maxLength={1}
+                      value={grammarAnswers[idx] || ""}
+                      readOnly={grammarChecked && isGrammarCorrect === true}
+                      onChange={(e) => {
+                        const newAns = [...grammarAnswers];
+                        newAns[idx] = e.target.value;
+                        setGrammarAnswers(newAns);
+                        // Auto focus next field
+                        if (e.target.value && idx < idiom.hanzi.length - 1) {
+                          const nextInput = e.target.parentElement?.children[
+                            idx + 1
+                          ] as HTMLInputElement;
+                          nextInput?.focus();
+                        }
+                      }}
+                      className={`w-10 h-10 md:w-12 md:h-12 border-2 rounded-xl text-center font-hanzi text-xl md:text-2xl transition-all outline-none ${
+                        grammarChecked
+                          ? isGrammarCorrect
+                            ? "border-emerald-500 bg-emerald-50 text-emerald-700 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                            : "border-red-500 bg-red-50 text-red-700 animate-shake"
+                          : "border-slate-100 bg-slate-50 focus:border-indigo-400 focus:bg-white focus:shadow-lg"
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                {!grammarChecked || !isGrammarCorrect ? (
+                  <button
+                    onClick={checkGrammarResult}
+                    className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <CheckCircleIcon className="w-4 h-4" />
+                    Kiểm tra đáp án
+                  </button>
+                ) : (
+                  <div className="py-3 bg-emerald-100 text-emerald-700 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 animate-bounce">
+                    <CheckCircleIcon className="w-4 h-4" />
+                    Tuyệt vời!
+                  </div>
+                )}
+
+                <details className="group mt-4 cursor-pointer">
+                  <summary className="text-indigo-600 font-bold text-sm list-none flex items-center gap-2 group-open:hidden">
+                    <span>Xem gợi ý & ứng dụng</span>
+                    <ChevronRightIcon className="w-4 h-4" />
+                  </summary>
+                  <div className="mt-3 pl-4 border-l-2 border-indigo-100 animate-fadeIn text-sm">
+                    <p className="font-bold text-slate-800 mb-2">
+                      Đáp án chính xác: {idiom.hanzi}
+                    </p>
+                    {idiom.grammar}
+                  </div>
+                </details>
+              </div>
             </InfoCard>
           </div>
 
@@ -373,28 +463,41 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
                   Ví dụ minh họa
                 </h3>
               </div>
-              <div className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/40 w-fit">
-                Ứng dụng
+              <div className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/40 w-fit flex items-center gap-2">
+                <span>Ứng dụng</span>
+                <SpeakerWaveIcon className="w-3 h-3" />
               </div>
             </div>
 
             <div className="space-y-6 md:space-y-8">
-              {idiom.examples.map((ex, idx) => (
+              {idiom.examples.slice(0, 2).map((ex, idx) => (
                 <div key={idx} className="relative pl-6 md:pl-10 group/ex">
                   <div className="absolute left-0 top-0 w-px h-full bg-white/10"></div>
                   <div className="absolute left-[-3px] md:left-[-4px] top-0 w-1.5 md:w-2 h-1.5 md:h-2 rounded-full bg-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]"></div>
 
                   <div className="space-y-3 md:space-y-4">
-                    <p className="text-xl md:text-3xl font-hanzi font-medium leading-relaxed">
-                      {ex.chinese}
-                    </p>
+                    <div className="flex items-start justify-between gap-4">
+                      <p className="text-xl md:text-3xl font-hanzi font-medium leading-relaxed flex-1">
+                        {ex.chinese}
+                      </p>
+                      <SpeakButton
+                        text={ex.chinese}
+                        lang="zh-CN"
+                        className="mt-1 bg-white/5 hover:bg-white/10"
+                      />
+                    </div>
                     <p className="text-red-400 font-black font-sans tracking-widest text-xs md:text-sm uppercase opacity-60">
                       {ex.pinyin}
                     </p>
-                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                      <p className="text-white/70 text-sm md:text-base font-medium italic">
+                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between gap-4">
+                      <p className="text-white/70 text-sm md:text-base font-medium italic flex-1">
                         "{ex.vietnamese}"
                       </p>
+                      <SpeakButton
+                        text={ex.vietnamese}
+                        lang="vi-VN"
+                        className="bg-white/5 hover:bg-white/10"
+                      />
                     </div>
                   </div>
                 </div>
@@ -461,8 +564,7 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
                 Tip học tập
               </h5>
               <p className="text-base md:text-lg font-bold leading-relaxed mb-3 md:mb-5">
-                Nhớ lâu hơn 300% với phương pháp{" "}
-                <span className="text-amber-400">Spaced Repetition</span>.
+                {learningTip}
               </p>
               <div className="flex items-center gap-2 text-[10px] font-black text-white/40 uppercase">
                 <CheckCircleIcon className="w-4 h-4" /> Hệ thống GYSpace

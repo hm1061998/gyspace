@@ -1,0 +1,16 @@
+{
+  "name": "GYSpace - Học Quán Dụng Ngữ Thông Minh",
+  "short_name": "GYSpace",
+  "description": "Tra cứu thành ngữ Hán ngữ thông minh với giải thích chi tiết, âm thanh và thẻ nhớ Flashcard.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ef4444",
+  "icons": [
+    {
+      "src": "/assets/app_icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

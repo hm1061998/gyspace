@@ -1,23 +1,25 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import IdiomDetail from "@/components/idiom/IdiomDetail";
 import DailySuggestions from "@/components/idiom/DailySuggestions";
-import { ArrowLeftIcon } from "@/components/common/icons";
+import { ArrowLeftIcon, HistoryIcon } from "@/components/common/icons";
 import SearchBar from "@/components/home/SearchBar";
 import SearchSuggestions from "@/components/home/SearchSuggestions";
 import HomeActionCards from "@/components/home/HomeActionCards";
 import { useIdiomSearch } from "@/hooks/useIdiomSearch";
 import { useSuggestions } from "@/hooks/useSuggestions";
 import ReportModal from "@/components/idiom/ReportModal";
+import { toast } from "@/libs/Toast";
 
 const Home: React.FC = () => {
+  const navigate = useNavigate();
   const {
     query,
     setQuery,
     currentIdiom,
     isLoading,
     error,
-    searchMode,
     handleSearch,
     isLoggedIn,
   } = useIdiomSearch();
@@ -29,7 +31,7 @@ const Home: React.FC = () => {
     selectedIndex,
     suggestionsListRef,
     handleKeyDown,
-  } = useSuggestions(query, searchMode, !!currentIdiom);
+  } = useSuggestions(query, !!currentIdiom);
 
   const [voiceLang, setVoiceLang] = useState<"vi-VN" | "zh-CN">("vi-VN");
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -115,12 +117,28 @@ const Home: React.FC = () => {
           isCenteredMode ? "scale-100" : "mb-8 scale-100"
         }`}
       >
+        {isLoggedIn && (
+          <div className="flex justify-center mb-6">
+            <button
+              onClick={() => {
+                if (!isLoggedIn) {
+                  toast.error("Vui lòng đăng nhập để xem lịch sử");
+                  return;
+                }
+                navigate("/history");
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50/50 hover:bg-white text-slate-400 hover:text-red-600 transition-all text-[10px] font-black uppercase tracking-wider border border-slate-100 hover:border-red-100 shadow-sm"
+            >
+              <HistoryIcon className="w-3.5 h-3.5" />
+              Lịch sử tra cứu
+            </button>
+          </div>
+        )}
         <SearchBar
           query={query}
           setQuery={setQuery}
           onSearch={handleSearch}
           isLoading={isLoading}
-          searchMode={searchMode}
           isListening={isListening}
           isSupported={isSupported}
           voiceLang={voiceLang}
@@ -152,11 +170,9 @@ const Home: React.FC = () => {
           )}
         </SearchBar>
 
-        {searchMode === "database" && (
-          <p className="text-center text-slate-400 text-[10px] uppercase tracking-widest mt-4 font-bold">
-            Hỗ trợ tìm kiếm bằng: Tiếng Việt, Pinyin, hoặc Chữ Hán
-          </p>
-        )}
+        <p className="text-center text-slate-400 text-[10px] uppercase tracking-widest mt-2 font-bold">
+          Hỗ trợ tìm kiếm bằng: Tiếng Việt, Pinyin, hoặc Chữ Hán
+        </p>
 
         {isCenteredMode && (
           <div className="mt-8">
@@ -172,15 +188,9 @@ const Home: React.FC = () => {
 
       {isLoading ? (
         <div className="flex flex-col items-center mt-12 text-slate-400 animate-pulse">
-          <div
-            className={`w-12 h-12 border-4 rounded-full border-t-transparent animate-spin mb-4 ${
-              searchMode === "ai" ? "border-purple-600" : "border-red-600"
-            }`}
-          ></div>
+          <div className="w-12 h-12 border-4 rounded-full border-t-transparent animate-spin mb-4 border-red-600"></div>
           <p className="font-bold text-sm tracking-wide uppercase">
-            {searchMode === "ai"
-              ? "AI đang tư duy..."
-              : "Đang lục lại thư viện..."}
+            Đang lục lại thư viện...
           </p>
         </div>
       ) : error ? (

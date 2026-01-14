@@ -6,9 +6,11 @@ import { updateUser } from "@/redux/authSlice";
 import {
   updateProfile,
   changePassword,
+  fetchUserProfile,
   UpdateProfileData,
   ChangePasswordData,
 } from "@/services/api/userDataService";
+import { setUser } from "@/redux/authSlice";
 import { toast } from "@/libs/Toast";
 
 interface PasswordFormData extends ChangePasswordData {
@@ -21,6 +23,18 @@ export const useProfile = () => {
 
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isChangingPass, setIsChangingPass] = useState(false);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const fullProfile = await fetchUserProfile();
+        dispatch(setUser(fullProfile));
+      } catch (e) {
+        console.error("Failed to load full profile", e);
+      }
+    };
+    loadProfile();
+  }, [dispatch]);
 
   // Profile Form
   const {

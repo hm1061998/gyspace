@@ -18,8 +18,6 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { PaginationQueryDto } from '../common/dto/pagination.dto';
 
-export type SearchMode = 'database' | 'ai';
-
 @Controller('idioms')
 export class IdiomsController {
   constructor(private readonly idiomsService: IdiomsService) {}
@@ -28,6 +26,18 @@ export class IdiomsController {
   @Get('admin/stats')
   async getAdminStats() {
     return this.idiomsService.getAdminStats();
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Get('admin/analytics/search')
+  async getSearchAnalytics() {
+    return this.idiomsService.getSearchAnalytics();
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Get('admin/analytics/growth')
+  async getUserGrowth() {
+    return this.idiomsService.getUserGrowth();
   }
 
   @UseGuards(JwtAuthGuard, AdminGuard)
@@ -64,8 +74,8 @@ export class IdiomsController {
   }
 
   @Get('search')
-  async search(@Query('query') query: string, @Query('mode') mode: SearchMode) {
-    return this.idiomsService.search(query, mode);
+  async search(@Query('query') query: string) {
+    return this.idiomsService.search(query);
   }
 
   @Get(':id')
