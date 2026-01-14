@@ -667,35 +667,8 @@ const ExamPlay: React.FC = () => {
               Quay lại
             </button>
 
-            {!isChecked ? (
-              <button
-                onClick={checkCurrentAnswer}
-                disabled={!canProceed()}
-                className="flex-1 sm:flex-none px-8 py-3 bg-amber-500 text-white font-black rounded-2xl shadow-lg shadow-amber-200 hover:bg-amber-600 transform active:scale-95 transition-all disabled:opacity-50"
-              >
-                Kiểm tra
-              </button>
-            ) : (
-              <div
-                className={`p-3 rounded-2xl flex items-center gap-2 ${
-                  isCorrect
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "bg-red-50 text-red-700"
-                }`}
-              >
-                {isCorrect ? (
-                  <CheckIcon className="w-5 h-5" />
-                ) : (
-                  <XCircleIcon className="w-5 h-5" />
-                )}
-                <span className="font-bold text-sm">
-                  {isCorrect ? "Chính xác!" : "Chưa đúng"}
-                </span>
-              </div>
-            )}
-
-            {isChecked &&
-              (currentQuestionIndex < questions.length - 1 ? (
+            {isChecked || submitted ? (
+              currentQuestionIndex < questions.length - 1 ? (
                 <button
                   onClick={handleNext}
                   className="flex-1 sm:flex-none px-8 py-3 font-bold rounded-2xl transition-colors bg-slate-900 text-white hover:bg-slate-800 animate-fadeIn"
@@ -716,7 +689,16 @@ const ExamPlay: React.FC = () => {
                 >
                   Nộp bài
                 </button>
-              ))}
+              )
+            ) : (
+              <button
+                onClick={checkCurrentAnswer}
+                disabled={!canProceed()}
+                className="flex-1 sm:flex-none px-8 py-3 bg-amber-500 text-white font-black rounded-2xl shadow-lg shadow-amber-200 hover:bg-amber-600 transform active:scale-95 transition-all disabled:opacity-50"
+              >
+                Kiểm tra
+              </button>
+            )}
           </div>
         </div>
       </div>
