@@ -637,19 +637,23 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
                         className="mt-1 bg-white/5 hover:bg-white/10"
                       />
                     </div>
-                    <p className="text-red-400 font-black font-sans tracking-widest text-xs md:text-sm uppercase opacity-60">
-                      {ex.pinyin}
-                    </p>
-                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between gap-4">
-                      <p className="text-white/70 text-sm md:text-base font-medium italic flex-1">
-                        "{ex.vietnamese}"
+                    {ex.pinyin && (
+                      <p className="text-red-400 font-black font-sans tracking-widest text-xs md:text-sm uppercase opacity-60">
+                        {ex.pinyin}
                       </p>
-                      <SpeakButton
-                        text={ex.vietnamese}
-                        lang="vi-VN"
-                        className="bg-white/5 hover:bg-white/10"
-                      />
-                    </div>
+                    )}
+                    {ex.vietnamese && (
+                      <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between gap-4">
+                        <p className="text-white/70 text-sm md:text-base font-medium italic flex-1">
+                          "{ex.vietnamese}"
+                        </p>
+                        <SpeakButton
+                          text={ex.vietnamese}
+                          lang="vi-VN"
+                          className="bg-white/5 hover:bg-white/10"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

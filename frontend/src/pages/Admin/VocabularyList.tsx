@@ -194,6 +194,34 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
             if (!hanzi || String(hanzi).includes("Hướng dẫn sử dụng"))
               return null;
 
+            const parseExamples = (rawText: string) => {
+              if (!rawText) return [];
+              const text = rawText.replace(/\r\n/g, "\n").trim();
+
+              // Regex matches "列 1：" or "例 2:" variations
+              const delimiterRegex = /(?:列|例)\s*\d+\s*[：:]/g;
+
+              if (!delimiterRegex.test(text)) {
+                return [
+                  {
+                    chinese: text,
+                    pinyin: "",
+                    vietnamese: "",
+                  },
+                ];
+              }
+
+              return text
+                .split(delimiterRegex)
+                .map((p) => p.trim())
+                .filter(Boolean)
+                .map((content) => ({
+                  chinese: content,
+                  pinyin: "",
+                  vietnamese: "",
+                }));
+            };
+
             return {
               hanzi: String(hanzi).trim(),
               pinyin: String(row["PINYIN"] || "").trim(),
@@ -207,15 +235,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
               type: "Quán dụng ngữ",
               figurativeMeaning: "",
               literalMeaning: "",
-              examples: row["VÍ DỤ"]
-                ? [
-                    {
-                      chinese: String(row["VÍ DỤ"]),
-                      pinyin: "",
-                      vietnamese: "",
-                    },
-                  ]
-                : [],
+              examples: row["VÍ DỤ"] ? parseExamples(String(row["VÍ DỤ"])) : [],
               imageUrl: String(row["HÌNH ẢNH"] || "").trim(),
               videoUrl: String(row["LINK BÁO/VIDEO"] || "").trim(),
               usageContext: "",
