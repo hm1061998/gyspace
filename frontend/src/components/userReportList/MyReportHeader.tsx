@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ExclamationIcon, SearchIcon } from "@/components/common/icons";
+import { ExclamationIcon } from "@/components/common/icons";
 import FormSelect from "@/components/common/FormSelect";
 import { fetchSuggestions } from "@/services/api";
 import Container from "@/components/common/Container";
@@ -35,10 +35,8 @@ const MyReportHeader: React.FC<MyReportHeaderProps> = ({
   }, [idiomSuggestionsPage]);
 
   const searchIdioms = async (query: string, page: number) => {
-    // Actually we want to show loading spinner in dropdown for "load more" too
     setLoadingSuggestions(true);
     try {
-      // API now supports pagination: fetchSuggestions({ search: query, page })
       const { data, meta } = await fetchSuggestions({ search: query, page });
 
       if (page === 1) {
@@ -61,58 +59,67 @@ const MyReportHeader: React.FC<MyReportHeaderProps> = ({
   };
 
   return (
-    <div className="flex-none bg-white border-b border-slate-100 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] z-20 py-5">
-      <Container className="flex flex-col sm:flex-row justify-between sm:items-center gap-6">
-        <div className="flex items-center w-full sm:w-auto">
-          <h1 className="text-xl sm:text-2xl font-hanzi font-bold text-slate-800 flex items-center gap-2">
-            <ExclamationIcon className="w-5 h-5 text-red-600" />
-            Phản hồi của tôi
-          </h1>
-        </div>
+    <div className="flex-none bg-white border-b border-slate-100 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] z-20 py-6 md:py-8">
+      <Container>
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-red-600 rounded-2xl md:rounded-3xl flex items-center justify-center text-white shadow-xl shadow-red-200">
+              <ExclamationIcon className="w-6 h-6 md:w-8 md:h-8" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-hanzi font-black text-slate-800 tracking-tight">
+                Phản hồi & Báo lỗi
+              </h1>
+              <p className="text-[10px] md:text-sm text-slate-400 font-bold uppercase tracking-[0.2em] mt-1">
+                Góp ý xây dựng từ điển
+              </p>
+            </div>
+          </div>
 
-        <div className="flex w-full sm:w-auto gap-3">
-          <FormSelect
-            containerClassName="max-w-full w-80"
-            placeholder="Tìm thành ngữ..."
-            searchable
-            value={tempSelectedIdiom?.id || ""}
-            options={[
-              ...(tempSelectedIdiom
-                ? [
-                    {
-                      value: tempSelectedIdiom.id,
-                      label: tempSelectedIdiom.hanzi,
-                    },
-                  ]
-                : []),
-              { value: "all", label: "-- Tất cả --" },
-              ...idiomSuggestions
-                .filter((i) => i.id !== tempSelectedIdiom?.id)
-                .map((item) => ({
-                  value: item.id,
-                  label: `${item.hanzi} (${item.pinyin})`,
-                })),
-            ]}
-            onChange={(val) => {
-              if (val === "all") {
-                setTempSelectedIdiom(null);
-                setFilter(null);
-              } else {
-                const item =
-                  idiomSuggestions.find((i) => i.id === val) ||
-                  (tempSelectedIdiom?.id === val ? tempSelectedIdiom : null);
-                if (item) {
-                  setTempSelectedIdiom(item);
-                  setFilter(item.id);
+          <div className="flex w-full sm:w-auto gap-3">
+            <FormSelect
+              containerClassName="max-w-full w-80"
+              placeholder="Lọc theo thành ngữ..."
+              searchable
+              value={tempSelectedIdiom?.id || ""}
+              options={[
+                ...(tempSelectedIdiom
+                  ? [
+                      {
+                        value: tempSelectedIdiom.id,
+                        label: tempSelectedIdiom.hanzi,
+                      },
+                    ]
+                  : []),
+                { value: "all", label: "-- Tất cả --" },
+                ...idiomSuggestions
+                  .filter((i) => i.id !== tempSelectedIdiom?.id)
+                  .map((item) => ({
+                    value: item.id,
+                    label: `${item.hanzi} (${item.pinyin})`,
+                  })),
+              ]}
+              onChange={(val) => {
+                if (val === "all") {
+                  setTempSelectedIdiom(null);
+                  setFilter(null);
+                } else {
+                  const item =
+                    idiomSuggestions.find((i) => i.id === val) ||
+                    (tempSelectedIdiom?.id === val ? tempSelectedIdiom : null);
+                  if (item) {
+                    setTempSelectedIdiom(item);
+                    setFilter(item.id);
+                  }
                 }
-              }
-              setIdiomSearchText(""); // reset search text
-            }}
-            searchValue={idiomSearchText}
-            onSearchChange={setIdiomSearchText}
-            onLoadMore={handleLoadMoreSuggestions}
-            loading={loadingSuggestions}
-          />
+                setIdiomSearchText(""); // reset search text
+              }}
+              searchValue={idiomSearchText}
+              onSearchChange={setIdiomSearchText}
+              onLoadMore={handleLoadMoreSuggestions}
+              loading={loadingSuggestions}
+            />
+          </div>
         </div>
       </Container>
     </div>

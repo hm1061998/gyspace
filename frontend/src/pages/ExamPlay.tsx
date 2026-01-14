@@ -22,6 +22,7 @@ import { modalService } from "@/libs/Modal/services/modalService";
 import { FileTextIcon } from "@/components/common/icons";
 import { fetchSavedIdioms } from "@/services/api/userDataService";
 import Container from "@/components/common/Container";
+import { useSetBackAction } from "@/context/NavigationContext";
 
 const shuffleArray = (array: any[]) => {
   const newArray = [...array];
@@ -62,6 +63,37 @@ const ExamPlay: React.FC = () => {
   const [localState, setLocalState] = useState<any>({});
   const [isDisabledStartBtn, setIsDisabledStartBtn] = useState(false);
   const [isLowSavedWords, setIsLowSavedWords] = useState(false);
+
+  const handleExitToExams = React.useCallback(
+    () => navigate("/exams"),
+    [navigate]
+  );
+  const handleExitToHome = React.useCallback(() => navigate("/"), [navigate]);
+
+  const handleConfirmExit = React.useCallback(() => {
+    modalService
+      .confirm(
+        "Tiến trình làm bài sẽ không được lưu. Bạn có chắc muốn thoát?",
+        "Thoát bài tập"
+      )
+      .then((ok) => {
+        if (ok) navigate("/");
+      });
+  }, [navigate]);
+
+  const activeBackAction = React.useMemo(() => {
+    if (submitted) return handleExitToExams;
+    if (started) return handleConfirmExit;
+    return handleExitToHome;
+  }, [
+    submitted,
+    started,
+    handleExitToExams,
+    handleConfirmExit,
+    handleExitToHome,
+  ]);
+
+  useSetBackAction(activeBackAction, submitted ? "Xem kết quả" : "Bài tập");
 
   const currentQ = questions[currentQuestionIndex];
 
@@ -634,7 +666,7 @@ const ExamPlay: React.FC = () => {
 
   if (!started) {
     return (
-      <div className="h-full bg-slate-50 font-inter flex flex-col">
+      <div className="h-full bg-slate-50 font-inter flex flex-col pt-8 md:pt-16">
         <Container className="flex-1 flex flex-col items-center justify-center p-6 text-center">
           <div className="w-20 h-20 bg-indigo-100 rounded-3xl flex items-center justify-center mb-6 animate-pop rotate-3">
             <FileTextIcon className="w-10 h-10 text-indigo-600" />
@@ -748,34 +780,20 @@ const ExamPlay: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-slate-50 font-inter overflow-hidden">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 md:px-10 shrink-0">
-        <button
-          onClick={() => {
-            if (submitted) {
-              navigate("/exams");
-              return;
-            }
-            modalService
-              .confirm(
-                "Tiến trình làm bài sẽ không được lưu. Bạn có chắc muốn thoát?",
-                "Thoát bài tập"
-              )
-              .then((ok) => {
-                if (ok) navigate("/");
-              });
-          }}
-          className="p-2 -ml-2 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors"
-        >
-          <ArrowLeftIcon className="w-6 h-6" />
-        </button>
-        <div className="text-sm font-bold text-slate-700 truncate max-w-[200px]">
-          {exam?.title}
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black uppercase text-slate-500">
-            {currentQuestionIndex + 1} / {questions.length}
+      <div className="bg-white border-b border-slate-200 h-16 flex items-center shrink-0">
+        <Container className="flex justify-between items-center h-full">
+          <div className="flex items-center gap-2">
+            {/* Contextual back button is in the global header */}
           </div>
-        </div>
+          <div className="text-sm font-bold text-slate-700 truncate max-w-[200px]">
+            {exam?.title}
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black uppercase text-slate-500">
+              {currentQuestionIndex + 1} / {questions.length}
+            </div>
+          </div>
+        </Container>
       </div>
 
       <div className="flex-1 flex flex-col overflow-hidden relative">

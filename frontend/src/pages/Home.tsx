@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import IdiomDetail from "@/components/idiom/IdiomDetail";
 import DailySuggestions from "@/components/idiom/DailySuggestions";
-import { ArrowLeftIcon, HistoryIcon } from "@/components/common/icons";
+import { HistoryIcon } from "@/components/common/icons";
 import SearchBar from "@/components/home/SearchBar";
 import SearchSuggestions from "@/components/home/SearchSuggestions";
 import HomeActionCards from "@/components/home/HomeActionCards";
@@ -12,6 +12,7 @@ import { useSuggestions } from "@/hooks/useSuggestions";
 import ReportModal from "@/components/idiom/ReportModal";
 import { toast } from "@/libs/Toast";
 import Container from "@/components/common/Container";
+import { useSetBackAction } from "@/context/NavigationContext";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -68,24 +69,16 @@ const Home: React.FC = () => {
 
   const isCenteredMode = !currentIdiom && !isLoading;
 
+  const handleBackHome = React.useCallback(
+    () => handleSearch(""),
+    [handleSearch]
+  );
+
+  useSetBackAction(currentIdiom ? handleBackHome : null, "Trang chủ");
+
   if (currentIdiom) {
     return (
-      <div className="w-full h-full flex flex-col items-center pt-5">
-        <Container className="flex justify-start">
-          <button
-            onClick={() => handleSearch("")}
-            className="group flex items-center gap-3 px-5 py-2.5 bg-white/80 backdrop-blur-md border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:border-red-100 transition-all active:scale-95"
-            aria-label="Quay lại"
-          >
-            <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-red-600 transition-colors">
-              <ArrowLeftIcon className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            </div>
-            <span className="text-sm font-black text-slate-600 group-hover:text-slate-800 tracking-tight">
-              Quay lại trang chủ
-            </span>
-          </button>
-        </Container>
-
+      <div className="w-full h-full flex flex-col items-center">
         <div className="relative w-full animate-pop">
           <IdiomDetail
             idiom={currentIdiom}

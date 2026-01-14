@@ -15,12 +15,13 @@ import GameHeader from "@/components/game/GameHeader";
 import GameBoard from "@/components/game/GameBoard";
 import GameWordList from "@/components/game/GameWordList";
 import Container from "@/components/common/Container";
+import { useSetBackAction } from "@/context/NavigationContext";
 
 interface WordSearchGameProps {
   onBack: () => void;
 }
 
-const WordSearchGame: React.FC<WordSearchGameProps> = () => {
+const WordSearchGame: React.FC<WordSearchGameProps> = ({ onBack }) => {
   const {
     grid,
     words,
@@ -44,6 +45,21 @@ const WordSearchGame: React.FC<WordSearchGameProps> = () => {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const handleBackToSetup = React.useCallback(
+    () => setGameStarted(false),
+    [setGameStarted]
+  );
+
+  const activeBackAction = React.useMemo(
+    () => (gameStarted ? handleBackToSetup : onBack),
+    [gameStarted, handleBackToSetup, onBack]
+  );
+
+  useSetBackAction(
+    activeBackAction,
+    gameStarted ? "Thoát ván chơi" : "Trò chơi"
+  );
+
   useEffect(() => {
     const preventDefault = (e: TouchEvent) => {
       if (
@@ -60,8 +76,8 @@ const WordSearchGame: React.FC<WordSearchGameProps> = () => {
 
   if (!gameStarted) {
     return (
-      <div className="max-w-7xl mx-auto w-full h-full flex flex-col justify-center animate-pop p-6 md:p-10">
-        <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-2xl space-y-8">
+      <Container className="h-full flex flex-col items-center pt-8 md:pt-16 animate-pop">
+        <div className="bg-white rounded-[2.5rem] p-8 md:p-12 border border-slate-100 shadow-2xl space-y-8 w-full max-w-2xl relative">
           <div className="text-center space-y-2">
             <h2 className="text-3xl font-hanzi font-black text-slate-800">
               Cài đặt trò chơi
@@ -185,7 +201,7 @@ const WordSearchGame: React.FC<WordSearchGameProps> = () => {
             </div>
           </div>
         )}
-      </div>
+      </Container>
     );
   }
 

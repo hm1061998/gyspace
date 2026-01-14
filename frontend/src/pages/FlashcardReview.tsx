@@ -9,6 +9,7 @@ import FlashcardEmptyState from "@/components/flashcard/FlashcardEmptyState";
 import FlashcardCompletionState from "@/components/flashcard/FlashcardCompletionState";
 import FlashcardItem from "@/components/flashcard/FlashcardItem";
 import FlashcardRatingControls from "@/components/flashcard/FlashcardRatingControls";
+import { useSetBackAction } from "@/context/NavigationContext";
 
 interface FlashcardReviewProps {
   onBack: () => void;
@@ -29,6 +30,8 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
     getNextIntervalLabel,
     loadData,
   } = useFlashcards(isLoggedIn, source);
+
+  useSetBackAction(onBack, "Thẻ ghi nhớ");
 
   useEffect(() => {
     setIsTransitioning(true);
@@ -62,6 +65,7 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
             onSavedClickError={() =>
               toast.error("Vui lòng đăng nhập để sử dụng tính năng này.")
             }
+            onBack={onBack}
           />
 
           {!isLoggedIn && (

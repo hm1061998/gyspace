@@ -8,8 +8,9 @@ import MyReportItem from "@/components/userReportList/MyReportItem";
 import { useMyReports } from "@/hooks/useMyReports";
 import EmptyState from "@/components/userReportList/EmptyState";
 import Container from "@/components/common/Container";
+import { useSetBackAction } from "@/context/NavigationContext";
 
-const UserReportList: React.FC = ({ onSelect }) => {
+const UserReportList: React.FC<any> = ({ onSelect, onBack }) => {
   const {
     historyItems,
     loading,
@@ -27,6 +28,8 @@ const UserReportList: React.FC = ({ onSelect }) => {
     isAllSelected,
     isSomeSelected,
   } = useMyReports();
+
+  useSetBackAction(onBack, "Báo lỗi");
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-slate-50/50">

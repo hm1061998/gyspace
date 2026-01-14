@@ -14,12 +14,13 @@ import { fetchSavedIdioms } from "@/services/api/userDataService";
 import ProcessingOverlay from "@/components/common/ProcessingOverlay";
 import { exportPDF } from "@/libs/ExportPDF/ExportPDFService";
 import Container from "@/components/common/Container";
+import { useSetBackAction } from "@/context/NavigationContext";
 
 interface SavedVocabularyProps {
   onBack: () => void;
 }
 
-const SavedVocabulary: React.FC<SavedVocabularyProps> = () => {
+const SavedVocabulary: React.FC<SavedVocabularyProps> = ({ onBack }) => {
   const navigate = useNavigate();
   const {
     savedItems,
@@ -40,6 +41,8 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = () => {
     isAllSelected,
     isSomeSelected,
   } = useSavedVocabulary();
+
+  useSetBackAction(onBack, "Sổ tay");
 
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [processProgress, setProcessProgress] = React.useState(0);
@@ -148,6 +151,7 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = () => {
         onExportPDF={handleExportPDF}
         isExportingExcel={isProcessing && processTitle.includes("Excel")}
         isExportingPDF={isProcessing && processTitle.includes("PDF")}
+        onBack={onBack}
       />
 
       {/* Middle Section: Scrollable List */}

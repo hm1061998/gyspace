@@ -38,6 +38,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { fetchCurrentUser } from "@/redux/authSlice";
 import SplashScreen from "@/components/common/SplashScreen";
+import { NavigationProvider } from "@/context/NavigationContext";
 
 // Wrapper component cho trang Edit để trích xuất ID từ URL params và xử lý Back
 const AdminInsertWrapper: React.FC<{ navigate: (path: string) => void }> = ({
@@ -92,7 +93,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <>
+    <NavigationProvider>
       <React.Suspense fallback={<SplashScreen />}>
         <Routes>
           {/* User Routes - Sử dụng MainLayout chung */}
@@ -197,7 +198,7 @@ const App: React.FC = () => {
           </Route>
         </Routes>
       </React.Suspense>
-    </>
+    </NavigationProvider>
   );
 };
 

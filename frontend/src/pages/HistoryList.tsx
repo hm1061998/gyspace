@@ -9,13 +9,14 @@ import HistoryHeader from "@/components/history/HistoryHeader";
 import HistoryItem from "@/components/history/HistoryItem";
 import HistoryEmptyState from "@/components/history/HistoryEmptyState";
 import Container from "@/components/common/Container";
+import { useSetBackAction } from "@/context/NavigationContext";
 
 interface HistoryListProps {
   onBack: () => void;
   onSelect: (idiom: Idiom) => void;
 }
 
-const HistoryList: React.FC<HistoryListProps> = ({ onSelect }) => {
+const HistoryList: React.FC<HistoryListProps> = ({ onSelect, onBack }) => {
   const {
     historyItems,
     loading,
@@ -34,6 +35,8 @@ const HistoryList: React.FC<HistoryListProps> = ({ onSelect }) => {
     isAllSelected,
     isSomeSelected,
   } = useHistory();
+
+  useSetBackAction(onBack, "Lịch sử");
 
   const groupedItems = useMemo(() => {
     const groups: Record<string, typeof filteredItems> = {};
@@ -77,6 +80,7 @@ const HistoryList: React.FC<HistoryListProps> = ({ onSelect }) => {
         setFilter={setFilter}
         onClearAll={handleClearAll}
         showClearAll={historyItems.length > 0}
+        onBack={onBack}
       />
 
       {/* Middle Section: Scrollable List */}
