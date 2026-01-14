@@ -609,4 +609,51 @@ export class IdiomsService {
       count: parseInt(d.count),
     }));
   }
+  async getRandomDistractors(
+    count: number,
+    excludeId?: string,
+    level?: string,
+    type?: string,
+  ) {
+    let query = this.idiomRepository.createQueryBuilder('idiom');
+
+    if (excludeId) {
+      query = query.where('idiom.id != :id', { id: excludeId });
+    }
+
+    // Try to filter by same level or type if provided
+    if (level || type) {
+      if (level) {
+        query = query.andWhere('idiom.level = :level', { level });
+      }
+      if (type) {
+        query = query.andWhere('idiom.type = :type', { type });
+      }
+    }
+
+    let results = await query.orderBy('RANDOM()').take(count).getMany();
+
+    // If not enough results with filters, get some random ones without level/type filters
+    if (results.length < count) {
+      const remaining = count - results.length;
+      const excludeIds = [excludeId, ...results.map((r) => r.id)].filter(
+        Boolean,
+      );
+
+      let fallbackQuery = this.idiomRepository.createQueryBuilder('idiom');
+      if (excludeIds.length > 0) {
+        fallbackQuery = fallbackQuery.where('idiom.id NOT IN (:...ids)', {
+          ids: excludeIds,
+        });
+      }
+
+      const fallbackResults = await fallbackQuery
+        .orderBy('RANDOM()')
+        .take(remaining)
+        .getMany();
+      results = [...results, ...fallbackResults];
+    }
+
+    return results;
+  }
 }
