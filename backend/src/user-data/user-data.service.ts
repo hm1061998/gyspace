@@ -251,7 +251,10 @@ export class UserDataService {
       .getManyAndCount();
 
     return {
-      data: history.map((h) => h.idiom),
+      data: history.map((h) => ({
+        ...h.idiom,
+        searchedAt: h.createdAt,
+      })),
       meta: {
         total,
         page,

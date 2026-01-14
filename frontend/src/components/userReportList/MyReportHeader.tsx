@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ExclamationIcon, SearchIcon } from "@/components/common/icons";
 import FormSelect from "@/components/common/FormSelect";
 import { fetchSuggestions } from "@/services/api";
+import Container from "@/components/common/Container";
 
 interface MyReportHeaderProps {
   filter: string;
@@ -60,8 +61,8 @@ const MyReportHeader: React.FC<MyReportHeaderProps> = ({
   };
 
   return (
-    <div className="flex-none bg-white border-b border-slate-200 shadow-sm z-10 px-4 py-4 md:px-6">
-      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div className="flex-none bg-white border-b border-slate-100 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] z-20 py-5">
+      <Container className="flex flex-col sm:flex-row justify-between sm:items-center gap-6">
         <div className="flex items-center w-full sm:w-auto">
           <h1 className="text-xl sm:text-2xl font-hanzi font-bold text-slate-800 flex items-center gap-2">
             <ExclamationIcon className="w-5 h-5 text-red-600" />
@@ -113,7 +114,7 @@ const MyReportHeader: React.FC<MyReportHeaderProps> = ({
             loading={loadingSuggestions}
           />
         </div>
-      </div>
+      </Container>
     </div>
   );
 };

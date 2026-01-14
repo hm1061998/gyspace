@@ -2,6 +2,7 @@ import React from "react";
 import { useProfile } from "@/hooks/useProfile";
 import ProfileInfoForm from "@/components/profile/ProfileInfoForm";
 import ChangePasswordForm from "@/components/profile/ChangePasswordForm";
+import Container from "@/components/common/Container";
 
 const Profile: React.FC = () => {
   const {
@@ -20,7 +21,7 @@ const Profile: React.FC = () => {
   } = useProfile();
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
+    <Container className="py-8">
       <div className="mb-10 text-center">
         <h1 className="text-3xl font-black text-slate-800 tracking-tight mb-2">
           Cài đặt tài khoản
@@ -103,7 +104,7 @@ const Profile: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </Container>
   );
 };
 

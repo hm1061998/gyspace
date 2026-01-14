@@ -14,6 +14,7 @@ import {
   ExclamationIcon,
   ChatBubbleIcon,
 } from "@/components/common/icons";
+import Container from "@/components/common/Container";
 import SpeakButton from "@/components/common/SpeakButton";
 import IdiomComments from "./IdiomComments";
 import { toast } from "@/libs/Toast";
@@ -197,7 +198,7 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
   };
 
   return (
-    <div className="max-w-6xl mx-auto pb-8 md:pb-12 animate-[fadeInUp_0.4s_ease-out] px-4">
+    <Container className="pb-8 md:pb-12 animate-[fadeInUp_0.4s_ease-out]">
       {/* Hero Header Section */}
       <div className="relative mb-5 md:mb-8 group mt-3 md:mt-5">
         {/* Background Decor */}
@@ -581,7 +582,7 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
       >
         <IdiomComments idiomId={idiom.id} idiomHanzi={idiom.hanzi} />
       </div>
-    </div>
+    </Container>
   );
 };
 

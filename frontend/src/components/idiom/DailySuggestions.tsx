@@ -8,6 +8,7 @@ import {
   fetchSuggestions,
   fetchDailySuggestions,
 } from "@/services/api/idiomService";
+import Container from "@/components/common/Container";
 import type { Idiom } from "@/types";
 
 interface DailySuggestionsProps {
@@ -79,7 +80,7 @@ const DailySuggestions: React.FC<DailySuggestionsProps> = ({ onSelect }) => {
   }, []);
 
   return (
-    <div className="w-full max-w-2xl mx-auto mb-8 animate-pop">
+    <Container className="mb-8 animate-pop">
       <div className="flex flex-col items-center">
         {/* Date Header */}
         <div className="flex items-center gap-2 mb-6 bg-white/50 backdrop-blur-sm px-4 py-1.5 rounded-full border border-slate-100 shadow-sm">
@@ -131,7 +132,7 @@ const DailySuggestions: React.FC<DailySuggestionsProps> = ({ onSelect }) => {
                 </div>
 
                 {/* Number Badge */}
-                <div className="mr-3 flex-shrink-0">
+                <div className="mr-3 shrink-0">
                   <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-colors duration-300">
                     <span className="font-hanzi font-black text-base text-slate-400 group-hover:text-white">
                       {index + 1}
@@ -164,7 +165,7 @@ const DailySuggestions: React.FC<DailySuggestionsProps> = ({ onSelect }) => {
            <span>Cập nhật mỗi ngày lúc 00:00</span>
         </div> */}
       </div>
-    </div>
+    </Container>
   );
 };
 

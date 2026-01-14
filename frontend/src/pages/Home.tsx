@@ -11,6 +11,7 @@ import { useIdiomSearch } from "@/hooks/useIdiomSearch";
 import { useSuggestions } from "@/hooks/useSuggestions";
 import ReportModal from "@/components/idiom/ReportModal";
 import { toast } from "@/libs/Toast";
+import Container from "@/components/common/Container";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -69,8 +70,8 @@ const Home: React.FC = () => {
 
   if (currentIdiom) {
     return (
-      <div className="w-full h-full flex flex-col items-center">
-        <div className="w-full max-w-6xl px-4 flex justify-start">
+      <div className="w-full h-full flex flex-col items-center pt-5">
+        <Container className="flex justify-start">
           <button
             onClick={() => handleSearch("")}
             className="group flex items-center gap-3 px-5 py-2.5 bg-white/80 backdrop-blur-md border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:border-red-100 transition-all active:scale-95"
@@ -83,7 +84,7 @@ const Home: React.FC = () => {
               Quay lại trang chủ
             </span>
           </button>
-        </div>
+        </Container>
 
         <div className="relative w-full animate-pop">
           <IdiomDetail

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { SpinnerIcon } from "@/components/common/icons";
+import Container from "@/components/common/Container";
 import { toast } from "@/libs/Toast";
 import { useOutletContext } from "react-router-dom";
 import { useFlashcards } from "@/hooks/useFlashcards";
@@ -46,7 +47,7 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto w-full flex flex-col h-full animate-pop p-3">
+    <Container className="flex flex-col h-full animate-pop py-4 md:py-10">
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
           <SpinnerIcon className="w-10 h-10 text-red-600" />
@@ -109,7 +110,7 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
           )}
         </>
       )}
-    </div>
+    </Container>
   );
 };
 

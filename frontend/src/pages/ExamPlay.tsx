@@ -21,6 +21,7 @@ import { Exercise, ExerciseType } from "@/types";
 import { modalService } from "@/libs/Modal/services/modalService";
 import { FileTextIcon } from "@/components/common/icons";
 import { fetchSavedIdioms } from "@/services/api/userDataService";
+import Container from "@/components/common/Container";
 
 const shuffleArray = (array: any[]) => {
   const newArray = [...array];
@@ -330,7 +331,7 @@ const ExamPlay: React.FC = () => {
               : "bg-red-50 border-red-200"
           }`}
         >
-          <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+          <Container className="flex flex-col sm:flex-row items-center justify-between gap-6">
             {/* Feedback Message (Only if checked) */}
             {isChecked ? (
               <div
@@ -417,7 +418,7 @@ const ExamPlay: React.FC = () => {
                 </button>
               )}
             </div>
-          </div>
+          </Container>
         </div>
       </div>
     );
@@ -634,7 +635,7 @@ const ExamPlay: React.FC = () => {
   if (!started) {
     return (
       <div className="h-full bg-slate-50 font-inter flex flex-col">
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-2xl mx-auto w-full">
+        <Container className="flex-1 flex flex-col items-center justify-center p-6 text-center">
           <div className="w-20 h-20 bg-indigo-100 rounded-3xl flex items-center justify-center mb-6 animate-pop rotate-3">
             <FileTextIcon className="w-10 h-10 text-indigo-600" />
           </div>
@@ -739,7 +740,7 @@ const ExamPlay: React.FC = () => {
               )}
             </button>
           )}
-        </div>
+        </Container>
       </div>
     );
   }
@@ -747,7 +748,7 @@ const ExamPlay: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-slate-50 font-inter overflow-hidden">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 sm:px-8 shrink-0">
+      <div className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 md:px-10 shrink-0">
         <button
           onClick={() => {
             if (submitted) {
@@ -778,8 +779,8 @@ const ExamPlay: React.FC = () => {
       </div>
 
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 flex flex-col">
-          <div className="max-w-3xl mx-auto w-full flex-1 flex flex-col">
+        <div className="flex-1 overflow-y-auto pb-24 flex flex-col">
+          <Container className="flex-1 flex flex-col py-4 md:py-10">
             {/* Progress Bar */}
             <div className="mb-8">
               <div className="flex justify-between text-xs font-bold text-slate-400 mb-2">
@@ -832,7 +833,7 @@ const ExamPlay: React.FC = () => {
                 />
               )}
             </div>
-          </div>
+          </Container>
         </div>
 
         {/* Bottom Nav / Feedback Banner */}
