@@ -8,6 +8,7 @@ import {
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
 import { ReportQueryDto } from './dto/report-query.dto';
+import { createPaginatedResponse } from '../common/utils/pagination.util';
 
 @Injectable()
 export class DictionaryReportsService {
@@ -54,15 +55,7 @@ export class DictionaryReportsService {
 
     const [data, total] = await queryBuilder.getManyAndCount();
 
-    return {
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    return createPaginatedResponse(data, total, page, limit);
   }
 
   async findMyReports(userId: string, query: ReportQueryDto) {
@@ -87,15 +80,7 @@ export class DictionaryReportsService {
       take: limit,
     });
 
-    return {
-      data: items,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    return createPaginatedResponse(items, total, page, limit);
   }
 
   async getStats() {

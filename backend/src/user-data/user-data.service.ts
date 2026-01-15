@@ -9,6 +9,7 @@ import {
 } from './entities/user-data.entity';
 import { IdiomEntity } from '../idioms/entities/idiom.entity';
 import { UserEntity } from '../user/entities/user.entity';
+import { createPaginatedResponse } from '../common/utils/pagination.util';
 
 @Injectable()
 export class UserDataService {
@@ -80,15 +81,8 @@ export class UserDataService {
       skip: skip,
     });
 
-    return {
-      data: saved.map((s) => s.idiom),
-      meta: {
-        total,
-        page,
-        limit,
-        lastPage: Math.ceil(total / limit) || 1,
-      },
-    };
+    const formattedData = saved.map((s) => s.idiom);
+    return createPaginatedResponse(formattedData, total, page, limit);
   }
 
   async updateSRS(
@@ -184,15 +178,7 @@ export class UserDataService {
       skip: skip,
     });
 
-    return {
-      data: progress,
-      meta: {
-        total,
-        page,
-        limit,
-        lastPage: Math.ceil(total / limit) || 1,
-      },
-    };
+    return createPaginatedResponse(progress, total, page, limit);
   }
 
   async addToHistory(userId: string, idiomId: string) {
@@ -250,18 +236,11 @@ export class UserDataService {
       .take(limit)
       .getManyAndCount();
 
-    return {
-      data: history.map((h) => ({
-        ...h.idiom,
-        searchedAt: h.createdAt,
-      })),
-      meta: {
-        total,
-        page,
-        limit,
-        lastPage: Math.ceil(total / limit) || 1,
-      },
-    };
+    const formattedHistory = history.map((h) => ({
+      ...h.idiom,
+      searchedAt: h.createdAt,
+    }));
+    return createPaginatedResponse(formattedHistory, total, page, limit);
   }
 
   async clearHistory(userId: string) {

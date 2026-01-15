@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from './entities/user.entity';
 import { comparePasswords, hashPassword } from '../auth/utils/crypto.utils';
+import { createPaginatedResponse } from '../common/utils/pagination.util';
 
 @Injectable()
 export class UserService {
@@ -53,15 +54,7 @@ export class UserService {
       .take(limit)
       .getManyAndCount();
 
-    return {
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        lastPage: Math.ceil(total / limit) || 1,
-      },
-    };
+    return createPaginatedResponse(data, total, page, limit);
   }
 
   async createUser(data: {
