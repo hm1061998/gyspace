@@ -124,7 +124,6 @@ const FormSelectCustom: React.FC<FormSelectProps> = ({
           absolute z-50 mt-2 w-full
           rounded-xl border border-slate-200
           bg-white shadow-xl overflow-hidden
-          animate-in fade-in zoom-in-95 duration-200
         "
           >
             {searchable && (
