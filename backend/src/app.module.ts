@@ -94,10 +94,16 @@ const isProd = process.env.NODE_ENV === 'production';
     ]),
     ...(isProd
       ? [
-          ServeStaticModule.forRoot({
-            rootPath: join(__dirname, '..', 'public', 'dist'),
-            exclude: ['/api'],
-          }),
+          ServeStaticModule.forRoot(
+            {
+              rootPath: join(__dirname, '..', 'public', 'dist'),
+              exclude: ['/api'],
+            },
+            {
+              rootPath: join(__dirname, '..', 'public'),
+              exclude: ['/api'],
+            },
+          ),
         ]
       : []),
   ],
