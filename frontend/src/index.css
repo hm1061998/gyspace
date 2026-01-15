@@ -1,6 +1,21 @@
 @import "tailwindcss";
 
 @theme {
+  /* Design System Tokens */
+  --color-primary: var(--color-indigo-600);
+  --color-primary-hover: var(--color-indigo-700);
+  --color-primary-light: var(--color-indigo-50);
+  
+  --color-secondary: var(--color-purple-600);
+  
+  --color-danger: var(--color-red-600);
+  --color-danger-hover: var(--color-red-700);
+  --color-danger-light: var(--color-red-50);
+
+  --color-success: var(--color-emerald-500);
+  --color-warning: var(--color-amber-500);
+  --color-info: var(--color-blue-500);
+
   --animate-bounce-subtle: bounceSubtle 2s infinite;
   --animate-shake: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
   --animate-in: fadeIn 0.4s ease-out;
