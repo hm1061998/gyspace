@@ -13,6 +13,9 @@ ARG VITE_API_URL
 # Set environment variable
 ENV VITE_API_URL=$VITE_API_URL
 
+# Create .env file manually because Vite loadEnv relies on it
+RUN echo "VITE_API_URL=$VITE_API_URL" > .env
+
 RUN npm run build
 
 # Production Stage with Nginx
