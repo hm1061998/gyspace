@@ -7,7 +7,8 @@ on:
       - "backend/**"
 
 jobs:
-  deploy-backend:
+  build:
+    name: Build & Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -17,10 +18,15 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Test Docker Build
-        run: docker build -t  hm1061998/gyspace-api:latest ./backend
+        run: docker build -t hm1061998/gyspace-api:latest ./backend
 
+  deploy:
+    name: Deploy to Render
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
       - name: Trigger Render Deploy
-        if: success()
         run: |
           if [ -n "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}" ]; then
             curl -X POST ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}

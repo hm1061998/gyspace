@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, ".", "");
+  const env = loadEnv(mode, process.cwd(), "");
   return {
     base: "/",
     build: {
@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => {
         new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })
       ),
       __APP_NAME__: JSON.stringify("GYSpace"),
-      __API_URL__: JSON.stringify(env.VITE_API_URL),
+      __API_URL__: JSON.stringify(process.env.VITE_API_URL || env.VITE_API_URL),
     },
     resolve: {
       alias: {
