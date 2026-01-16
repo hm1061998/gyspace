@@ -29,8 +29,6 @@ jobs:
           context: ./frontend
           push: true
           tags: hm1061998/gyspace-web:latest
-          build-args: |
-            VITE_API_URL=${{ secrets.VITE_API_URL }}
 
   deploy:
     name: Deploy to Render
