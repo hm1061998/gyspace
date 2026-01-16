@@ -23,6 +23,7 @@ import { FileTextIcon } from "@/components/common/icons";
 import { fetchSavedIdioms } from "@/services/api/userDataService";
 import Container from "@/components/common/Container";
 import { useSetBackAction } from "@/context/NavigationContext";
+import { SEO } from "@/components/common/SEO";
 
 const shuffleArray = (array: any[]) => {
   const newArray = [...array];
@@ -609,6 +610,10 @@ const ExamPlay: React.FC = () => {
     const maxTotalScore = questions.reduce((sum, q) => sum + q.points, 0);
     return (
       <div className="h-full bg-slate-50 flex items-center justify-center p-6 font-inter">
+        <SEO
+          title={`Kết quả: ${exam.title}`}
+          description={`Bạn đạt được ${score}/${maxTotalScore} điểm.`}
+        />
         <div className="bg-white rounded-[32px] p-8 max-w-lg w-full shadow-xl border border-slate-100 text-center">
           <TrophyIcon className="w-20 h-20 text-yellow-500 mx-auto mb-6" />
           <h2 className="text-3xl font-black text-slate-800 mb-2">
@@ -667,6 +672,16 @@ const ExamPlay: React.FC = () => {
   if (!started) {
     return (
       <div className="h-full bg-slate-50 font-inter flex flex-col pt-8 md:pt-16">
+        <SEO
+          title={
+            mode === "saved"
+              ? "Luyện tập Sổ tay cá nhân"
+              : exam?.title || "Bài tập"
+          }
+          description={
+            exam?.description || "Tham gia bài tập để rèn luyện kỹ năng."
+          }
+        />
         <Container className="flex-1 flex flex-col items-center justify-center p-6 text-center">
           <div className="w-20 h-20 bg-indigo-100 rounded-3xl flex items-center justify-center mb-6 animate-pop rotate-3">
             <FileTextIcon className="w-10 h-10 text-indigo-600" />
@@ -779,6 +794,10 @@ const ExamPlay: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-slate-50 font-inter overflow-hidden">
+      <SEO
+        title={exam?.title || "Làm bài tập"}
+        description={exam?.description}
+      />
       {/* Header */}
       <div className="bg-white border-b border-slate-200 h-16 flex items-center shrink-0">
         <Container className="flex justify-between items-center h-full">
