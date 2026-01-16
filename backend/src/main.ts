@@ -14,7 +14,6 @@ async function bootstrap() {
   app.useGlobalInterceptors(new LoggingInterceptor());
 
   app.use(cookieParser());
-  app.setGlobalPrefix('api');
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -22,17 +21,6 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  if (process.env.NODE_ENV !== 'production') {
-    app.use(
-      // ❗ CHỈ proxy các path KHÔNG bắt đầu bằng /api
-      createProxyMiddleware({
-        target: 'http://localhost:5173',
-        changeOrigin: true,
-        ws: true,
-        pathFilter: (path) => !path.startsWith('/api'),
-      }),
-    );
-  }
   // Cấu hình CORS mở rộng để tránh lỗi chặn truy cập từ Frontend
   app.enableCors({
     origin: true, // Cho phép tất cả các nguồn (hoặc điền ['http://localhost:5173'] nếu muốn cụ thể)
