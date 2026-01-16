@@ -26,7 +26,7 @@ type ResponseInterceptor = <T>(
 type ErrorInterceptor = (error: any) => any;
 
 class HttpService {
-  private baseURL: string = __API_URL__ ?? "/api";
+  private baseURL: string = __API_URL__ || "/api";
   private requestInterceptors: RequestInterceptor[] = [];
   private responseInterceptors: ResponseInterceptor[] = [];
   private errorInterceptors: ErrorInterceptor[] = [];
