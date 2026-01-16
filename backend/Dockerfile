@@ -7,6 +7,10 @@ RUN npm install
 
 COPY . .
 
+# Optional: Add build arguments (Not recommended for Secrets like DB_PASSWORD)
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+
 RUN npm run build
 
 FROM node:22-alpine
