@@ -16,7 +16,6 @@ import GameBoard from "@/components/game/GameBoard";
 import GameWordList from "@/components/game/GameWordList";
 import Container from "@/components/common/Container";
 import { useSetBackAction } from "@/context/NavigationContext";
-import { SEO } from "@/components/common/SEO";
 
 interface WordSearchGameProps {
   onBack: () => void;
@@ -78,10 +77,6 @@ const WordSearchGame: React.FC<WordSearchGameProps> = ({ onBack }) => {
   if (!gameStarted) {
     return (
       <Container className="h-full flex flex-col items-center pt-8 md:pt-16 animate-pop">
-        <SEO
-          title="Game tìm chữ"
-          description="Trò chơi tìm chữ Hán thú vị, giúp rèn luyện khả năng nhận diện mặt chữ."
-        />
         <div className="bg-white rounded-[2.5rem] p-8 md:p-12 border border-slate-100 shadow-2xl space-y-8 w-full max-w-2xl relative">
           <div className="text-center space-y-2">
             <h2 className="text-3xl font-hanzi font-black text-slate-800">
@@ -212,7 +207,6 @@ const WordSearchGame: React.FC<WordSearchGameProps> = ({ onBack }) => {
 
   return (
     <Container className="h-full flex flex-col animate-pop select-none overflow-hidden relative">
-      <SEO title="Đang chơi Game tìm chữ" />
       <GameHeader
         onNewGame={() => startNewGame(difficulty, mode)}
         onShowTutorial={() => setShowTutorial(true)}

@@ -10,7 +10,6 @@ import FlashcardCompletionState from "@/components/flashcard/FlashcardCompletion
 import FlashcardItem from "@/components/flashcard/FlashcardItem";
 import FlashcardRatingControls from "@/components/flashcard/FlashcardRatingControls";
 import { useSetBackAction } from "@/context/NavigationContext";
-import { SEO } from "@/components/common/SEO";
 
 interface FlashcardReviewProps {
   onBack: () => void;
@@ -52,10 +51,6 @@ const FlashcardReview: React.FC<FlashcardReviewProps> = ({ onBack }) => {
 
   return (
     <Container className="flex flex-col h-full animate-pop py-4 md:py-10">
-      <SEO
-        title="Ôn tập Flashcard"
-        description="Luyện tập từ vựng với Flashcard thông minh theo phương pháp Spaced Repetition."
-      />
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
           <SpinnerIcon className="w-10 h-10 text-red-600" />

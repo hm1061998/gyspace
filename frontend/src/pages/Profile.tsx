@@ -5,7 +5,6 @@ import ChangePasswordForm from "@/components/profile/ChangePasswordForm";
 import Container from "@/components/common/Container";
 import { useNavigation, useSetBackAction } from "@/context/NavigationContext";
 import { useNavigate } from "react-router-dom";
-import { SEO } from "@/components/common/SEO";
 
 const Profile: React.FC = () => {
   const {
@@ -29,10 +28,6 @@ const Profile: React.FC = () => {
 
   return (
     <Container className="py-8 md:py-12">
-      <SEO
-        title="Hồ sơ cá nhân"
-        description="Quản lý thông tin tài khoản và xem thành tích học tập."
-      />
       <div className="mb-10 pt-2 text-center md:text-left md:flex md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl md:text-4xl font-hanzi font-black text-slate-800 tracking-tight mb-2">

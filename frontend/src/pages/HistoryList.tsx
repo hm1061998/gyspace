@@ -10,7 +10,6 @@ import HistoryItem from "@/components/history/HistoryItem";
 import HistoryEmptyState from "@/components/history/HistoryEmptyState";
 import Container from "@/components/common/Container";
 import { useSetBackAction } from "@/context/NavigationContext";
-import { SEO } from "@/components/common/SEO";
 
 interface HistoryListProps {
   onBack: () => void;
@@ -76,10 +75,6 @@ const HistoryList: React.FC<HistoryListProps> = ({ onSelect, onBack }) => {
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-slate-50/50">
-      <SEO
-        title="Lịch sử tra cứu"
-        description="Xem lại lịch sử tìm kiếm từ vựng và thành ngữ của bạn."
-      />
       <HistoryHeader
         filter={filter}
         setFilter={setFilter}

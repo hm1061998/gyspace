@@ -13,7 +13,6 @@ import ReportModal from "@/components/idiom/ReportModal";
 import { toast } from "@/libs/Toast";
 import Container from "@/components/common/Container";
 import { useSetBackAction } from "@/context/NavigationContext";
-import { SEO } from "@/components/common/SEO";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -80,10 +79,6 @@ const Home: React.FC = () => {
   if (currentIdiom) {
     return (
       <div className="w-full h-full flex flex-col items-center">
-        <SEO
-          title={`${currentIdiom.hanzi} - ${currentIdiom.pinyin}`}
-          description={`${currentIdiom.hanzi} (${currentIdiom.pinyin}): ${currentIdiom.meaning}`}
-        />
         <div className="relative w-full animate-pop">
           <IdiomDetail
             idiom={currentIdiom}
@@ -111,7 +106,6 @@ const Home: React.FC = () => {
           : "min-h-full justify-start pt-4"
       }`}
     >
-      <SEO />
       <div
         className={`w-full max-w-3xl transition-all duration-700 z-1 ${
           isCenteredMode ? "scale-100" : "mb-8 scale-100"

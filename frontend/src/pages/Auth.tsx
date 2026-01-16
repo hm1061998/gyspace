@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import LoginView from "@/components/auth/LoginView";
 import RegisterView from "@/components/auth/RegisterView";
 import { toast } from "@/libs/Toast";
-import { SEO } from "@/components/common/SEO";
 
 interface LoginViewProps {
   onLoginSuccess: () => void;
@@ -19,10 +18,6 @@ const Auth: React.FC<LoginViewProps> = ({ onLoginSuccess, onBack }) => {
 
   return (
     <React.Fragment>
-      <SEO
-        title={type === "login" ? "Đăng nhập" : "Đăng ký"}
-        description="Đăng nhập hoặc đăng ký tài khoản để lưu từ vựng và theo dõi tiến độ học tập."
-      />
       {type === "login" && (
         <LoginView
           onLoginSuccess={onLoginSuccess}

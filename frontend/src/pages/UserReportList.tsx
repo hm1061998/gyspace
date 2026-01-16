@@ -9,7 +9,6 @@ import { useMyReports } from "@/hooks/useMyReports";
 import EmptyState from "@/components/userReportList/EmptyState";
 import Container from "@/components/common/Container";
 import { useSetBackAction } from "@/context/NavigationContext";
-import { SEO } from "@/components/common/SEO";
 
 const UserReportList: React.FC<any> = ({ onSelect, onBack }) => {
   const {
@@ -34,10 +33,6 @@ const UserReportList: React.FC<any> = ({ onSelect, onBack }) => {
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-slate-50/50">
-      <SEO
-        title="Báo cáo của tôi"
-        description="Danh sách các báo cáo lỗi từ điển bạn đã gửi."
-      />
       <MyReportHeader filter={filter} setFilter={setFilter} />
 
       {/* Middle Section: Scrollable List */}

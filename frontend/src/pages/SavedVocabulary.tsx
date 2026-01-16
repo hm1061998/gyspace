@@ -15,7 +15,6 @@ import ProcessingOverlay from "@/components/common/ProcessingOverlay";
 import { exportPDF } from "@/libs/ExportPDF/ExportPDFService";
 import Container from "@/components/common/Container";
 import { useSetBackAction } from "@/context/NavigationContext";
-import { SEO } from "@/components/common/SEO";
 
 interface SavedVocabularyProps {
   onBack: () => void;
@@ -137,10 +136,6 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = ({ onBack }) => {
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-slate-50/50 relative">
-      <SEO
-        title="Sổ tay từ vựng"
-        description="Quản lý từ vựng tiếng Trung đã lưu của bạn. Ôn tập và xuất dữ liệu."
-      />
       <ProcessingOverlay
         isOpen={isProcessing}
         progress={processProgress}
