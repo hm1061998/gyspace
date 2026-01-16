@@ -78,6 +78,21 @@ export class IdiomsController {
     return this.idiomsService.search(query);
   }
 
+  @Get('random-distractors')
+  async getRandomDistractors(
+    @Query('count') count: number = 4,
+    @Query('excludeId') excludeId?: string,
+    @Query('level') level?: string,
+    @Query('type') type?: string,
+  ) {
+    return this.idiomsService.getRandomDistractors(
+      count,
+      excludeId,
+      level,
+      type,
+    );
+  }
+
   @Get(':id')
   async findById(@Param('id') id: string) {
     return this.idiomsService.findById(id);

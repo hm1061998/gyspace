@@ -5,6 +5,7 @@ import { ExamPaperEntity } from './entities/exam-paper.entity';
 import { CreateExamPaperDto } from './dto/create-exam-paper.dto';
 import { UpdateExamPaperDto } from './dto/update-exam-paper.dto';
 import { ExamPaperQueryDto } from './dto/exam-paper-query.dto';
+import { createPaginatedResponse } from '../common/utils/pagination.util';
 
 @Injectable()
 export class ExamPapersService {
@@ -34,14 +35,7 @@ export class ExamPapersService {
       order: { createdAt: 'DESC' },
     });
 
-    return {
-      data,
-      meta: {
-        total,
-        page,
-        lastPage: Math.ceil(total / limit),
-      },
-    };
+    return createPaginatedResponse(data, total, page, limit);
   }
 
   async findOne(id: string) {

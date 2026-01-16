@@ -194,6 +194,34 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
             if (!hanzi || String(hanzi).includes("Hướng dẫn sử dụng"))
               return null;
 
+            const parseExamples = (rawText: string) => {
+              if (!rawText) return [];
+              const text = rawText.replace(/\r\n/g, "\n").trim();
+
+              // Regex matches "列 1：" or "例 2:" variations
+              const delimiterRegex = /(?:列|例)\s*\d+\s*[：:]/g;
+
+              if (!delimiterRegex.test(text)) {
+                return [
+                  {
+                    chinese: text,
+                    pinyin: "",
+                    vietnamese: "",
+                  },
+                ];
+              }
+
+              return text
+                .split(delimiterRegex)
+                .map((p) => p.trim())
+                .filter(Boolean)
+                .map((content) => ({
+                  chinese: content,
+                  pinyin: "",
+                  vietnamese: "",
+                }));
+            };
+
             return {
               hanzi: String(hanzi).trim(),
               pinyin: String(row["PINYIN"] || "").trim(),
@@ -207,15 +235,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
               type: "Quán dụng ngữ",
               figurativeMeaning: "",
               literalMeaning: "",
-              examples: row["VÍ DỤ"]
-                ? [
-                    {
-                      chinese: String(row["VÍ DỤ"]),
-                      pinyin: "",
-                      vietnamese: "",
-                    },
-                  ]
-                : [],
+              examples: row["VÍ DỤ"] ? parseExamples(String(row["VÍ DỤ"])) : [],
               imageUrl: String(row["HÌNH ẢNH"] || "").trim(),
               videoUrl: String(row["LINK BÁO/VIDEO"] || "").trim(),
               usageContext: "",
@@ -339,7 +359,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
       />
 
       {/* Top Section: Title & Actions & Filters */}
-      <div className="flex-none bg-white border-b border-slate-200 shadow-sm z-10 transition-all">
+      <div className="flex-none bg-white border-b border-slate-200 shadow-sm z-11 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-2 sm:gap-3">
@@ -377,7 +397,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
           </div>
 
           {/* Toolbar: Search, Filters & Main Actions */}
-          <div className="flex flex-col gap-3 mb-3">
+          <div className="flex flex-col gap-3 mb-3 ">
             <div className="flex items-center gap-2">
               <div className="relative flex-1 group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -435,7 +455,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
             </div>
 
             {/* Sub-Filters */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            <div className="flex items-center gap-2 pb-1">
               <FormSelect
                 value={selectedLevel}
                 onChange={(e) => {

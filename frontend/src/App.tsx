@@ -38,6 +38,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { fetchCurrentUser } from "@/redux/authSlice";
 import SplashScreen from "@/components/common/SplashScreen";
+import { NavigationProvider } from "@/context/NavigationContext";
 
 // Wrapper component cho trang Edit để trích xuất ID từ URL params và xử lý Back
 const AdminInsertWrapper: React.FC<{ navigate: (path: string) => void }> = ({
@@ -87,12 +88,36 @@ const App: React.FC = () => {
     }
   }, [dispatch]);
 
+  const handleBackToHome = React.useCallback(() => navigate("/"), [navigate]);
+  const handleBackToAdmin = React.useCallback(
+    () => navigate("/admin"),
+    [navigate]
+  );
+  const handleBackToIdiomList = React.useCallback(
+    () => navigate("/admin/idiom"),
+    [navigate]
+  );
+
+  const handleSelectIdiom = React.useCallback(
+    (idiom: any) => {
+      navigate(`/?query=${encodeURIComponent(idiom.hanzi)}`);
+    },
+    [navigate]
+  );
+
+  const handleSelectReportIdiom = React.useCallback(
+    (item: any) => {
+      navigate(`/?query=${encodeURIComponent(item.idiom?.hanzi)}`);
+    },
+    [navigate]
+  );
+
   if (loading) {
     return <SplashScreen />;
   }
 
   return (
-    <>
+    <NavigationProvider>
       <React.Suspense fallback={<SplashScreen />}>
         <Routes>
           {/* User Routes - Sử dụng MainLayout chung */}
@@ -101,11 +126,11 @@ const App: React.FC = () => {
 
             <Route
               path="/flashcards"
-              element={<FlashcardReview onBack={() => navigate("/")} />}
+              element={<FlashcardReview onBack={handleBackToHome} />}
             />
             <Route
               path="/word_search"
-              element={<WordSearchGame onBack={() => navigate("/")} />}
+              element={<WordSearchGame onBack={handleBackToHome} />}
             />
 
             <Route path="/auth" element={<AuthWrapper />} />
@@ -114,16 +139,14 @@ const App: React.FC = () => {
             <Route element={<RequireAuth />}>
               <Route
                 path="/saved"
-                element={<SavedVocabulary onBack={() => navigate("/")} />}
+                element={<SavedVocabulary onBack={handleBackToHome} />}
               />
               <Route
                 path="/history"
                 element={
                   <HistoryList
-                    onBack={() => navigate("/")}
-                    onSelect={(idiom) => {
-                      navigate(`/?query=${encodeURIComponent(idiom.hanzi)}`);
-                    }}
+                    onBack={handleBackToHome}
+                    onSelect={handleSelectIdiom}
                   />
                 }
               />
@@ -131,12 +154,8 @@ const App: React.FC = () => {
                 path="/reports"
                 element={
                   <UserReportList
-                    onBack={() => navigate("/")}
-                    onSelect={(idiom) => {
-                      navigate(
-                        `/?query=${encodeURIComponent(idiom.idiom?.hanzi)}`
-                      );
-                    }}
+                    onBack={handleBackToHome}
+                    onSelect={handleSelectReportIdiom}
                   />
                 }
               />
@@ -155,7 +174,7 @@ const App: React.FC = () => {
                 path="idiom"
                 element={
                   <VocabularyList
-                    onBack={() => navigate("/admin")}
+                    onBack={handleBackToAdmin}
                     onEdit={(id) => navigate(`/admin/idiom/detail/${id}`)}
                   />
                 }
@@ -166,21 +185,19 @@ const App: React.FC = () => {
               />
               <Route
                 path="idiom/insert"
-                element={
-                  <AdminInsert onBack={() => navigate("/admin/idiom")} />
-                }
+                element={<AdminInsert onBack={handleBackToIdiomList} />}
               />
               <Route
                 path="comments"
-                element={<AdminComments onBack={() => navigate("/admin")} />}
+                element={<AdminComments onBack={handleBackToAdmin} />}
               />
               <Route
                 path="search-logs"
-                element={<SearchLogs onBack={() => navigate("/admin")} />}
+                element={<SearchLogs onBack={handleBackToAdmin} />}
               />
               <Route
                 path="reports"
-                element={<AdminReports onBack={() => navigate("/admin")} />}
+                element={<AdminReports onBack={handleBackToAdmin} />}
               />
               <Route path="users" element={<UserManagement />} />
               <Route path="exams" element={<ExamPaperManagement />} />
@@ -197,7 +214,7 @@ const App: React.FC = () => {
           </Route>
         </Routes>
       </React.Suspense>
-    </>
+    </NavigationProvider>
   );
 };
 

@@ -2,6 +2,7 @@ import React from "react";
 import {
   CloseIcon,
   BookmarkIcon,
+  BookOpenIcon,
   CardIcon,
   LogoutIcon,
   ChevronRightIcon,
@@ -294,8 +295,8 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
 
             <Section title="Bộ sưu tập">
               <MenuButton
-                icon={<BookmarkIcon className="w-5 h-5" />}
-                label="Từ vựng đã lưu"
+                icon={<BookOpenIcon className="w-5 h-5" />}
+                label="Sổ tay cá nhân"
                 isActive={isPathActive("/saved")}
                 onClick={() => {
                   if (!isLoggedIn) {

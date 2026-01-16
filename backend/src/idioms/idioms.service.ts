@@ -13,6 +13,8 @@ import { CreateIdiomDto } from './dto/create-idiom.dto';
 import { IdiomQueryDto, SearchLogQueryDto } from './dto/idiom-query.dto';
 import { PaginationQueryDto } from '../common/dto/pagination.dto';
 import { UserEntity } from '../user/entities/user.entity';
+import { applyDateFilter } from '../common/utils/date-filter.util';
+import { createPaginatedResponse } from '../common/utils/pagination.util';
 
 @Injectable()
 export class IdiomsService {
@@ -145,18 +147,7 @@ export class IdiomsService {
       });
     }
 
-    if (startDate) {
-      queryBuilder.andWhere('log.createdAt >= :startDate', { startDate });
-    }
-
-    if (endDate) {
-      // Add 1 day to include the end date fully
-      const end = new Date(endDate);
-      end.setDate(end.getDate() + 1);
-      queryBuilder.andWhere('log.createdAt < :endDate', {
-        endDate: end.toISOString().split('T')[0],
-      });
-    }
+    applyDateFilter(queryBuilder, 'log.createdAt', startDate, endDate);
 
     // Since we are grouping, we need a way to count distinct groups for pagination
     // TypeORM's getRawMany doesn't give total count easily with grouping + pagination
@@ -170,17 +161,7 @@ export class IdiomsService {
       countQuery.andWhere('log.query ILike :search', { search: `%${search}%` });
     }
 
-    if (startDate) {
-      countQuery.andWhere('log.createdAt >= :startDate', { startDate });
-    }
-
-    if (endDate) {
-      const end = new Date(endDate);
-      end.setDate(end.getDate() + 1);
-      countQuery.andWhere('log.createdAt < :endDate', {
-        endDate: end.toISOString().split('T')[0],
-      });
-    }
+    applyDateFilter(countQuery, 'log.createdAt', startDate, endDate);
 
     const countResult = await countQuery.getRawOne();
     const total = parseInt(countResult?.total || '0');
@@ -195,19 +176,13 @@ export class IdiomsService {
       .limit(limit)
       .getRawMany();
 
-    return {
-      data: data.map((item) => ({
-        query: item.query,
-        count: parseInt(item.count),
-        lastSearched: item.lastsearched,
-      })),
-      meta: {
-        total,
-        page,
-        limit,
-        lastPage: Math.ceil(total / limit) || 1,
-      },
-    };
+    const formattedData = data.map((item) => ({
+      query: item.query,
+      count: parseInt(item.count),
+      lastSearched: item.lastsearched,
+    }));
+
+    return createPaginatedResponse(formattedData, total, page, limit);
   }
 
   async deleteSearchLog(query: string) {
@@ -290,15 +265,7 @@ export class IdiomsService {
         skip: skip,
       });
 
-      return {
-        data: data || [],
-        meta: {
-          total,
-          page,
-          limit,
-          lastPage: Math.ceil(total / limit) || 1,
-        },
-      };
+      return createPaginatedResponse(data || [], total, page, limit);
     } catch (error) {
       this.logger.error('Database find error:', error);
       throw new HttpException(
@@ -334,16 +301,7 @@ export class IdiomsService {
         skip: skip,
       });
 
-      return {
-        data,
-        meta: {
-          page,
-          limit,
-          total,
-          lastPage: Math.ceil(total / limit) || 1,
-          hasMore: skip + limit < total,
-        },
-      };
+      return createPaginatedResponse(data, total, page, limit);
     }
 
     const normalizedQuery = search.toLowerCase().trim();
@@ -359,16 +317,7 @@ export class IdiomsService {
       skip: skip,
     });
 
-    return {
-      data,
-      meta: {
-        page,
-        limit,
-        total,
-        lastPage: Math.ceil(total / limit) || 1,
-        hasMore: skip + limit < total,
-      },
-    };
+    return createPaginatedResponse(data, total, page, limit);
   }
 
   async getDailySuggestions() {
@@ -608,5 +557,52 @@ export class IdiomsService {
       }),
       count: parseInt(d.count),
     }));
+  }
+  async getRandomDistractors(
+    count: number,
+    excludeId?: string,
+    level?: string,
+    type?: string,
+  ) {
+    let query = this.idiomRepository.createQueryBuilder('idiom');
+
+    if (excludeId) {
+      query = query.where('idiom.id != :id', { id: excludeId });
+    }
+
+    // Try to filter by same level or type if provided
+    if (level || type) {
+      if (level) {
+        query = query.andWhere('idiom.level = :level', { level });
+      }
+      if (type) {
+        query = query.andWhere('idiom.type = :type', { type });
+      }
+    }
+
+    let results = await query.orderBy('RANDOM()').take(count).getMany();
+
+    // If not enough results with filters, get some random ones without level/type filters
+    if (results.length < count) {
+      const remaining = count - results.length;
+      const excludeIds = [excludeId, ...results.map((r) => r.id)].filter(
+        Boolean,
+      );
+
+      let fallbackQuery = this.idiomRepository.createQueryBuilder('idiom');
+      if (excludeIds.length > 0) {
+        fallbackQuery = fallbackQuery.where('idiom.id NOT IN (:...ids)', {
+          ids: excludeIds,
+        });
+      }
+
+      const fallbackResults = await fallbackQuery
+        .orderBy('RANDOM()')
+        .take(remaining)
+        .getMany();
+      results = [...results, ...fallbackResults];
+    }
+
+    return results;
   }
 }

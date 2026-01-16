@@ -2,6 +2,9 @@ import React from "react";
 import { useProfile } from "@/hooks/useProfile";
 import ProfileInfoForm from "@/components/profile/ProfileInfoForm";
 import ChangePasswordForm from "@/components/profile/ChangePasswordForm";
+import Container from "@/components/common/Container";
+import { useNavigation, useSetBackAction } from "@/context/NavigationContext";
+import { useNavigate } from "react-router-dom";
 
 const Profile: React.FC = () => {
   const {
@@ -18,14 +21,22 @@ const Profile: React.FC = () => {
     onChangePassword,
     newPassValue,
   } = useProfile();
+  const navigate = useNavigate();
+
+  const handleBack = React.useCallback(() => navigate("/"), [navigate]);
+  useSetBackAction(handleBack, "Tài khoản");
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <div className="mb-10 text-center">
-        <h1 className="text-3xl font-black text-slate-800 tracking-tight mb-2">
-          Cài đặt tài khoản
-        </h1>
-        <p className="text-slate-500">Quản lý thông tin cá nhân và bảo mật</p>
+    <Container className="py-8 md:py-12">
+      <div className="mb-10 pt-2 text-center md:text-left md:flex md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-hanzi font-black text-slate-800 tracking-tight mb-2">
+            Cài đặt tài khoản
+          </h1>
+          <p className="text-slate-500 font-medium">
+            Quản lý thông tin cá nhân và bảo mật của bạn
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -103,7 +114,7 @@ const Profile: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </Container>
   );
 };
 

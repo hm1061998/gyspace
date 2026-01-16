@@ -19,6 +19,7 @@ import {
   CommentQueryDto,
 } from './dto/idiom-comment.dto';
 import { PaginationQueryDto } from '../common/dto/pagination.dto';
+import { createPaginatedResponse } from '../common/utils/pagination.util';
 
 @Injectable()
 export class IdiomCommentsService {
@@ -82,15 +83,7 @@ export class IdiomCommentsService {
       skip: skip,
     });
 
-    return {
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        lastPage: Math.ceil(total / limit),
-      },
-    };
+    return createPaginatedResponse(data, total, page, limit);
   }
 
   async findAll(query: CommentQueryDto) {
@@ -159,15 +152,7 @@ export class IdiomCommentsService {
 
     const [comments, total] = await queryBuilder.getManyAndCount();
 
-    return {
-      data: comments,
-      meta: {
-        total,
-        page,
-        limit,
-        lastPage: Math.ceil(total / limit),
-      },
-    };
+    return createPaginatedResponse(comments, total, page, limit);
   }
 
   async updateStatus(

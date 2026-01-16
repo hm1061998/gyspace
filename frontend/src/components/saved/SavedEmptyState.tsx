@@ -1,5 +1,5 @@
 import React from "react";
-import { BookmarkIconFilled, SearchIcon } from "@/components/common/icons";
+import { BookOpenIcon, SearchIcon } from "@/components/common/icons";
 
 interface SavedEmptyStateProps {
   isFilterActive: boolean;
@@ -25,9 +25,9 @@ const SavedEmptyState: React.FC<SavedEmptyStateProps> = ({
 
   return (
     <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-      <BookmarkIconFilled className="w-16 h-16 mb-4 opacity-10" />
+      <BookOpenIcon className="w-16 h-16 mb-4 opacity-10" />
       <p className="text-lg font-bold text-slate-300">
-        Bạn chưa lưu từ vựng nào.
+        Sổ tay cá nhân của bạn đang trống.
       </p>
       <button
         onClick={onExplore}

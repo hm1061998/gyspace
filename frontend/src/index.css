@@ -1,10 +1,51 @@
 @import "tailwindcss";
 
 @theme {
-  --animate-pop: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  /* Design System Tokens */
+  --color-primary: var(--color-indigo-600);
+  --color-primary-hover: var(--color-indigo-700);
+  --color-primary-light: var(--color-indigo-50);
+  
+  --color-secondary: var(--color-purple-600);
+  
+  --color-danger: var(--color-red-600);
+  --color-danger-hover: var(--color-red-700);
+  --color-danger-light: var(--color-red-50);
+
+  --color-success: var(--color-emerald-500);
+  --color-warning: var(--color-amber-500);
+  --color-info: var(--color-blue-500);
+
+  --animate-bounce-subtle: bounceSubtle 2s infinite;
   --animate-shake: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-  --animate-fade-in: fadeIn 0.3s ease-out forwards;
-  --animate-fade-out: fadeOut 0.3s ease-in forwards;
+  --animate-in: fadeIn 0.4s ease-out;
+  --animate-slide-up: slideUp 0.5s ease-out;
+
+  @keyframes bounceSubtle {
+
+    0%,
+    100% {
+      transform: translateY(-5%);
+      animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    }
+
+    50% {
+      transform: translateY(0);
+      animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
 
   @keyframes pop {
     0% {
@@ -188,13 +229,7 @@ label {
   /* red-700 */
 }
 
-
 button:disabled {
-  /* Darker gray text */
   cursor: not-allowed;
-  /* Change cursor to a "not allowed" symbol */
-  opacity: 0.5;
-  /* Optional: reduce opacity to emphasize the state */
   pointer-events: none;
-  /* Prevents click events in browsers that support it */
 }

@@ -56,14 +56,17 @@ export const useIdiomSearch = () => {
     }
   }, [searchQuery, executeSearch]);
 
-  const handleSearch = (searchTerm: string) => {
-    if (!searchTerm.trim()) {
-      setSearchParams({});
-      setQuery("");
-      return;
-    }
-    setSearchParams({ query: searchTerm });
-  };
+  const handleSearch = useCallback(
+    (searchTerm: string) => {
+      if (!searchTerm.trim()) {
+        setSearchParams({});
+        setQuery("");
+        return;
+      }
+      setSearchParams({ query: searchTerm });
+    },
+    [setSearchParams]
+  );
 
   return {
     query,

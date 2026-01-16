@@ -149,24 +149,24 @@ const FillBlanksExercise: React.FC<FillBlanksExerciseProps> = ({
           })}
       </div>
 
-      {!submitted && (
-        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xl shadow-slate-100/50">
-          <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <LightbulbIcon size={14} />
-            Ngân hàng từ vựng
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {shuffledWordBank.map((word: string, wIdx: number) => {
-              const isUsed = Object.values(userAnswers).includes(word);
-              const isSelected =
-                activeBlankIndex !== null &&
-                userAnswers[`blank_${activeBlankIndex}`] === word;
+      <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xl shadow-slate-100/50">
+        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+          <LightbulbIcon size={14} />
+          Ngân hàng từ vựng
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {shuffledWordBank.map((word: string, wIdx: number) => {
+            const isUsed = Object.values(userAnswers).includes(word);
+            const isSelected =
+              activeBlankIndex !== null &&
+              userAnswers[`blank_${activeBlankIndex}`] === word;
 
-              return (
-                <button
-                  key={wIdx}
-                  onClick={() => handleWordBankClick(word)}
-                  className={`
+            return (
+              <button
+                key={wIdx}
+                onClick={() => handleWordBankClick(word)}
+                disabled={submitted}
+                className={`
                     px-4 py-2 rounded-xl font-bold transition-all active:scale-95 shadow-sm border
                     ${
                       isSelected
@@ -176,14 +176,13 @@ const FillBlanksExercise: React.FC<FillBlanksExerciseProps> = ({
                         : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
                     }
                   `}
-                >
-                  {word}
-                </button>
-              );
-            })}
-          </div>
+              >
+                {word}
+              </button>
+            );
+          })}
         </div>
-      )}
+      </div>
     </div>
   );
 };

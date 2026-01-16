@@ -42,11 +42,7 @@ export class UserController {
   @Get('list')
   @UseGuards(AdminGuard)
   async listUsers(@Query() query: PaginationQueryDto) {
-    return this.userService.findAll({
-      page: Number(query.page || 1),
-      limit: Number(query.limit || 10),
-      search: query.search,
-    });
+    return this.userService.findAll(query);
   }
 
   @Post('admin-create')

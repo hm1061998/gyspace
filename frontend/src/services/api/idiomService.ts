@@ -99,6 +99,19 @@ export const fetchDailySuggestions = async (): Promise<Idiom[]> => {
   return response.data;
 };
 
+export const fetchRandomDistractors = async (params: {
+  count?: number;
+  excludeId?: string;
+  level?: string;
+  type?: string;
+}): Promise<Idiom[]> => {
+  const response = await http.get<Idiom[]>(
+    "/idioms/random-distractors",
+    params
+  );
+  return response.data;
+};
+
 export const fetchIdiomDetails = async (
   query: string
 ): Promise<Idiom & { dataSource: string }> => {

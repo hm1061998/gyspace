@@ -5,12 +5,13 @@ import {
   CardIcon,
   PuzzlePieceIcon,
 } from "@/components/common/icons";
+import Container from "@/components/common/Container";
 
 const HomeActionCards: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full max-w-4xl px-4 animate-pop delay-100 mt-3">
+    <Container className="grid grid-cols-1 md:grid-cols-3 gap-5 animate-pop delay-100 mt-3">
       <button
         onClick={() => navigate("flashcards")}
         className="group relative bg-linear-to-br from-red-600 to-red-800 p-8 rounded-[2.5rem] text-left overflow-hidden shadow-2xl hover:shadow-red-200 hover:-translate-y-1.5 transition-all duration-300"
@@ -74,7 +75,7 @@ const HomeActionCards: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
           </div>
         </div>
       </button>
-    </div>
+    </Container>
   );
 };
 

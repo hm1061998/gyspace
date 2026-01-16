@@ -13,12 +13,9 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       host: "0.0.0.0",
-      strictPort: true,
     },
     plugins: [react(), tailwindcss()],
     define: {
-      "process.env.API_KEY": JSON.stringify(env.GEMINI_API_KEY),
-      "process.env.GEMINI_API_KEY": JSON.stringify(env.GEMINI_API_KEY),
       __APP_VERSION__: JSON.stringify(
         (() => {
           const now = new Date();
@@ -36,6 +33,7 @@ export default defineConfig(({ mode }) => {
         new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })
       ),
       __APP_NAME__: JSON.stringify("GYSpace"),
+      __API_URL__: JSON.stringify(env.VITE_API_URL),
     },
     resolve: {
       alias: {

@@ -8,6 +8,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from './entities/user.entity';
 import { comparePasswords, hashPassword } from '../auth/utils/crypto.utils';
+import { createPaginatedResponse } from '../common/utils/pagination.util';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class UserService {
@@ -26,9 +28,9 @@ export class UserService {
     return user;
   }
 
-  async findAll(options: { page: number; limit: number; search?: string }) {
-    const { page, limit, search } = options;
-    const query = this.userRepository
+  async findAll(query: PaginationQueryDto) {
+    const { page = 1, limit = 10, search } = query;
+    const queryBuilder = this.userRepository
       .createQueryBuilder('user')
       .select([
         'user.id',
@@ -40,7 +42,7 @@ export class UserService {
       .orderBy('user.createdAt', 'DESC');
 
     if (search) {
-      query.where(
+      queryBuilder.where(
         'user.username ILIKE :search OR user.displayName ILIKE :search',
         {
           search: `%${search}%`,
@@ -48,20 +50,12 @@ export class UserService {
       );
     }
 
-    const [data, total] = await query
+    const [data, total] = await queryBuilder
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
 
-    return {
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        lastPage: Math.ceil(total / limit) || 1,
-      },
-    };
+    return createPaginatedResponse(data, total, page, limit);
   }
 
   async createUser(data: {

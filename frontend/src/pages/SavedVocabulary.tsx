@@ -13,12 +13,14 @@ import * as XLSX from "xlsx";
 import { fetchSavedIdioms } from "@/services/api/userDataService";
 import ProcessingOverlay from "@/components/common/ProcessingOverlay";
 import { exportPDF } from "@/libs/ExportPDF/ExportPDFService";
+import Container from "@/components/common/Container";
+import { useSetBackAction } from "@/context/NavigationContext";
 
 interface SavedVocabularyProps {
   onBack: () => void;
 }
 
-const SavedVocabulary: React.FC<SavedVocabularyProps> = () => {
+const SavedVocabulary: React.FC<SavedVocabularyProps> = ({ onBack }) => {
   const navigate = useNavigate();
   const {
     savedItems,
@@ -39,6 +41,8 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = () => {
     isAllSelected,
     isSomeSelected,
   } = useSavedVocabulary();
+
+  useSetBackAction(onBack, "Sổ tay");
 
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [processProgress, setProcessProgress] = React.useState(0);
@@ -70,14 +74,14 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = () => {
 
       const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Từ vựng đã lưu");
+      XLSX.utils.book_append_sheet(wb, ws, "Sổ tay cá nhân");
 
       setProcessProgress(90);
       setProcessStatus("Đang tải dữ liệu xuống...");
 
       XLSX.writeFile(
         wb,
-        `Sổ_tay_từ_vựng_${new Date().toISOString().slice(0, 10)}.xlsx`
+        `So_tay_ca_nhan_${new Date().toISOString().slice(0, 10)}.xlsx`
       );
 
       setProcessProgress(100);
@@ -111,10 +115,10 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = () => {
 
       await exportPDF(
         {
-          title: "Sổ tay từ vựng của tôi",
+          title: "Sổ tay cá nhân của tôi",
           columns,
           rows,
-          filename: `So_tay_tu_vung_${new Date().toISOString().slice(0, 10)}`,
+          filename: `So_tay_ca_nhan_${new Date().toISOString().slice(0, 10)}`,
         },
         (prog, status) => {
           setProcessProgress(prog);
@@ -147,16 +151,20 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = () => {
         onExportPDF={handleExportPDF}
         isExportingExcel={isProcessing && processTitle.includes("Excel")}
         isExportingPDF={isProcessing && processTitle.includes("PDF")}
+        onBack={onBack}
       />
 
       {/* Middle Section: Scrollable List */}
-      <div className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar px-3 md:px-4 pb-6 pt-2">
-        <div className="max-w-6xl mx-auto">
+      <div className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar pb-12 pt-3">
+        <Container>
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-              <SpinnerIcon className="w-10 h-10 text-red-600 animate-spin mb-4" />
-              <p className="font-bold text-xs uppercase tracking-widest">
-                Đang tải dữ liệu...
+            <div className="flex flex-col items-center justify-center py-24 text-slate-400">
+              <div className="relative">
+                <div className="w-16 h-16 border-4 border-slate-100 rounded-full animate-pulse"></div>
+                <SpinnerIcon className="w-10 h-10 text-red-600 animate-spin absolute inset-0 m-auto" />
+              </div>
+              <p className="font-bold text-xs uppercase tracking-[0.2em] mt-6 opacity-60">
+                Đang chuẩn bị sổ tay...
               </p>
             </div>
           ) : savedItems.length === 0 ? (
@@ -166,24 +174,26 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = () => {
               onExplore={() => navigate("/")}
             />
           ) : (
-            <>
-              <BulkActionBar
-                selectedCount={selectedIds.length}
-                onDelete={handleBulkDelete}
-                onClearSelection={() => setSelectedIds([])}
-                label="từ vựng"
-                deleteLabel="Bỏ lưu đã chọn"
-              />
+            <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <BulkActionBar
+                  selectedCount={selectedIds.length}
+                  onDelete={handleBulkDelete}
+                  onClearSelection={() => setSelectedIds([])}
+                  label="mục"
+                  deleteLabel="Bỏ lưu đã chọn"
+                />
 
-              <SelectAllCheckbox
-                checked={isAllSelected}
-                indeterminate={isSomeSelected}
-                onChange={toggleSelectAll}
-                subLabel={`(${filteredItems.length} mục)`}
-                className="mb-4"
-              />
+                <SelectAllCheckbox
+                  checked={isAllSelected}
+                  indeterminate={isSomeSelected}
+                  onChange={toggleSelectAll}
+                  subLabel={`(Tổng ${filteredItems.length} mục)`}
+                  className="sm:mb-0"
+                />
+              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                 {filteredItems.map((item) => (
                   <SavedItem
                     key={item.hanzi}
@@ -204,21 +214,21 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = () => {
                   onExplore={() => {}}
                 />
               )}
-            </>
+            </div>
           )}
-        </div>
+        </Container>
       </div>
 
       {/* Fixed Bottom Section */}
       {totalPages > 1 && (
         <div className="flex-none bg-white border-t border-slate-200 py-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-          <div className="max-w-6xl mx-auto px-4 md:px-6">
+          <Container>
             <Pagination
               currentPage={page}
               totalPages={totalPages}
               onPageChange={setPage}
             />
-          </div>
+          </Container>
         </div>
       )}
     </div>

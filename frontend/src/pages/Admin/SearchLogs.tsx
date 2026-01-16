@@ -7,7 +7,6 @@ import {
   TrashIcon,
   CloseIcon,
 } from "@/components/common/icons";
-import DateRangePicker from "@/components/common/DateRangePicker";
 import Table from "@/components/common/Table";
 import {
   fetchSearchLogs,
@@ -18,6 +17,7 @@ import {
 import { toast } from "@/libs/Toast";
 import { modalService } from "@/libs/Modal";
 import { debounce } from "lodash";
+import DatePicker from "@/components/common/DatePicker";
 
 const SearchLogs: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [logs, setLogs] = useState<SearchLog[]>([]);
@@ -202,14 +202,14 @@ const SearchLogs: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               )}
             </div> */}
 
-            <DateRangePicker
-              startDate={startDate}
-              endDate={endDate}
-              onStartDateChange={setStartDate}
-              onEndDateChange={setEndDate}
-              onClear={() => setPage(1)}
-              className="w-full lg:w-auto"
-              height="h-10"
+            <DatePicker
+              mode="range"
+              value={[startDate, endDate]}
+              onChange={(value) => {
+                setStartDate(value[0]);
+                setEndDate(value[1]);
+              }}
+              className="w-full lg:w-xs"
             />
           </div>
         </div>

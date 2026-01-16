@@ -7,10 +7,12 @@ import { logoutAdmin } from "@/services/api/authService";
 import { RootState } from "@/redux/store";
 import { logout as reduxLogout } from "@/redux/authSlice";
 import { ChevronDownIcon } from "@/components/common/icons";
+import { useNavigation } from "@/context/NavigationContext";
 
 const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { backAction, backLabel } = useNavigation();
   const { user, isAuthenticated } = useSelector(
     (state: RootState) => state.auth
   );
@@ -44,15 +46,24 @@ const MainLayout: React.FC = () => {
     });
   };
 
+  const contextValue = React.useMemo(
+    () => ({ isLoggedIn: isAuthenticated, user }),
+    [isAuthenticated, user]
+  );
+
   return (
     <div className="h-screen flex flex-col relative font-sans overflow-hidden bg-slate-50">
-      <Header onMenuClick={() => setIsSidebarOpen(true)} />
+      <Header
+        onMenuClick={() => setIsSidebarOpen(true)}
+        onBack={backAction || undefined}
+        backLabel={backLabel || undefined}
+      />
 
       <main
         ref={scrollContainerRef}
-        className="flex-1 flex flex-col overflow-y-auto w-full relative scroll-smooth"
+        className="flex-1 flex flex-col overflow-y-auto w-full relative scroll-smooth pt-16 md:pt-20"
       >
-        <Outlet context={{ isLoggedIn: isAuthenticated, user }} />
+        <Outlet context={contextValue} />
       </main>
 
       {/* Scroll To Top Button */}

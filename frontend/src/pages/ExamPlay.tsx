@@ -21,6 +21,8 @@ import { Exercise, ExerciseType } from "@/types";
 import { modalService } from "@/libs/Modal/services/modalService";
 import { FileTextIcon } from "@/components/common/icons";
 import { fetchSavedIdioms } from "@/services/api/userDataService";
+import Container from "@/components/common/Container";
+import { useSetBackAction } from "@/context/NavigationContext";
 
 const shuffleArray = (array: any[]) => {
   const newArray = [...array];
@@ -60,6 +62,38 @@ const ExamPlay: React.FC = () => {
   // Matching/FillBlanks Local State
   const [localState, setLocalState] = useState<any>({});
   const [isDisabledStartBtn, setIsDisabledStartBtn] = useState(false);
+  const [isLowSavedWords, setIsLowSavedWords] = useState(false);
+
+  const handleExitToExams = React.useCallback(
+    () => navigate("/exams"),
+    [navigate]
+  );
+  const handleExitToHome = React.useCallback(() => navigate("/"), [navigate]);
+
+  const handleConfirmExit = React.useCallback(() => {
+    modalService
+      .confirm(
+        "Tiến trình làm bài sẽ không được lưu. Bạn có chắc muốn thoát?",
+        "Thoát bài tập"
+      )
+      .then((ok) => {
+        if (ok) navigate("/");
+      });
+  }, [navigate]);
+
+  const activeBackAction = React.useMemo(() => {
+    if (submitted) return handleExitToExams;
+    if (started) return handleConfirmExit;
+    return handleExitToHome;
+  }, [
+    submitted,
+    started,
+    handleExitToExams,
+    handleConfirmExit,
+    handleExitToHome,
+  ]);
+
+  useSetBackAction(activeBackAction, submitted ? "Xem kết quả" : "Bài tập");
 
   const currentQ = questions[currentQuestionIndex];
 
@@ -147,9 +181,9 @@ const ExamPlay: React.FC = () => {
 
     return {
       id: "saved_exam",
-      title: "Luyện tập từ đã lưu",
+      title: "Luyện tập Sổ tay cá nhân",
       description:
-        "Bài tập được tổng hợp từ danh sách từ vựng cá nhân của bạn.",
+        "Bài tập được luyện tập dành riêng cho bạn dựa trên dữ liệu Sổ tay cá nhân.",
       questions: qList,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -159,6 +193,7 @@ const ExamPlay: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      setIsLowSavedWords(false);
       let data: any;
       if (mode === "saved") {
         data = await generateSavedWordsExam();
@@ -175,8 +210,13 @@ const ExamPlay: React.FC = () => {
       setQuestions(shuffledQuestions);
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || "Không tìm thấy bài tập phù hợp.");
-      if (id) navigate("/exams");
+      if (error.message?.includes("lưu ít nhất 4 từ")) {
+        setIsLowSavedWords(true);
+        setIsDisabledStartBtn(true);
+      } else {
+        toast.error(error.message || "Không tìm thấy bài tập phù hợp.");
+        if (id) navigate("/exams");
+      }
     } finally {
       setLoading(false);
     }
@@ -198,10 +238,17 @@ const ExamPlay: React.FC = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
       const nextQ = questions[currentQuestionIndex + 1];
-      setCurrentAnswer(allAnswers[nextQ.id] || {});
+      const savedAns = allAnswers[nextQ.id] || {};
+      setCurrentAnswer(savedAns);
       setLocalState({});
-      setIsChecked(false);
-      setIsCorrect(null);
+
+      if (submitted) {
+        setIsChecked(true);
+        setIsCorrect(calculateQuestionCorrectness(nextQ, savedAns));
+      } else {
+        setIsChecked(false);
+        setIsCorrect(null);
+      }
     }
   };
 
@@ -210,20 +257,23 @@ const ExamPlay: React.FC = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex((prev) => prev - 1);
       const prevQ = questions[currentQuestionIndex - 1];
-      setCurrentAnswer(allAnswers[prevQ.id] || {});
+      const savedAns = allAnswers[prevQ.id] || {};
+      setCurrentAnswer(savedAns);
       setLocalState({});
-      setIsChecked(false);
-      setIsCorrect(null);
+
+      if (submitted) {
+        setIsChecked(true);
+        setIsCorrect(calculateQuestionCorrectness(prevQ, savedAns));
+      } else {
+        setIsChecked(false);
+        setIsCorrect(null);
+      }
     }
   };
 
-  const checkCurrentAnswer = () => {
-    const q = currentQ;
-    const ans = currentAnswer;
-    let correct = false;
-
+  const calculateQuestionCorrectness = (q: ExamQuestion, ans: any) => {
     if (q.type === "MULTIPLE_CHOICE") {
-      correct = ans.selectedOptionId === q.content.correctOptionId;
+      return ans.selectedOptionId === q.content.correctOptionId;
     } else if (q.type === "MATCHING") {
       const matches = ans.matches || {};
       const pairs = q.content.pairs || [];
@@ -231,7 +281,7 @@ const ExamPlay: React.FC = () => {
       Object.entries(matches).forEach(([l, r]) => {
         if (parseInt(l) === (r as number)) correctCount++;
       });
-      correct = correctCount === pairs.length;
+      return correctCount === pairs.length;
     } else if (q.type === "FILL_BLANKS") {
       const correctAnswers = q.content.correctAnswers || [];
       let correctCount = 0;
@@ -241,17 +291,15 @@ const ExamPlay: React.FC = () => {
           correctCount++;
         }
       });
-      correct = correctCount === correctAnswers.length;
+      return correctCount === correctAnswers.length;
     }
+    return false;
+  };
 
+  const checkCurrentAnswer = () => {
+    const correct = calculateQuestionCorrectness(currentQ, currentAnswer);
     setIsCorrect(correct);
     setIsChecked(true);
-
-    if (correct) {
-      toast.success("Chính xác! Tiếp tục phát huy nhé.");
-    } else {
-      toast.error("Chưa đúng rồi. Hãy xem lại kỹ nhé!");
-    }
   };
 
   const saveCurrentAnswer = () => {
@@ -262,16 +310,150 @@ const ExamPlay: React.FC = () => {
     }));
   };
 
-  // Calculate Result
-  const handleSubmitConfirm = async () => {
-    const confirmed = await modalService.confirm(
-      "Bạn có chắc chắn muốn nộp bài? Hãy kiểm tra kỹ các câu trả lời trước khi xác nhận.",
-      "Nộp bài tập"
-    );
-    if (confirmed) {
-      saveCurrentAnswer(); // Save last one
-      submitExam();
+  const handleFinish = () => {
+    saveCurrentAnswer();
+    submitExam();
+  };
+
+  const renderBottomNav = () => {
+    const isLastQuestion = currentQuestionIndex === questions.length - 1;
+
+    // SCENARIO 1: REVIEW MODE (ALREADY SUBMITTED)
+    if (submitted) {
+      return (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 p-6 sm:p-8">
+          <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
+            <button
+              onClick={handlePrev}
+              disabled={currentQuestionIndex === 0}
+              className="px-8 py-4 rounded-2xl font-bold bg-slate-100 text-slate-600 disabled:opacity-30 hover:bg-slate-200 transition-all"
+            >
+              Quay lại
+            </button>
+
+            {!isLastQuestion ? (
+              <button
+                onClick={handleNext}
+                className="flex-1 sm:min-w-[200px] py-4 bg-slate-900 text-white font-black text-lg rounded-2xl shadow-xl hover:bg-slate-800 transform active:scale-95 transition-all"
+              >
+                Tiếp theo
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowResult(true)}
+                className="flex-1 sm:min-w-[200px] py-4 bg-indigo-600 text-white font-black text-lg rounded-2xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 transform active:scale-95 transition-all"
+              >
+                Xem tổng kết
+              </button>
+            )}
+          </div>
+        </div>
+      );
     }
+
+    // SCENARIO 2: EXAM MODE (ACTIVE PLAY)
+    return (
+      <div className="fixed bottom-0 left-0 right-0 z-40 transition-all duration-500 ease-out">
+        <div
+          className={`w-full p-6 sm:p-8 border-t transition-colors duration-500 ${
+            !isChecked
+              ? "bg-white border-slate-200"
+              : isCorrect
+              ? "bg-emerald-50 border-emerald-200"
+              : "bg-red-50 border-red-200"
+          }`}
+        >
+          <Container className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            {/* Feedback Message (Only if checked) */}
+            {isChecked ? (
+              <div
+                className={`flex items-center gap-4 animate-in slide-in-from-left-4 duration-300 ${
+                  !isCorrect ? "animate-shake" : ""
+                }`}
+              >
+                <div
+                  className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 ${
+                    isCorrect
+                      ? "bg-emerald-500 text-white"
+                      : "bg-red-500 text-white"
+                  }`}
+                >
+                  {isCorrect ? (
+                    <CheckIcon className="w-8 h-8" />
+                  ) : (
+                    <XCircleIcon className="w-8 h-8" />
+                  )}
+                </div>
+                <div>
+                  <h3
+                    className={`text-xl font-black ${
+                      isCorrect ? "text-emerald-900" : "text-red-900"
+                    }`}
+                  >
+                    {isCorrect ? "Rất tuyệt vời!" : "Chưa chính xác"}
+                  </h3>
+                  <p
+                    className={`text-sm font-bold ${
+                      isCorrect ? "text-emerald-700/70" : "text-red-700/70"
+                    }`}
+                  >
+                    {isCorrect
+                      ? "Bạn đã nắm vững kiến thức này."
+                      : "Đừng nản lòng, hãy thử lại nhé!"}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="hidden sm:block flex-1" />
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+              {!isChecked ? (
+                <>
+                  <button
+                    onClick={handlePrev}
+                    disabled={currentQuestionIndex === 0}
+                    className="px-6 py-4 rounded-2xl font-bold bg-slate-50 text-slate-500 disabled:opacity-30 hover:bg-slate-100 transition-all"
+                  >
+                    Quay lại
+                  </button>
+                  <button
+                    onClick={checkCurrentAnswer}
+                    disabled={!canProceed()}
+                    className="flex-1 sm:min-w-[200px] py-4 bg-indigo-600 text-white font-black text-lg rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transform active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+                  >
+                    Kiểm tra
+                  </button>
+                </>
+              ) : !isLastQuestion ? (
+                <button
+                  onClick={handleNext}
+                  className={`flex-1 sm:min-w-[200px] py-4 text-white font-black text-lg rounded-2xl shadow-xl transform active:scale-95 transition-all animate-bounce-subtle ${
+                    isCorrect
+                      ? "bg-emerald-600 shadow-emerald-200"
+                      : "bg-red-600 shadow-red-200"
+                  }`}
+                >
+                  Tiếp theo
+                </button>
+              ) : (
+                <button
+                  onClick={handleFinish}
+                  className={`flex-1 sm:min-w-[200px] py-4 text-white font-black text-lg rounded-2xl shadow-xl transform active:scale-95 transition-all animate-bounce-subtle ${
+                    isCorrect
+                      ? "bg-emerald-600 shadow-emerald-200"
+                      : "bg-red-600 shadow-red-200"
+                  }`}
+                >
+                  Xem kết quả
+                </button>
+              )}
+            </div>
+          </Container>
+        </div>
+      </div>
+    );
   };
 
   const submitExam = () => {
@@ -411,7 +593,8 @@ const ExamPlay: React.FC = () => {
     return true; // Default allow for other types (unknown)
   };
 
-  if (loading) {
+  // Only show full-screen loader on initial fetch when there is no data at all
+  if (loading && !exam && !isLowSavedWords) {
     return (
       <div className="h-full flex items-center justify-center bg-slate-50">
         <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
@@ -419,9 +602,10 @@ const ExamPlay: React.FC = () => {
     );
   }
 
-  if (!exam) return null;
+  // If no exam and not a special error case, just wait (loading or something failed)
+  if (!exam && !isLowSavedWords) return null;
 
-  if (showResult) {
+  if (showResult && exam) {
     const maxTotalScore = questions.reduce((sum, q) => sum + q.points, 0);
     return (
       <div className="h-full bg-slate-50 flex items-center justify-center p-6 font-inter">
@@ -451,8 +635,11 @@ const ExamPlay: React.FC = () => {
                 setCurrentQuestionIndex(0);
                 if (questions.length > 0) {
                   const firstQ = questions[0];
-                  setCurrentAnswer(allAnswers[firstQ.id] || {});
+                  const savedAns = allAnswers[firstQ.id] || {};
+                  setCurrentAnswer(savedAns);
                   setLocalState({});
+                  setIsChecked(true);
+                  setIsCorrect(calculateQuestionCorrectness(firstQ, savedAns));
                 }
               }}
               className="flex-1 py-3 bg-white border-2 border-indigo-100 text-indigo-600 rounded-xl font-bold hover:bg-indigo-50"
@@ -479,17 +666,21 @@ const ExamPlay: React.FC = () => {
 
   if (!started) {
     return (
-      <div className="h-full bg-slate-50 font-inter flex flex-col">
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-2xl mx-auto w-full">
+      <div className="h-full bg-slate-50 font-inter flex flex-col pt-8 md:pt-16">
+        <Container className="flex-1 flex flex-col items-center justify-center p-6 text-center">
           <div className="w-20 h-20 bg-indigo-100 rounded-3xl flex items-center justify-center mb-6 animate-pop rotate-3">
             <FileTextIcon className="w-10 h-10 text-indigo-600" />
           </div>
           <h1 className="text-3xl font-black text-slate-800 mb-2 leading-tight">
-            {exam.title}
+            {mode === "saved"
+              ? "Luyện tập Sổ tay cá nhân"
+              : exam?.title || "Đang tải bài tập..."}
           </h1>
           <p className="text-slate-500 mb-8 max-w-md mx-auto">
-            {exam.description ||
-              "Hãy kiểm tra kiến thức của mình qua bài tập thú vị này nhé!"}
+            {exam?.description ||
+              (mode === "saved"
+                ? "Bài tập được tổng hợp từ danh sách từ vựng cá nhân của bạn."
+                : "Hãy kiểm tra kiến thức của mình qua bài tập thú vị này nhé!")}
           </p>
 
           <div className="grid grid-cols-2 gap-4 w-full mb-8">
@@ -538,7 +729,7 @@ const ExamPlay: React.FC = () => {
               </div>
               <div>
                 <div className="font-bold text-sm text-slate-800">
-                  Từ đã lưu
+                  Sổ tay cá nhân
                 </div>
                 <div className="text-[10px] text-slate-400 uppercase font-black tracking-widest">
                   Cá nhân hóa
@@ -547,20 +738,41 @@ const ExamPlay: React.FC = () => {
             </button>
           </div>
 
-          <button
-            onClick={handleStart}
-            disabled={loading || isDisabledStartBtn}
-            className="w-full py-4 bg-indigo-600 text-white font-black text-lg rounded-2xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-          >
-            {loading ? (
-              <Loader2 className="w-6 h-6 animate-spin" />
-            ) : (
-              <>
-                Bắt đầu ngay <ArrowRightIcon className="w-6 h-6" />
-              </>
-            )}
-          </button>
-        </div>
+          {isLowSavedWords && mode === "saved" ? (
+            <div className="w-full p-6 bg-amber-50 border-2 border-amber-100 rounded-[24px] text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <LightbulbIcon className="w-6 h-6 text-amber-600" />
+              </div>
+              <h3 className="font-bold text-amber-900 mb-1">
+                Thiếu dữ liệu luyện tập
+              </h3>
+              <p className="text-sm text-amber-700/80 mb-4">
+                Bạn cần lưu ít nhất 4 từ vựng vào danh sách yêu thích để sử dụng
+                chế độ cá nhân hóa này.
+              </p>
+              <button
+                onClick={() => navigate("/")}
+                className="text-amber-700 font-black text-sm uppercase tracking-wider hover:underline"
+              >
+                Khám phá từ mới ngay
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleStart}
+              disabled={loading || isDisabledStartBtn}
+              className="w-full py-4 bg-indigo-600 text-white font-black text-lg rounded-2xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+            >
+              {loading ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <>
+                  Bắt đầu ngay <ArrowRightIcon className="w-6 h-6" />
+                </>
+              )}
+            </button>
+          )}
+        </Container>
       </div>
     );
   }
@@ -568,39 +780,25 @@ const ExamPlay: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-slate-50 font-inter overflow-hidden">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 sm:px-8 shrink-0">
-        <button
-          onClick={() => {
-            if (submitted) {
-              navigate("/exams");
-              return;
-            }
-            modalService
-              .confirm(
-                "Tiến trình làm bài sẽ không được lưu. Bạn có chắc muốn thoát?",
-                "Thoát bài tập"
-              )
-              .then((ok) => {
-                if (ok) navigate("/");
-              });
-          }}
-          className="p-2 -ml-2 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors"
-        >
-          <ArrowLeftIcon className="w-6 h-6" />
-        </button>
-        <div className="text-sm font-bold text-slate-700 truncate max-w-[200px]">
-          {exam.title}
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black uppercase text-slate-500">
-            {currentQuestionIndex + 1} / {questions.length}
+      <div className="bg-white border-b border-slate-200 h-16 flex items-center shrink-0">
+        <Container className="flex justify-between items-center h-full">
+          <div className="flex items-center gap-2">
+            {/* Contextual back button is in the global header */}
           </div>
-        </div>
+          <div className="text-sm font-bold text-slate-700 truncate max-w-[200px]">
+            {exam?.title}
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black uppercase text-slate-500">
+              {currentQuestionIndex + 1} / {questions.length}
+            </div>
+          </div>
+        </Container>
       </div>
 
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 flex flex-col">
-          <div className="max-w-3xl mx-auto w-full flex-1 flex flex-col">
+        <div className="flex-1 overflow-y-auto pb-24 flex flex-col">
+          <Container className="flex-1 flex flex-col py-4 md:py-10">
             {/* Progress Bar */}
             <div className="mb-8">
               <div className="flex justify-between text-xs font-bold text-slate-400 mb-2">
@@ -653,74 +851,14 @@ const ExamPlay: React.FC = () => {
                 />
               )}
             </div>
-          </div>
+          </Container>
         </div>
 
-        {/* Bottom Nav */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shrink-0 shadow-2xl z-30">
-          <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
-            <button
-              onClick={handlePrev}
-              disabled={currentQuestionIndex === 0 || isChecked}
-              className="px-6 py-3 rounded-2xl font-bold bg-slate-100 text-slate-600 disabled:opacity-50 hover:bg-slate-200 transition-colors"
-            >
-              Quay lại
-            </button>
-
-            {!isChecked ? (
-              <button
-                onClick={checkCurrentAnswer}
-                disabled={!canProceed()}
-                className="flex-1 sm:flex-none px-8 py-3 bg-amber-500 text-white font-black rounded-2xl shadow-lg shadow-amber-200 hover:bg-amber-600 transform active:scale-95 transition-all disabled:opacity-50"
-              >
-                Kiểm tra
-              </button>
-            ) : (
-              <div
-                className={`p-3 rounded-2xl flex items-center gap-2 ${
-                  isCorrect
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "bg-red-50 text-red-700"
-                }`}
-              >
-                {isCorrect ? (
-                  <CheckIcon className="w-5 h-5" />
-                ) : (
-                  <XCircleIcon className="w-5 h-5" />
-                )}
-                <span className="font-bold text-sm">
-                  {isCorrect ? "Chính xác!" : "Chưa đúng"}
-                </span>
-              </div>
-            )}
-
-            {isChecked &&
-              (currentQuestionIndex < questions.length - 1 ? (
-                <button
-                  onClick={handleNext}
-                  className="flex-1 sm:flex-none px-8 py-3 font-bold rounded-2xl transition-colors bg-slate-900 text-white hover:bg-slate-800 animate-fadeIn"
-                >
-                  Tiếp theo
-                </button>
-              ) : submitted ? (
-                <button
-                  onClick={() => setShowResult(true)}
-                  className="flex-1 sm:flex-none px-8 py-3 bg-indigo-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transform active:scale-95 transition-all"
-                >
-                  Xem tổng kết
-                </button>
-              ) : (
-                <button
-                  onClick={handleSubmitConfirm}
-                  className="flex-1 sm:flex-none px-8 py-3 bg-indigo-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transform active:scale-95 transition-all"
-                >
-                  Nộp bài
-                </button>
-              ))}
-          </div>
-        </div>
+        {/* Bottom Nav / Feedback Banner */}
+        {renderBottomNav()}
       </div>
     </div>
   );
 };
+
 export default ExamPlay;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import type { Idiom } from "@/types";
 import WritingGrid from "@/components/common/WritingGrid";
 import {
@@ -13,7 +13,10 @@ import {
   CheckCircleIcon,
   ExclamationIcon,
   ChatBubbleIcon,
+  BrainIcon,
+  SparklesIcon,
 } from "@/components/common/icons";
+import Container from "@/components/common/Container";
 import SpeakButton from "@/components/common/SpeakButton";
 import IdiomComments from "./IdiomComments";
 import { toast } from "@/libs/Toast";
@@ -23,6 +26,7 @@ import {
   updateSRSProgress,
 } from "@/services/api/userDataService";
 import { loadingService } from "@/libs/Loading";
+import { fetchRandomDistractors } from "@/services/api";
 
 interface IdiomDetailProps {
   idiom: Idiom;
@@ -118,7 +122,7 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
       const result = await toggleSaveIdiom(idiom.id);
       setIsSaved(result.saved);
       if (result.saved) {
-        toast.success(`Đã lưu "${idiom.hanzi}" vào thư viện!`);
+        toast.success(`Đã lưu "${idiom.hanzi}" vào Sổ tay cá nhân!`);
       } else {
         toast.info(`Đã bỏ lưu "${idiom.hanzi}"`);
       }
@@ -129,29 +133,129 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
     }
   };
 
-  const [grammarAnswers, setGrammarAnswers] = useState<string[]>([]);
-  const [grammarChecked, setGrammarChecked] = useState(false);
-  const [isGrammarCorrect, setIsGrammarCorrect] = useState<boolean | null>(
-    null
+  // Quiz State
+  const [quizStep, setQuizStep] = useState(0); // 0: Start, 1: Meaning, 2: Pinyin, 3: Context, 4: Result
+  const [quizScore, setQuizScore] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [isAnswered, setIsAnswered] = useState(false);
+  const [quizOptions, setQuizOptions] = useState<string[]>([]);
+
+  // Distractors State
+  const [dynamicDistractors, setDynamicDistractors] = useState<string[]>([]);
+
+  // Fetch dynamic distractors once on mount or idiom change
+  useEffect(() => {
+    const loadDistractors = async () => {
+      try {
+        const suggestions = await fetchRandomDistractors({
+          count: 10,
+          excludeId: idiom.id,
+          level: idiom.level,
+          type: idiom.type,
+        });
+
+        // Map to meanings
+        const distractors = suggestions
+          .map((s) => s.vietnameseMeaning)
+          .filter(Boolean);
+
+        if (distractors.length > 0) {
+          setDynamicDistractors(distractors);
+        }
+      } catch (err) {
+        console.error("Failed to fetch dynamic distractors", err);
+      }
+    };
+    loadDistractors();
+  }, [idiom.id, idiom.level, idiom.type]);
+
+  const generateOptions = useCallback(
+    (type: "meaning" | "pinyin" | "context") => {
+      let correct = "";
+      if (type === "meaning") correct = idiom.vietnameseMeaning;
+      else if (type === "pinyin") correct = idiom.pinyin;
+      else if (type === "context") correct = idiom.hanzi;
+
+      let others: string[] = [];
+      if (type === "meaning") {
+        // Use dynamic distractors if available, otherwise fallback to generic ones
+        const fallbacks = [
+          "Hành động thiếu suy nghĩ kĩ càng",
+          "Gặp khó khăn là nản lòng bỏ cuộc",
+          "Chỉ quan tâm đến lợi ích cá nhân",
+          "Làm việc không có kế hoạch",
+          "Vội vàng hấp tấp dẫn đến sai sót",
+        ];
+
+        const source =
+          dynamicDistractors.length >= 3 ? dynamicDistractors : fallbacks;
+        others = [...source].sort(() => 0.5 - Math.random()).slice(0, 3);
+      } else if (type === "pinyin") {
+        // Real logic for Pinyin distractors: slight variations of the correct one
+        // E.g. changing tones or vowels
+        others = [
+          idiom.pinyin.replace(/[āáǎà]/g, "a").replace(/[ēéěè]/g, "e"),
+          idiom.pinyin.split(" ").reverse().join(" "),
+          idiom.pinyin.replace(/n/g, "ng"),
+        ].filter((v) => v !== idiom.pinyin);
+
+        // Fill up to 3 if variations were too few
+        while (others.length < 3) {
+          others.push(idiom.pinyin + (others.length + 1));
+        }
+      } else if (type === "context") {
+        // For context, we need real hanzi distractors
+        others = ["不可思议", "全力以赴", "乱七八糟", "如鱼得水"]
+          .filter((h) => h !== idiom.hanzi)
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 3);
+      }
+
+      const all = Array.from(new Set([correct, ...others])).sort(
+        () => 0.5 - Math.random()
+      );
+      setQuizOptions(all);
+      setIsAnswered(false);
+      setSelectedOption(null);
+    },
+    [idiom.vietnameseMeaning, idiom.pinyin, idiom.hanzi, dynamicDistractors]
   );
 
-  useEffect(() => {
-    if (idiom.hanzi) {
-      setGrammarAnswers(new Array(idiom.hanzi.length).fill(""));
-      setGrammarChecked(false);
-      setIsGrammarCorrect(null);
-    }
-  }, [idiom.id, idiom.hanzi]);
+  const startQuiz = () => {
+    setQuizStep(1);
+    setQuizScore(0);
+    generateOptions("meaning");
+  };
 
-  const checkGrammarResult = () => {
-    const isCorrect = grammarAnswers.join("") === idiom.hanzi;
-    setIsGrammarCorrect(isCorrect);
-    setGrammarChecked(true);
-    if (isCorrect) {
-      toast.success("Chính xác! Bạn giỏi quá!");
+  const handleAnswer = (index: number) => {
+    if (isAnswered) return;
+    setSelectedOption(index);
+    setIsAnswered(true);
+
+    const isCorrect = (step: number) => {
+      const val = quizOptions[index];
+      if (step === 1) return val === idiom.vietnameseMeaning;
+      if (step === 2) return val === idiom.pinyin;
+      if (step === 3) return val === idiom.hanzi;
+      return false;
+    };
+
+    if (isCorrect(quizStep)) {
+      setQuizScore((s) => s + 1);
+      toast.success("Chính xác!");
     } else {
-      toast.error("Chưa đúng rồi, thử lại nhé!");
+      toast.error("Chưa đúng rồi!");
     }
+
+    setTimeout(() => {
+      if (quizStep < 3) {
+        const nextStep = quizStep + 1;
+        setQuizStep(nextStep);
+        generateOptions(nextStep === 2 ? "pinyin" : ("context" as any));
+      } else {
+        setQuizStep(4);
+      }
+    }, 1500);
   };
 
   const handleAddToFlashcard = async () => {
@@ -197,7 +301,7 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
   };
 
   return (
-    <div className="max-w-6xl mx-auto pb-8 md:pb-12 animate-[fadeInUp_0.4s_ease-out] px-4">
+    <Container className="pb-8 md:pb-12 animate-[fadeInUp_0.4s_ease-out]">
       {/* Hero Header Section */}
       <div className="relative mb-5 md:mb-8 group mt-3 md:mt-5">
         {/* Background Decor */}
@@ -382,73 +486,120 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
               {idiom.origin}
             </InfoCard>
             <InfoCard
-              title="Luyện tập ngữ pháp"
-              className="md:order-2"
-              icon={<PencilIcon />}
+              title="Trung tâm Ôn tập"
+              className="md:order-2 shadow-indigo-100/50 overflow-hidden relative"
+              icon={<BrainIcon />}
             >
-              <div className="space-y-4">
-                <p className="text-slate-500 italic text-xs mb-2">
-                  Hãy thử điền các chữ Hán còn thiếu:
-                </p>
-                <div className="flex flex-wrap justify-center gap-2 mb-4">
-                  {idiom.hanzi.split("").map((_, idx) => (
-                    <input
-                      key={idx}
-                      type="text"
-                      maxLength={1}
-                      value={grammarAnswers[idx] || ""}
-                      readOnly={grammarChecked && isGrammarCorrect === true}
-                      onChange={(e) => {
-                        const newAns = [...grammarAnswers];
-                        newAns[idx] = e.target.value;
-                        setGrammarAnswers(newAns);
-                        // Auto focus next field
-                        if (e.target.value && idx < idiom.hanzi.length - 1) {
-                          const nextInput = e.target.parentElement?.children[
-                            idx + 1
-                          ] as HTMLInputElement;
-                          nextInput?.focus();
-                        }
-                      }}
-                      className={`w-10 h-10 md:w-12 md:h-12 border-2 rounded-xl text-center font-hanzi text-xl md:text-2xl transition-all outline-none ${
-                        grammarChecked
-                          ? isGrammarCorrect
-                            ? "border-emerald-500 bg-emerald-50 text-emerald-700 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
-                            : "border-red-500 bg-red-50 text-red-700 animate-shake"
-                          : "border-slate-100 bg-slate-50 focus:border-indigo-400 focus:bg-white focus:shadow-lg"
-                      }`}
-                    />
-                  ))}
-                </div>
-
-                {!grammarChecked || !isGrammarCorrect ? (
+              {quizStep === 0 ? (
+                <div className="text-center py-4 space-y-4 animate-in fade-in zoom-in duration-500">
+                  <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <SparklesIcon className="w-8 h-8 text-indigo-600 animate-pulse" />
+                  </div>
+                  <h4 className="font-black text-slate-800 text-lg">
+                    Thử thách ghi nhớ
+                  </h4>
+                  <p className="text-sm text-slate-500">
+                    Bạn đã sẵn sàng kiểm tra kiến thức về từ vựng này chưa?
+                  </p>
                   <button
-                    onClick={checkGrammarResult}
-                    className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center gap-2"
+                    onClick={startQuiz}
+                    className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-slate-800 transition-all active:scale-95"
                   >
-                    <CheckCircleIcon className="w-4 h-4" />
-                    Kiểm tra đáp án
+                    Bắt đầu ôn tập
                   </button>
-                ) : (
-                  <div className="py-3 bg-emerald-100 text-emerald-700 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 animate-bounce">
-                    <CheckCircleIcon className="w-4 h-4" />
-                    Tuyệt vời!
+                </div>
+              ) : quizStep <= 3 ? (
+                <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600">
+                      Câu hỏi {quizStep} / 3
+                    </span>
+                    <div className="flex gap-1">
+                      {[1, 2, 3].map((s) => (
+                        <div
+                          key={s}
+                          className={`w-4 h-1 rounded-full transition-all ${
+                            quizStep >= s ? "bg-indigo-600" : "bg-slate-100"
+                          }`}
+                        ></div>
+                      ))}
+                    </div>
                   </div>
-                )}
 
-                <details className="group mt-4 cursor-pointer">
-                  <summary className="text-indigo-600 font-bold text-sm list-none flex items-center gap-2 group-open:hidden">
-                    <span>Xem gợi ý & ứng dụng</span>
-                    <ChevronRightIcon className="w-4 h-4" />
-                  </summary>
-                  <div className="mt-3 pl-4 border-l-2 border-indigo-100 animate-fadeIn text-sm">
-                    <p className="font-bold text-slate-800 mb-2">
-                      Đáp án chính xác: {idiom.hanzi}
-                    </p>
-                    {idiom.grammar}
+                  <h5 className="font-bold text-slate-800 min-h-[48px]">
+                    {quizStep === 1
+                      ? `Ý nghĩa chính xác nhất của "${idiom.hanzi}" là gì?`
+                      : quizStep === 2
+                      ? `Chọn phiên âm Pinyin đúng cho "${idiom.hanzi}":`
+                      : `Hoàn thiện câu: "${
+                          idiom.examples?.[0]?.chinese.replace(
+                            idiom.hanzi,
+                            "____"
+                          ) || "____"
+                        }"`}
+                  </h5>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    {quizOptions.map((opt, i) => {
+                      const isCorrect = (step: number, val: string) => {
+                        if (step === 1) return val === idiom.vietnameseMeaning;
+                        if (step === 2) return val === idiom.pinyin;
+                        if (step === 3) return val === idiom.hanzi;
+                        return false;
+                      };
+
+                      return (
+                        <button
+                          key={i}
+                          disabled={isAnswered}
+                          onClick={() => handleAnswer(i)}
+                          className={`p-4 rounded-xl border-2 text-sm font-bold text-left transition-all ${
+                            isAnswered
+                              ? isCorrect(quizStep, opt)
+                                ? "bg-emerald-50 border-emerald-500 text-emerald-700"
+                                : selectedOption === i
+                                ? "bg-red-50 border-red-500 text-red-700"
+                                : "bg-slate-50 border-slate-50 text-slate-300"
+                              : "bg-white border-slate-100 text-slate-600 hover:border-indigo-400 hover:bg-indigo-50/30"
+                          }`}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
                   </div>
-                </details>
-              </div>
+                </div>
+              ) : (
+                <div className="text-center py-6 animate-in zoom-in duration-500">
+                  <div className="text-4xl mb-4">
+                    {quizScore === 3 ? "🏆" : quizScore >= 1 ? "👏" : "💪"}
+                  </div>
+                  <h4 className="font-black text-slate-800 text-xl mb-1">
+                    Kết quả: {quizScore}/3
+                  </h4>
+                  <p className="text-sm text-slate-500 mb-6">
+                    {quizScore === 3
+                      ? "Bạn là bậc thầy quán dụng ngữ!"
+                      : quizScore >= 1
+                      ? "Khá lắm! Cố gắng phát huy nhé."
+                      : "Đừng nản lòng, hãy xem lại nghĩa và thử lại."}
+                  </p>
+                  <button
+                    onClick={() => setQuizStep(0)}
+                    className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
+                  >
+                    Làm lại thử thách
+                  </button>
+                </div>
+              )}
+
+              {/* Decorative progress bar at bottom */}
+              {quizStep > 0 && quizStep <= 3 && (
+                <div
+                  className="absolute bottom-0 left-0 h-1 bg-indigo-600 transition-all duration-1500"
+                  style={{ width: `${(quizStep / 3) * 100}%` }}
+                ></div>
+              )}
             </InfoCard>
           </div>
 
@@ -486,19 +637,23 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
                         className="mt-1 bg-white/5 hover:bg-white/10"
                       />
                     </div>
-                    <p className="text-red-400 font-black font-sans tracking-widest text-xs md:text-sm uppercase opacity-60">
-                      {ex.pinyin}
-                    </p>
-                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between gap-4">
-                      <p className="text-white/70 text-sm md:text-base font-medium italic flex-1">
-                        "{ex.vietnamese}"
+                    {ex.pinyin && (
+                      <p className="text-red-400 font-black font-sans tracking-widest text-xs md:text-sm uppercase opacity-60">
+                        {ex.pinyin}
                       </p>
-                      <SpeakButton
-                        text={ex.vietnamese}
-                        lang="vi-VN"
-                        className="bg-white/5 hover:bg-white/10"
-                      />
-                    </div>
+                    )}
+                    {ex.vietnamese && (
+                      <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between gap-4">
+                        <p className="text-white/70 text-sm md:text-base font-medium italic flex-1">
+                          "{ex.vietnamese}"
+                        </p>
+                        <SpeakButton
+                          text={ex.vietnamese}
+                          lang="vi-VN"
+                          className="bg-white/5 hover:bg-white/10"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -581,7 +736,7 @@ const IdiomDetail: React.FC<IdiomDetailProps> = ({
       >
         <IdiomComments idiomId={idiom.id} idiomHanzi={idiom.hanzi} />
       </div>
-    </div>
+    </Container>
   );
 };
 
