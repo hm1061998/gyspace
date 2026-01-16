@@ -92,6 +92,14 @@ const isProd = process.env.NODE_ENV === 'production';
         limit: 100, // max 100 requests per minute
       },
     ]),
+    ...(isProd
+      ? [
+          ServeStaticModule.forRoot({
+            rootPath: join(__dirname, '..', 'public', 'dist'),
+            exclude: ['/api'],
+          }),
+        ]
+      : []),
   ],
   controllers: [AppController, HealthController],
   providers: [
