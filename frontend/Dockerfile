@@ -13,8 +13,6 @@ ARG VITE_API_URL
 # Set environment variable
 ENV VITE_API_URL=$VITE_API_URL
 
-
-RUN echo "Checking env var during build: VITE_API_URL='$VITE_API_URL'"
 RUN npm run build
 
 # Production Stage with Nginx
