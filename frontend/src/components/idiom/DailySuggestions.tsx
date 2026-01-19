@@ -4,12 +4,8 @@ import {
   SparklesIcon,
   CalendarIcon,
 } from "@/components/common/icons";
-import {
-  fetchSuggestions,
-  fetchDailySuggestions,
-} from "@/services/api/idiomService";
+import { useDailySuggestions } from "@/hooks/queries/useIdioms";
 import Container from "@/components/common/Container";
-import type { Idiom } from "@/types";
 
 interface DailySuggestionsProps {
   onSelect: (keyword: string) => void;
@@ -45,8 +41,16 @@ const FALLBACK_DAILY_KEYWORDS = [
 ];
 
 const DailySuggestions: React.FC<DailySuggestionsProps> = ({ onSelect }) => {
-  const [keywords, setKeywords] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Use Query Hook
+  const { data, isLoading: loading } = useDailySuggestions();
+
+  // Combine fetched data with fallback if needed or just use data
+  const keywords =
+    data && data.length > 0
+      ? data
+      : loading
+        ? []
+        : FALLBACK_DAILY_KEYWORDS.slice(0, 4);
 
   // Get current date formatted
   const today = new Date();
@@ -55,29 +59,6 @@ const DailySuggestions: React.FC<DailySuggestionsProps> = ({ onSelect }) => {
     day: "numeric",
     month: "long",
   });
-
-  useEffect(() => {
-    const loadDaily = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchDailySuggestions();
-
-        if (data && data.length > 0) {
-          setKeywords(data);
-        } else {
-          // Fallback if no data from backend
-          setKeywords(FALLBACK_DAILY_KEYWORDS.slice(0, 4));
-        }
-      } catch (err) {
-        console.error("Failed to fetch daily suggestions", err);
-        setKeywords(FALLBACK_DAILY_KEYWORDS.slice(0, 4));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadDaily();
-  }, []);
 
   return (
     <Container className="mb-8 animate-pop">
@@ -98,9 +79,6 @@ const DailySuggestions: React.FC<DailySuggestionsProps> = ({ onSelect }) => {
           <div className="absolute -top-4 -right-4 text-yellow-400 animate-bounce delay-700">
             <SparklesIcon className="w-6 h-6" />
           </div>
-          {/* <p className="text-slate-500 text-xs md:text-sm max-w-md mx-auto">
-            Khám phá những từ khóa nổi bật dành riêng cho bạn
-          </p> */}
         </div>
 
         {/* Grid of Chips */}
@@ -121,7 +99,7 @@ const DailySuggestions: React.FC<DailySuggestionsProps> = ({ onSelect }) => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full px-4">
-            {keywords.map((item, index) => (
+            {keywords.map((item: any, index: number) => (
               <button
                 key={index}
                 onClick={() => onSelect(item.hanzi)}
@@ -158,12 +136,6 @@ const DailySuggestions: React.FC<DailySuggestionsProps> = ({ onSelect }) => {
             ))}
           </div>
         )}
-
-        {/* Footer Hint */}
-        {/* <div className="mt-6 flex items-center gap-2 text-xs text-slate-400 font-medium opacity-60">
-           <SparklesIcon className="w-3 h-3" />
-           <span>Cập nhật mỗi ngày lúc 00:00</span>
-        </div> */}
       </div>
     </Container>
   );

@@ -1,20 +1,15 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { modalService } from "@/libs/Modal";
-import { toast } from "@/libs/Toast";
+import { DictionaryReport } from "@/services/api/reportService";
 import {
-  getMyReports,
-  DictionaryReport,
-  bulkDeleteReport,
-} from "@/services/api/reportService";
+  useMyReportsList,
+  useDeleteReports,
+} from "@/hooks/queries/useUserData";
 
 export const useMyReports = (initialPage = 1) => {
-  const [historyItems, setHistoryItems] = useState<DictionaryReport[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [page, setPage] = useState(initialPage);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
 
   // Debounced search to avoid excessive API calls
   const [debouncedFilter, setDebouncedFilter] = useState("");
@@ -25,57 +20,46 @@ export const useMyReports = (initialPage = 1) => {
     return () => clearTimeout(timer);
   }, [filter]);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await getMyReports({
-        page,
-        limit: 20,
-        filter: {
-          idiomId: filter,
-        },
-      });
-      setHistoryItems(response.data);
-      setTotalPages(response.meta.lastPage);
-      setTotalItems(response.meta.total);
-      setSelectedIds([]);
-    } catch (e) {
-      toast.error("Không thể tải danh sách.");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, debouncedFilter]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
   // Reset page to 1 when filter changes
   useEffect(() => {
     setPage(1);
   }, [debouncedFilter]);
 
+  // Query
+  const {
+    data: response,
+    isLoading: loading,
+    refetch: loadData,
+  } = useMyReportsList({
+    page,
+    limit: 20,
+    filter: {
+      idiomId: debouncedFilter,
+    },
+  });
+
+  const historyItems = response?.data || [];
+  const totalPages = response?.meta?.lastPage || 1;
+  const totalItems = response?.meta?.total || 0;
+
+  // Mutation
+  const { mutateAsync: deleteReports } = useDeleteReports();
+
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) {
-      toast.warning("Vui lòng chọn ít nhất một mục để xóa");
+      // toast.warning("Vui lòng chọn ít nhất một mục để xóa");
       return;
     }
 
     const confirmed = await modalService.danger(
-      `Bạn có chắc chắn muốn xóa ${selectedIds.length} mục trong lịch sử đã chọn không?`,
-      "Xác nhận xóa?"
+      `Bạn có chắc chắn muốn xóa ${selectedIds.length} mục trong danh sách đã chọn không?`,
+      "Xác nhận xóa?",
     );
 
     if (!confirmed) return;
 
-    try {
-      await bulkDeleteReport(selectedIds);
-      toast.success(`Đã xóa ${selectedIds.length} mục thành công!`);
-      loadData();
-    } catch (error) {
-      console.error(error);
-      toast.error("Xóa thất bại");
-    }
+    await deleteReports(selectedIds);
+    setSelectedIds([]);
   };
 
   const filteredItems = historyItems;
@@ -93,19 +77,19 @@ export const useMyReports = (initialPage = 1) => {
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   }, []);
 
   const isAllSelected = useMemo(
     () =>
       filteredItems.length > 0 && selectedIds.length === filteredItems.length,
-    [filteredItems, selectedIds]
+    [filteredItems, selectedIds],
   );
 
   const isSomeSelected = useMemo(
     () => selectedIds.length > 0 && selectedIds.length < filteredItems.length,
-    [filteredItems, selectedIds]
+    [filteredItems, selectedIds],
   );
 
   return {

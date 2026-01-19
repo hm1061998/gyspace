@@ -48,7 +48,7 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = ({ onBack }) => {
   const [processProgress, setProcessProgress] = React.useState(0);
   const [processStatus, setProcessStatus] = React.useState("");
   const [processType, setProcessType] = React.useState<"import" | "export">(
-    "export"
+    "export",
   );
   const [processTitle, setProcessTitle] = React.useState("");
 
@@ -81,7 +81,7 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = ({ onBack }) => {
 
       XLSX.writeFile(
         wb,
-        `So_tay_ca_nhan_${new Date().toISOString().slice(0, 10)}.xlsx`
+        `So_tay_ca_nhan_${new Date().toISOString().slice(0, 10)}.xlsx`,
       );
 
       setProcessProgress(100);
@@ -123,7 +123,7 @@ const SavedVocabulary: React.FC<SavedVocabularyProps> = ({ onBack }) => {
         (prog, status) => {
           setProcessProgress(prog);
           setProcessStatus(status);
-        }
+        },
       );
 
       toast.success("Xuất file PDF thành công!");

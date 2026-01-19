@@ -13,45 +13,39 @@ import {
   FunnelIcon,
 } from "@/components/common/icons";
 import type { Feedback } from "@/types";
-import {
-  fetchAllComments,
-  updateCommentStatus,
-  deleteComment,
-  bulkDeleteComments,
-} from "@/services/api/commentService";
 import { fetchSuggestions, fetchIdiomById } from "@/services/api/idiomService";
 import { modalService } from "@/libs/Modal";
 import { toast } from "@/libs/Toast";
 import Pagination from "@/components/common/Pagination";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/redux/store";
-import { getCommentStats } from "@/redux/adminSlice";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useCommentStats,
+  useCommentsList,
+  useUpdateCommentStatusMutation,
+  useDeleteCommentMutation,
+  useBulkDeleteCommentsMutation,
+} from "@/hooks/queries/useAdminData";
 import FormSelect from "@/components/common/FormSelect";
 import Drawer from "@/components/common/Drawer";
 import BulkActionBar from "@/components/common/BulkActionBar";
 import SelectAllCheckbox from "@/components/common/SelectAllCheckbox";
 
 const AdminComments: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { commentStats: stats, commentLoading: statsLoading } = useSelector(
-    (state: RootState) => state.admin
-  );
+  const { data: stats, isLoading: statsLoading } = useCommentStats();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const idiomIdParam = searchParams.get("idiomId");
   const onlyReportedParam = searchParams.get("onlyReported") === "true";
 
-  const [comments, setComments] = useState<Feedback[]>([]);
   const [filter, setFilter] = useState<
     "all" | "pending" | "approved" | "rejected"
   >("pending");
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // New filters
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); // Input value
+  const [activeSearch, setActiveSearch] = useState(""); // Actual search trigger
   const [onlyReported, setOnlyReported] = useState(false);
   const [selectedIdiom, setSelectedIdiom] = useState<any>(null);
   const [idiomSearchText, setIdiomSearchText] = useState("");
@@ -65,7 +59,7 @@ const AdminComments: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [tempSelectedIdiom, setTempSelectedIdiom] = useState<any>(null);
   const [tempOnlyReported, setTempOnlyReported] = useState(false);
 
-  // Nếu có idiomId từ URL, mặc định xem 'all' status của thành ngữ đó và fetch chi tiết
+  // Initial params sync
   useEffect(() => {
     if (idiomIdParam) {
       setFilter("all");
@@ -73,7 +67,6 @@ const AdminComments: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     } else {
       setSelectedIdiom(null);
     }
-
     if (onlyReportedParam) {
       setOnlyReported(true);
     }
@@ -104,12 +97,9 @@ const AdminComments: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   }, [idiomSuggestionsPage]);
 
   const searchIdioms = async (query: string, page: number) => {
-    // Actually we want to show loading spinner in dropdown for "load more" too
     setLoadingSuggestions(true);
     try {
-      // API now supports pagination: fetchSuggestions({ search: query, page })
       const { data, meta } = await fetchSuggestions({ search: query, page });
-
       if (page === 1) {
         setIdiomSuggestions(data);
       } else {
@@ -129,16 +119,36 @@ const AdminComments: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     }
   };
 
-  useEffect(() => {
-    dispatch(getCommentStats(false));
-  }, [dispatch]);
+  // Query Hook
+  const currentIdiomId = selectedIdiom?.id || idiomIdParam;
 
-  // Sync effect: load comments whenever filter keys change
-  // Note: we don't include searchQuery here to avoid excessive API calls while typing
-  // User should press Enter or click 'Filter' for search
+  const {
+    data: response,
+    isLoading: loading,
+    error: queryError,
+  } = useCommentsList({
+    page,
+    limit: 15,
+    search: activeSearch,
+    filter: {
+      status: filter !== "all" ? filter : undefined,
+      idiomId: currentIdiomId || undefined, // use memoized or state
+      onlyReported: onlyReported || undefined,
+    },
+  });
+
+  const comments = response?.data || [];
+  const totalPages = response?.meta?.lastPage || 1;
+
+  // Mutations
+  const updateStatusMutation = useUpdateCommentStatusMutation();
+  const deleteMutation = useDeleteCommentMutation();
+  const bulkDeleteMutation = useBulkDeleteCommentsMutation();
+
+  // Reset selection on data change
   useEffect(() => {
-    loadComments();
-  }, [filter, page, onlyReported, selectedIdiom]);
+    setSelectedIds([]);
+  }, [filter, page, onlyReported, selectedIdiom, activeSearch]);
 
   const openFilterDrawer = () => {
     setTempSelectedIdiom(selectedIdiom);
@@ -159,7 +169,6 @@ const AdminComments: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       });
     }
 
-    // Handle onlyReported param
     if (tempOnlyReported) {
       setSearchParams((prev) => {
         const newParams = new URLSearchParams(prev);
@@ -187,45 +196,20 @@ const AdminComments: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const onSearchSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     setPage(1);
-    loadComments();
-  };
-
-  const loadComments = async () => {
-    setLoading(true);
-    try {
-      const currentIdiomId = selectedIdiom?.id || idiomIdParam;
-      const response = await fetchAllComments({
-        page,
-        limit: 15,
-        search: searchQuery.trim(),
-        filter: {
-          status: filter !== "all" ? filter : undefined,
-          idiomId: currentIdiomId || undefined,
-          onlyReported: onlyReported || undefined,
-        },
-      });
-      setComments(response.data);
-      setTotalPages(response.meta.lastPage);
-      setSelectedIds([]); // Clear selection when data changes
-    } catch (error) {
-      console.error("Error loading comments", error);
-    } finally {
-      setLoading(false);
-    }
+    setActiveSearch(searchQuery.trim());
   };
 
   const handleUpdateStatus = async (
     commentId: string,
-    status: "approved" | "rejected"
+    status: "approved" | "rejected",
   ) => {
     try {
-      await updateCommentStatus(commentId, status);
-      await loadComments();
-      dispatch(getCommentStats(true));
+      await updateStatusMutation.mutateAsync({ id: commentId, status });
+      // Notification handled by mutation or auto-updated UI
     } catch (error: any) {
       toast.error(
         error.response?.data?.message ||
-          "Không thể cập nhật trạng thái. Vui lòng thử lại."
+          "Không thể cập nhật trạng thái. Vui lòng thử lại.",
       );
     }
   };
@@ -233,19 +217,17 @@ const AdminComments: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const handleDelete = async (commentId: string) => {
     const confirmed = await modalService.danger(
       "Bạn có chắc chắn muốn xóa bình luận này? Hành động này không thể hoàn tác.",
-      "Xác nhận xóa"
+      "Xác nhận xóa",
     );
     if (!confirmed) return;
 
     try {
-      await deleteComment(commentId);
+      await deleteMutation.mutateAsync(commentId);
       toast.success("Đã xóa bình luận thành công");
-      await loadComments();
-      dispatch(getCommentStats(true));
     } catch (error: any) {
       toast.error(
         error.response?.data?.message ||
-          "Không thể xóa bình luận. Vui lòng thử lại."
+          "Không thể xóa bình luận. Vui lòng thử lại.",
       );
     }
   };
@@ -258,19 +240,17 @@ const AdminComments: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     const confirmed = await modalService.danger(
       `Bạn có chắc chắn muốn xóa ${selectedIds.length} bình luận đã chọn không? Hành động này không thể hoàn tác.`,
-      "Xác nhận xóa"
+      "Xác nhận xóa",
     );
 
     if (!confirmed) return;
 
     try {
-      await bulkDeleteComments(selectedIds);
+      await bulkDeleteMutation.mutateAsync(selectedIds);
       toast.success(`Đã xóa ${selectedIds.length} bình luận thành công`);
-      await loadComments();
-      dispatch(getCommentStats(true));
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Xóa thất bại. Vui lòng thử lại."
+        error.response?.data?.message || "Xóa thất bại. Vui lòng thử lại.",
       );
     }
   };

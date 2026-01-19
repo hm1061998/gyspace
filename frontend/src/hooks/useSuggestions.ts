@@ -1,32 +1,34 @@
 import React, { useState, useEffect, useRef } from "react";
-import { fetchSuggestions } from "@/services/api/idiomService";
+import { useIdiomSuggestions } from "@/hooks/queries/useIdioms";
 import { Idiom } from "@/types";
 
 export const useSuggestions = (query: string, isIdiomSelected: boolean) => {
-  const [suggestions, setSuggestions] = useState<Idiom[]>([]);
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const suggestionsListRef = useRef<HTMLDivElement>(null);
 
+  // Debounce query
   useEffect(() => {
-    const fetchTimer = setTimeout(async () => {
-      if (query.trim() && !isIdiomSelected) {
-        try {
-          const { data } = await fetchSuggestions({ search: query });
-          setSuggestions(data);
-          setShowSuggestions(data.length > 0);
-          setSelectedIndex(-1);
-        } catch (err) {
-          console.error("Suggestions error:", err);
-        }
-      } else {
-        setSuggestions([]);
-        setShowSuggestions(false);
-      }
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
     }, 200);
+    return () => clearTimeout(timer);
+  }, [query]);
 
-    return () => clearTimeout(fetchTimer);
-  }, [query, isIdiomSelected]);
+  // Query
+  const { data } = useIdiomSuggestions({ search: debouncedQuery.trim() });
+
+  const suggestions = data?.data || [];
+
+  useEffect(() => {
+    if (debouncedQuery.trim() && !isIdiomSelected && suggestions.length > 0) {
+      setShowSuggestions(true);
+      setSelectedIndex(-1);
+    } else {
+      setShowSuggestions(false);
+    }
+  }, [suggestions, debouncedQuery, isIdiomSelected]);
 
   useEffect(() => {
     if (selectedIndex >= 0 && suggestionsListRef.current) {
@@ -44,14 +46,14 @@ export const useSuggestions = (query: string, isIdiomSelected: boolean) => {
 
   const handleKeyDown = (
     e: React.KeyboardEvent,
-    onSelect: (val: string) => void
+    onSelect: (val: string) => void,
   ) => {
     if (!showSuggestions) return;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setSelectedIndex((prev) =>
-        prev < suggestions.length - 1 ? prev + 1 : prev
+        prev < suggestions.length - 1 ? prev + 1 : prev,
       );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();

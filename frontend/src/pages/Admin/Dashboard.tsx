@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
   SpinnerIcon,
   ListBulletIcon,
@@ -7,10 +7,7 @@ import {
   HistoryIcon,
   ChevronRightIcon,
   FireIcon,
-  PhotoIcon,
-  ClockIcon,
   FlagIcon,
-  ChatBubbleIcon,
   CheckCircleIcon,
   UserIcon,
   SearchIcon,
@@ -23,59 +20,43 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
   BarChart,
   Bar,
 } from "recharts";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/redux/store";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  getAdminStats,
-  getCommentStats,
-  fetchReportStats,
-  getAnalytics,
-} from "@/redux/adminSlice";
-import { toast } from "@/libs/Toast";
+  useAdminStats,
+  useCommentStats,
+  useReportStats,
+  useAnalytics,
+} from "@/hooks/queries/useAdminData";
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>();
+  const queryClient = useQueryClient();
+
   const {
-    stats,
-    loading,
-    error,
-    commentStats,
-    reportStats,
-    searchAnalytics,
-    userGrowth,
-    analyticsLoading,
-  } = useSelector((state: RootState) => state.admin);
+    data: stats,
+    isLoading: loading,
+    error: statsError,
+  } = useAdminStats();
 
-  useEffect(() => {
-    dispatch(getAdminStats(false));
-    dispatch(getCommentStats(false));
-    dispatch(fetchReportStats(false));
-    // Import thunk getAnalytics from adminSlice if not already
-    // but I added it above in code, let's assume it's exported
-  }, [dispatch]);
+  const { data: commentStats } = useCommentStats();
+  const { data: reportStats } = useReportStats();
+  const { data: analyticsData } = useAnalytics();
 
-  useEffect(() => {
-    dispatch(getAnalytics(false));
-  }, [dispatch]);
+  const { searchAnalytics, userGrowth } = analyticsData || {};
 
   const onRefresh = () => {
-    dispatch(getAdminStats(true));
-    dispatch(getCommentStats(true));
-    dispatch(fetchReportStats(true));
-    dispatch(getAnalytics(true));
+    queryClient.invalidateQueries({ queryKey: ["admin"] });
   };
 
   const onNavigate = (path: string) => {
     navigate(path);
   };
+
+  const error = statsError ? (statsError as Error).message : null;
 
   if (loading && !stats)
     return (
@@ -573,8 +554,8 @@ const ProgressBar = ({ label, value, percent }: any) => (
           label.includes("Cao")
             ? "bg-red-600"
             : label.includes("Trung")
-            ? "bg-blue-600"
-            : "bg-emerald-600"
+              ? "bg-blue-600"
+              : "bg-emerald-600"
         }`}
         style={{ width: `${percent}%` }}
       />

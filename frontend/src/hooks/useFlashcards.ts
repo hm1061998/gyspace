@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
-import { fetchStoredIdioms } from "@/services/api/idiomService";
-import {
-  fetchSavedIdioms,
-  fetchSRSData,
-  updateSRSProgress,
-} from "@/services/api/userDataService";
 import type { Idiom } from "@/types";
 import { toast } from "@/libs/Toast";
 import { loadingService } from "@/libs/Loading";
+import {
+  useSRSData,
+  useSavedIdiomsList,
+  useUpdateSRS,
+} from "@/hooks/queries/useUserData";
+import { useStoredIdiomsList } from "@/hooks/queries/useIdioms";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface SRSProgress {
   interval: number;
@@ -34,74 +35,91 @@ const saveLocalSRS = (data: SRSDataMap) => {
 export const useFlashcards = (isLoggedIn: boolean, source: "all" | "saved") => {
   const [reviewQueue, setReviewQueue] = useState<Idiom[]>([]);
   const [currentCard, setCurrentCard] = useState<Idiom | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [srsData, setSrsData] = useState<SRSDataMap>({});
+  const [srsDataMap, setSrsDataMap] = useState<SRSDataMap>({});
   const [totalAvailableCards, setTotalAvailableCards] = useState(0);
 
-  const loadData = useCallback(
-    async (forceReview = false) => {
-      setLoading(true);
-      try {
-        const progressMap: SRSDataMap = {};
-        if (isLoggedIn) {
-          const srsResponse = await fetchSRSData({ page: 1, limit: 500 });
-          srsResponse.data.forEach((item: any) => {
-            progressMap[item.idiom.hanzi] = {
-              interval: item.interval,
-              repetition: item.repetition,
-              efactor: item.efactor,
-              nextReviewDate: Number(item.nextReviewDate),
-            };
-          });
-        } else {
-          // GUEST MODE: Load from localStorage
-          const localData = getLocalSRS();
-          Object.assign(progressMap, localData);
-        }
-        setSrsData(progressMap);
+  // Queries
+  const { data: srsDataRes, isLoading: srsLoading } = useSRSData(isLoggedIn);
 
-        let allCards: Idiom[] = [];
-        if (source === "saved") {
-          const savedRes = await fetchSavedIdioms({ page: 1, limit: 1000 });
-          allCards = savedRes.data;
-        } else {
-          // Pass QueryParams object
-          const response = await fetchStoredIdioms({ page: 1, limit: 1000 });
-          allCards = response.data;
-        }
-        setTotalAvailableCards(allCards.length);
-
-        let queue: Idiom[] = [];
-        if (forceReview) {
-          queue = allCards.sort(() => 0.5 - Math.random()).slice(0, 20);
-        } else {
-          const now = Date.now();
-          const dueCards = allCards.filter((card) => {
-            const progress = progressMap[card.hanzi];
-            if (!progress) return true;
-            return progress.nextReviewDate <= now;
-          });
-          dueCards.sort((a, b) => {
-            const progA = progressMap[a.hanzi]?.nextReviewDate || 0;
-            const progB = progressMap[b.hanzi]?.nextReviewDate || 0;
-            return progA - progB;
-          });
-          queue = dueCards.slice(0, 20);
-        }
-        setReviewQueue(queue);
-      } catch (e) {
-        toast.error("Không thể tải dữ liệu học tập.");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [isLoggedIn, source]
+  const { data: savedDataRes, isLoading: savedLoading } = useSavedIdiomsList(
+    { page: 1, limit: 1000 },
+    source === "saved",
   );
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const { data: storedDataRes, isLoading: storedLoading } = useStoredIdiomsList(
+    { page: 1, limit: 1000 },
+    source === "all",
+  );
 
+  const loading =
+    srsLoading || (source === "saved" ? savedLoading : storedLoading);
+
+  // Mutation
+  const { mutateAsync: updateSRS } = useUpdateSRS();
+  const queryClient = useQueryClient();
+
+  // Combine SRS Data (Server + Local)
+  useEffect(() => {
+    const progressMap: SRSDataMap = {};
+    if (isLoggedIn && srsDataRes) {
+      srsDataRes.data.forEach((item: any) => {
+        progressMap[item.idiom.hanzi] = {
+          interval: item.interval,
+          repetition: item.repetition,
+          efactor: item.efactor,
+          nextReviewDate: Number(item.nextReviewDate),
+        };
+      });
+    } else if (!isLoggedIn) {
+      const localData = getLocalSRS();
+      Object.assign(progressMap, localData);
+    }
+    setSrsDataMap(progressMap);
+  }, [isLoggedIn, srsDataRes]);
+
+  // Build Queue
+  const buildQueue = useCallback(
+    (forceReview = false) => {
+      let allCards: Idiom[] = [];
+      if (source === "saved" && savedDataRes) {
+        allCards = savedDataRes.data;
+      } else if (source === "all" && storedDataRes) {
+        allCards = storedDataRes.data;
+      }
+
+      setTotalAvailableCards(allCards.length);
+
+      let queue: Idiom[] = [];
+      if (forceReview) {
+        queue = [...allCards].sort(() => 0.5 - Math.random()).slice(0, 20);
+      } else {
+        const now = Date.now();
+        const dueCards = allCards.filter((card) => {
+          const progress = srsDataMap[card.hanzi];
+          if (!progress) return true; // New cards are due
+          return progress.nextReviewDate <= now;
+        });
+
+        dueCards.sort((a, b) => {
+          const progA = srsDataMap[a.hanzi]?.nextReviewDate || 0;
+          const progB = srsDataMap[b.hanzi]?.nextReviewDate || 0;
+          return progA - progB;
+        });
+        queue = dueCards.slice(0, 20);
+      }
+      setReviewQueue(queue);
+    },
+    [source, savedDataRes, storedDataRes, srsDataMap],
+  );
+
+  // Initial build when data is ready
+  useEffect(() => {
+    if (!loading) {
+      buildQueue(false);
+    }
+  }, [loading, buildQueue]);
+
+  // Update current card
   useEffect(() => {
     if (reviewQueue.length > 0) {
       setCurrentCard(reviewQueue[0]);
@@ -110,27 +128,33 @@ export const useFlashcards = (isLoggedIn: boolean, source: "all" | "saved") => {
     }
   }, [reviewQueue]);
 
+  const loadData = useCallback(
+    async (forceReview = false) => {
+      // With RQ, we technically just rebuild the queue from existing cache
+      // or trigger a refetch if needed. For now, just rebuild queue.
+      buildQueue(forceReview);
+    },
+    [buildQueue],
+  );
+
   const handleRate = async (quality: number) => {
     if (!currentCard || !currentCard.id) return;
 
     loadingService.show("Đang đồng bộ...");
     try {
       if (isLoggedIn) {
-        const result = await updateSRSProgress(currentCard.id, { quality });
-
-        // Update local SRS data with the result from backend
-        setSrsData((prev) => ({
-          ...prev,
-          [currentCard.hanzi]: {
-            interval: result.interval,
-            repetition: result.repetition,
-            efactor: result.efactor,
-            nextReviewDate: Number(result.nextReviewDate),
-          },
-        }));
+        // Optimistic update done by RQ invalidation?
+        // Actually, mutation return logic is complex.
+        // We'll trust the mutation response or update local state manually for immediate feedback.
+        // The original code used the result to update local srsData state.
+        // We can do the same if we want to reflect it immediately in the queue loop without refetching all 1000 items.
+        // However, since we are moving to next card, the `srsDataMap` is only used for *filtering* the next batch.
+        // The current card is already popped.
+        await updateSRS({ id: currentCard.id, quality });
+        queryClient.invalidateQueries({ queryKey: ["user", "srs"] });
       } else {
-        // GUEST MODE: Calculate SM-2 locally
-        const existing = srsData[currentCard.hanzi] || {
+        // GUEST MODE: Calculate SM-2 locally (Same as before)
+        const existing = srsDataMap[currentCard.hanzi] || {
           interval: 0,
           repetition: 0,
           efactor: 2.5,
@@ -142,7 +166,6 @@ export const useFlashcards = (isLoggedIn: boolean, source: "all" | "saved") => {
 
         if (q >= 3) {
           if (repetition === 0) {
-            // Special case: Easy (5) for new card jumps further
             interval = q === 5 ? 4 : 1;
           } else if (repetition === 1) {
             interval = 6;
@@ -166,13 +189,13 @@ export const useFlashcards = (isLoggedIn: boolean, source: "all" | "saved") => {
         allLocal[currentCard.hanzi] = newProgress;
         saveLocalSRS(allLocal);
 
-        setSrsData((prev) => ({
+        setSrsDataMap((prev) => ({
           ...prev,
           [currentCard.hanzi]: newProgress,
         }));
       }
 
-      // If quality is low, move to end of queue instead of removing
+      // Queue Management
       if (quality < 3) {
         setReviewQueue((prev) => [...prev.slice(1), currentCard]);
       } else {
@@ -188,7 +211,7 @@ export const useFlashcards = (isLoggedIn: boolean, source: "all" | "saved") => {
 
   const getNextIntervalLabel = (quality: number) => {
     if (!currentCard) return "";
-    const existing = srsData[currentCard.hanzi] || {
+    const existing = srsDataMap[currentCard.hanzi] || {
       interval: 0,
       repetition: 0,
       efactor: 2.5,
@@ -199,7 +222,8 @@ export const useFlashcards = (isLoggedIn: boolean, source: "all" | "saved") => {
     let interval = 0;
     if (existing.repetition === 0) {
       if (quality === 3) interval = 1;
-      else if (quality === 4) interval = 2; // Better for Good
+      else if (quality === 4)
+        interval = 2; // Better for Good
       else if (quality === 5) interval = 4; // Better for Easy
     } else if (existing.repetition === 1) {
       interval = 6;

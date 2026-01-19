@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/redux/store";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { useForm, useFieldArray } from "react-hook-form";
 import {
@@ -9,7 +8,7 @@ import {
   fetchIdiomById,
 } from "@/services/api/idiomService";
 import { toast } from "@/libs/Toast";
-import { getAdminStats } from "@/redux/adminSlice";
+import { queryKeys } from "@/services/queryKeys";
 
 export type AnalysisItem = {
   character: string;
@@ -45,7 +44,7 @@ export type IdiomFormInputs = {
 export const useAdminInsert = (idiomId?: string) => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
-  const dispatch = useDispatch<AppDispatch>();
+  const queryClient = useQueryClient();
   const topRef = useRef<HTMLDivElement>(null);
   const [searchParams] = useSearchParams();
 
@@ -152,7 +151,8 @@ export const useAdminInsert = (idiomId?: string) => {
         toast.success("Đã thêm từ mới thành công!");
         reset();
       }
-      dispatch(getAdminStats(true));
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.stats() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.idioms.stored.all });
       scrollToTop();
     } catch (err: any) {
       toast.error(err.message || "Có lỗi xảy ra.");

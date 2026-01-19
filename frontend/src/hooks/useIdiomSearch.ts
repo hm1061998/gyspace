@@ -1,60 +1,42 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useOutletContext } from "react-router-dom";
-import {
-  fetchIdiomDetails,
-  fetchSuggestions,
-} from "@/services/api/idiomService";
-import { addToHistory } from "@/services/api/userDataService";
+import { useIdiomDetails } from "@/hooks/queries/useIdioms";
+import { useAddToHistory } from "@/hooks/queries/useUserData";
 import type { Idiom } from "@/types";
 
 export const useIdiomSearch = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [query, setQuery] = useState<string>("");
-  const [currentIdiom, setCurrentIdiom] = useState<
-    (Idiom & { dataSource: string }) | null
-  >(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  // Local query state mirrors URL param for immediate UI feedback if needed,
+  // but primary source of truth for fetching is URL.
+  const searchQuery = searchParams.get("query") || "";
+  const [query, setQuery] = useState<string>(searchQuery);
+
   const { isLoggedIn } = useOutletContext<{ isLoggedIn: boolean }>();
 
-  const searchQuery = searchParams.get("query");
+  // Use Query for fetching details
+  const {
+    data: currentIdiom,
+    isLoading,
+    error: queryError,
+  } = useIdiomDetails(searchQuery, !!searchQuery);
 
-  const executeSearch = useCallback(
-    async (searchTerm: string) => {
-      if (!searchTerm.trim()) {
-        setCurrentIdiom(null);
-        setError(null);
-        return;
-      }
+  const error = queryError ? (queryError as Error).message : null;
 
-      setIsLoading(true);
-      setError(null);
-      setCurrentIdiom(null);
+  // Mutation for history
+  const { mutate: addToHistory } = useAddToHistory();
 
-      try {
-        const result = await fetchIdiomDetails(searchTerm);
-        setCurrentIdiom(result);
-        if (result?.id && isLoggedIn) {
-          addToHistory(result.id);
-        }
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [isLoggedIn]
-  );
-
+  // Effect to sync URL param to local state (for search bar input)
   useEffect(() => {
-    if (searchQuery) {
-      setQuery(searchQuery);
-      executeSearch(searchQuery);
-    } else {
-      setCurrentIdiom(null);
-      setError(null);
+    setQuery(searchQuery);
+  }, [searchQuery]);
+
+  // Effect to add to history when idiom is found
+  useEffect(() => {
+    if (currentIdiom?.id && isLoggedIn && searchQuery) {
+      // We could debounce this or check if it's the same as last time
+      addToHistory(currentIdiom.id);
     }
-  }, [searchQuery, executeSearch]);
+  }, [currentIdiom?.id, isLoggedIn, searchQuery, addToHistory]);
 
   const handleSearch = useCallback(
     (searchTerm: string) => {
@@ -65,7 +47,7 @@ export const useIdiomSearch = () => {
       }
       setSearchParams({ query: searchTerm });
     },
-    [setSearchParams]
+    [setSearchParams],
   );
 
   return {

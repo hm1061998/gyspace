@@ -1,49 +1,42 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import type { Idiom } from "@/types";
+import { useState, useCallback, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  fetchSavedIdioms,
-  toggleSaveIdiom,
-  bulkDeleteSavedIdioms,
-} from "@/services/api/userDataService";
+  useSavedIdiomsList,
+  useToggleSaveIdiom,
+  useBulkDeleteSaved,
+} from "@/hooks/queries/useUserData";
 import { modalService } from "@/libs/Modal";
 import { toast } from "@/libs/Toast";
+import { queryKeys } from "@/services/queryKeys";
 
 export const useSavedVocabulary = (initialPage = 1) => {
-  const [savedItems, setSavedItems] = useState<Idiom[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const [page, setPage] = useState(initialPage);
   const [filter, setFilter] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [page, setPage] = useState(initialPage);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
 
-  const loadSavedData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetchSavedIdioms({ page, limit: 12 });
-      setSavedItems(response.data);
-      setTotalPages(response.meta.lastPage);
-      setTotalItems(response.meta.total);
-      setSelectedIds([]);
-    } catch (e) {
-      toast.error("Không thể tải danh sách từ vựng đã lưu.");
-    } finally {
-      setLoading(false);
-    }
-  }, [page]);
+  // Query
+  const { data, isLoading: loading } = useSavedIdiomsList(
+    { page, limit: 12 },
+    true,
+  );
 
-  useEffect(() => {
-    loadSavedData();
-  }, [loadSavedData]);
+  const savedItems = data?.data || [];
+  const totalPages = data?.meta?.lastPage || 1;
+  const totalItems = data?.meta?.total || 0;
+
+  // Mutations
+  const toggleSaveMutation = useToggleSaveIdiom();
+  const bulkDeleteMutation = useBulkDeleteSaved();
 
   const handleRemove = async (idiomId: string, hanzi: string) => {
     try {
-      await toggleSaveIdiom(idiomId);
-      setSavedItems((prev) => prev.filter((item) => item.id !== idiomId));
+      await toggleSaveMutation.mutateAsync(idiomId);
       toast.info(`Đã bỏ lưu "${hanzi}"`);
       setSelectedIds((prev) => prev.filter((id) => id !== idiomId));
+      // Invalidation handled by mutation hook
     } catch (e) {
-      toast.error("Lỗi khi thực hiện thao tác.");
+      // Error handled in mutation hook
     }
   };
 
@@ -61,15 +54,15 @@ export const useSavedVocabulary = (initialPage = 1) => {
     if (!confirmed) return;
 
     try {
-      await bulkDeleteSavedIdioms(selectedIds);
-      toast.success(`Đã bỏ lưu ${selectedIds.length} từ vựng thành công!`);
-      loadSavedData();
+      await bulkDeleteMutation.mutateAsync(selectedIds);
+      toast.success(`Đã bỏ lưu các từ vựng thành công!`);
+      setSelectedIds([]);
     } catch (error) {
-      console.error(error);
-      toast.error("Thao tác thất bại");
+      // Error handled
     }
   };
 
+  // Client-side filtering logic (preserved from original)
   const filteredItems = useMemo(() => {
     return savedItems.filter(
       (item) =>
@@ -105,6 +98,11 @@ export const useSavedVocabulary = (initialPage = 1) => {
     () => selectedIds.length > 0 && selectedIds.length < filteredItems.length,
     [filteredItems, selectedIds],
   );
+
+  // Handlers for manual reload if needed
+  const loadSavedData = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.user.saved.all });
+  };
 
   return {
     savedItems,

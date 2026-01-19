@@ -4,23 +4,19 @@ import {
   ArrowLeftIcon,
   SpinnerIcon,
   SearchIcon,
-  ChevronRightIcon,
   PencilIcon,
   TrashIcon,
   PlusIcon,
   UploadIcon,
-  DownloadIcon,
-  DocumentIcon,
   ListBulletIcon,
   CloseIcon,
 } from "@/components/common/icons";
 import {
-  fetchStoredIdioms,
-  deleteIdiom,
-  bulkCreateIdioms,
-  bulkDeleteIdioms,
-} from "@/services/api/idiomService";
-import { Idiom } from "@/types";
+  useStoredIdiomsList,
+  useDeleteIdiomMutation,
+  useBulkDeleteIdiomsMutation,
+  useImportIdiomsMutation,
+} from "@/hooks/queries/useIdioms";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { modalService } from "@/libs/Modal";
 import { toast } from "@/libs/Toast";
@@ -29,14 +25,13 @@ import Pagination from "@/components/common/Pagination";
 import BulkActionBar from "@/components/common/BulkActionBar";
 import SelectAllCheckbox from "@/components/common/SelectAllCheckbox";
 import ProcessingOverlay from "@/components/common/ProcessingOverlay";
+import ImportModal from "@/components/admin/ImportModal";
 
 interface VocabularyListProps {
   onBack: () => void;
   onSelect: (idiomHanzi: string) => void;
   onEdit: (id: string) => void;
 }
-
-import ImportModal from "@/components/admin/ImportModal";
 
 const VocabularyList: React.FC<VocabularyListProps> = ({
   onBack,
@@ -45,9 +40,6 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
-  const [idioms, setIdioms] = useState<Idiom[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Processing State (Import/Export)
   const [isProcessing, setIsProcessing] = useState(false);
@@ -62,8 +54,6 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
 
   // Pagination State
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
 
   // Filter & Sort State
   const [filter, setFilter] = useState("");
@@ -83,9 +73,44 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
     return () => clearTimeout(timer);
   }, [filter]);
 
+  // Query
+  const {
+    data: response,
+    isLoading: loading,
+    error: queryError,
+  } = useStoredIdiomsList({
+    page,
+    limit: 12,
+    search: debouncedFilter,
+    filter: {
+      level: selectedLevel,
+      type: selectedType,
+    },
+    sort: `${sortParam},${orderParam}`,
+  });
+
+  const idioms = response?.data || [];
+  const totalPages = response?.meta?.lastPage || 1;
+  const totalItems = response?.meta?.total || 0;
+
+  // Mutations
+  const { mutateAsync: deleteSingle } = useDeleteIdiomMutation();
+  const { mutateAsync: deleteBulk } = useBulkDeleteIdiomsMutation();
+  const { mutateAsync: importIdioms } = useImportIdiomsMutation();
+
+  // Reset selection on page change or filter change
   useEffect(() => {
-    loadIdioms();
+    setSelectedIds([]);
   }, [page, debouncedFilter, selectedLevel, selectedType]);
+
+  // Loading error handling
+  useEffect(() => {
+    if (queryError) {
+      setError("Không thể tải danh sách từ. Vui lòng thử lại.");
+    } else {
+      setError(null);
+    }
+  }, [queryError]);
 
   // Simulated progress for processing
   useEffect(() => {
@@ -104,30 +129,6 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
       if (interval) clearInterval(interval);
     };
   }, [isProcessing]);
-
-  const loadIdioms = async () => {
-    setLoading(true);
-    try {
-      const response = await fetchStoredIdioms({
-        page,
-        limit: 12,
-        search: debouncedFilter,
-        filter: {
-          level: selectedLevel,
-          type: selectedType,
-        },
-        sort: `${sortParam},${orderParam}`,
-      });
-      setIdioms(response.data);
-      setTotalPages(response.meta.lastPage);
-      setTotalItems(response.meta.total);
-      setSelectedIds([]); // Clear selection when data changes
-    } catch (err) {
-      setError("Không thể tải danh sách từ. Vui lòng thử lại.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleExportTemplate = () => {
     const templateData = [
@@ -226,7 +227,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
               hanzi: String(hanzi).trim(),
               pinyin: String(row["PINYIN"] || "").trim(),
               vietnameseMeaning: String(
-                row["NGHĨA TIẾNG VIỆT"] || row["NGHĨA"] || ""
+                row["NGHĨA TIẾNG VIỆT"] || row["NGHĨA"] || "",
               ).trim(),
               chineseDefinition: String(row["NGHĨA TIẾNG TRUNG"] || "").trim(),
               source: String(row["VỊ TRÍ XUẤT HIỆN"] || "").trim(),
@@ -248,7 +249,7 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
 
         setProcessProgress(60);
         setProcessStatus("Đang lưu vào hệ thống...");
-        await bulkCreateIdioms(mappedData);
+        await importIdioms(mappedData);
 
         setProcessProgress(100);
         setProcessStatus("Hoàn tất!");
@@ -256,11 +257,11 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
         setTimeout(() => {
           toast.success(`Đã import thành công ${mappedData.length} từ vựng!`);
           setIsProcessing(false);
-          loadIdioms();
+          // Auto-refectch handled by mutation onSuccess
         }, 800);
       } catch (err: any) {
         toast.error(
-          "Lỗi khi đọc file: " + (err.message || "Định dạng không hợp lệ.")
+          "Lỗi khi đọc file: " + (err.message || "Định dạng không hợp lệ."),
         );
         setIsProcessing(false);
       } finally {
@@ -273,19 +274,19 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
   const handleDelete = async (
     e: React.MouseEvent,
     id: string,
-    hanzi: string
+    hanzi: string,
   ) => {
     e.stopPropagation();
 
     const confirmed = await modalService.danger(
       `Bạn có chắc chắn muốn xóa từ "${hanzi}" không? Hành động này không thể hoàn tác.`,
-      "Xác nhận xóa?"
+      "Xác nhận xóa?",
     );
 
     if (confirmed) {
-      await deleteIdiom(id);
+      await deleteSingle(id);
       toast.success("Đã xóa thành công!");
-      loadIdioms();
+      // Auto-refetch
     }
   };
 
@@ -302,15 +303,15 @@ const VocabularyList: React.FC<VocabularyListProps> = ({
 
     const confirmed = await modalService.danger(
       `Bạn có chắc chắn muốn xóa ${selectedIds.length} từ vựng đã chọn không? Hành động này không thể hoàn tác.`,
-      "Xác nhận xóa?"
+      "Xác nhận xóa?",
     );
 
     if (!confirmed) return;
 
     try {
-      await bulkDeleteIdioms(selectedIds);
+      await deleteBulk(selectedIds);
       toast.success(`Đã xóa ${selectedIds.length} từ vựng thành công!`);
-      loadIdioms();
+      // Auto-refetch
     } catch (error) {
       console.error(error);
       toast.error("Xóa thất bại");
