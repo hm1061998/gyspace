@@ -1,11 +1,18 @@
 /**
  * HTTP Service - Centralized HTTP request handler with interceptors
  * Handles all API calls with consistent error handling and request/response transformation
+ * Refactored to use Axios
  */
 
-export interface RequestConfig extends RequestInit {
-  url: string;
-  params?: Record<string, any>;
+import axios, {
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
+
+// Extend AxiosRequestConfig to include custom properties
+export interface RequestConfig extends AxiosRequestConfig {
   skipAuthHeader?: boolean;
   skipErrorToast?: boolean;
 }
@@ -14,27 +21,58 @@ export interface HttpResponse<T = any> {
   data: T;
   status: number;
   statusText: string;
-  headers: Headers;
+  headers: any;
 }
 
-type RequestInterceptor = (
-  config: RequestConfig
-) => RequestConfig | Promise<RequestConfig>;
-type ResponseInterceptor = <T>(
-  response: HttpResponse<T>
-) => HttpResponse<T> | Promise<HttpResponse<T>>;
-type ErrorInterceptor = (error: any) => any;
+export type RequestInterceptor = (
+  config: InternalAxiosRequestConfig,
+) => InternalAxiosRequestConfig | Promise<InternalAxiosRequestConfig>;
+
+export type ResponseInterceptor = (
+  response: AxiosResponse,
+) => AxiosResponse | Promise<AxiosResponse>;
+
+export type ErrorInterceptor = (error: any) => any;
 
 class HttpService {
-  private baseURL: string = (__API_URL__ || "/api").replace(/\/+$/, "");
-  private requestInterceptors: RequestInterceptor[] = [];
-  private responseInterceptors: ResponseInterceptor[] = [];
-  private errorInterceptors: ErrorInterceptor[] = [];
+  private instance: AxiosInstance;
   private isRefreshing = false;
   private refreshPromise: Promise<any> | null = null;
+  private baseURL: string = (__API_URL__ || "/api").replace(/\/+$/, "");
 
   constructor() {
-    // Setup default interceptors
+    this.instance = axios.create({
+      baseURL: this.baseURL,
+      withCredentials: true,
+      paramsSerializer: {
+        serialize: (params) => {
+          const searchParams = new URLSearchParams();
+          Object.entries(params).forEach(([key, value]) => {
+            if (value !== null && value !== undefined && value !== "") {
+              let stringValue = value;
+              // Automatically stringify 'filter' if it's an object
+              if (key === "filter" && typeof value === "object") {
+                const cleanedFilter = Object.entries(value).reduce(
+                  (acc, [k, v]) => {
+                    if (v !== null && v !== undefined && v !== "") {
+                      acc[k] = v;
+                    }
+                    return acc;
+                  },
+                  {} as Record<string, any>,
+                );
+
+                if (Object.keys(cleanedFilter).length === 0) return;
+                stringValue = JSON.stringify(cleanedFilter);
+              }
+              searchParams.append(key, String(stringValue));
+            }
+          });
+          return searchParams.toString();
+        },
+      },
+    });
+
     this.setupDefaultInterceptors();
   }
 
@@ -42,162 +80,74 @@ class HttpService {
    * Setup default interceptors for common use cases
    */
   private setupDefaultInterceptors() {
-    // Request interceptor: Add default headers
-    this.addRequestInterceptor((config) => {
-      const headers = new Headers(config.headers);
+    // Response interceptor: Handle common response transformations and errors
+    this.instance.interceptors.response.use(
+      (response) => {
+        return response;
+      },
+      async (error) => {
+        // Handle 401 Unauthorized for token refresh
+        if (axios.isAxiosError(error) && error.response) {
+          const originalRequest = error.config as RequestConfig & {
+            _retry?: boolean;
+          };
 
-      // Add Content-Type if not present and body exists
-      if (config.body && !headers.has("Content-Type")) {
-        headers.set("Content-Type", "application/json");
-      }
+          if (
+            error.response.status === 401 &&
+            originalRequest &&
+            !originalRequest._retry &&
+            !originalRequest.url?.includes("/auth/refresh") &&
+            !originalRequest.url?.includes("/auth/login")
+          ) {
+            originalRequest._retry = true;
+            try {
+              return await this.handle401Error(originalRequest);
+            } catch (e) {
+              return Promise.reject(e);
+            }
+          }
+        }
 
-      // Always include credentials for cookie-based auth
-      config.credentials = config.credentials || "include";
+        // Handle network errors
+        if (error.message === "Network Error") {
+          console.error("Network error: Unable to connect to server");
+        }
 
-      // Add custom headers here if needed
-      // Example: headers.set("X-App-Version", "1.0.0");
-
-      return {
-        ...config,
-        headers,
-      };
-    });
-
-    // Response interceptor: Handle common response transformations
-    this.addResponseInterceptor(async (response) => {
-      // You can add common response transformations here
-      return response;
-    });
-
-    // Error interceptor: Handle common errors
-    this.addErrorInterceptor((error) => {
-      // Handle network errors
-      if (error instanceof TypeError && error.message === "Failed to fetch") {
-        console.error("Network error: Unable to connect to server");
-      }
-
-      // Re-throw the error for the caller to handle
-      throw error;
-    });
+        return Promise.reject(error);
+      },
+    );
   }
 
   /**
    * Add a request interceptor
    */
-  addRequestInterceptor(interceptor: RequestInterceptor) {
-    this.requestInterceptors.push(interceptor);
-    return this.requestInterceptors.length - 1;
+  addRequestInterceptor(interceptor: RequestInterceptor): number {
+    return this.instance.interceptors.request.use(interceptor);
   }
 
   /**
    * Add a response interceptor
    */
-  addResponseInterceptor(interceptor: ResponseInterceptor) {
-    this.responseInterceptors.push(interceptor);
-    return this.responseInterceptors.length - 1;
+  addResponseInterceptor(interceptor: ResponseInterceptor): number {
+    return this.instance.interceptors.response.use(interceptor);
   }
 
   /**
    * Add an error interceptor
    */
-  addErrorInterceptor(interceptor: ErrorInterceptor) {
-    this.errorInterceptors.push(interceptor);
-    return this.errorInterceptors.length - 1;
+  addErrorInterceptor(interceptor: ErrorInterceptor): number {
+    return this.instance.interceptors.response.use(undefined, interceptor);
   }
 
   /**
-   * Remove an interceptor by index
+   * Remove an interceptor by ID
    */
-  removeInterceptor(type: "request" | "response" | "error", index: number) {
+  removeInterceptor(type: "request" | "response" | "error", id: number) {
     if (type === "request") {
-      this.requestInterceptors.splice(index, 1);
-    } else if (type === "response") {
-      this.responseInterceptors.splice(index, 1);
-    } else if (type === "error") {
-      this.errorInterceptors.splice(index, 1);
+      this.instance.interceptors.request.eject(id);
+    } else {
+      this.instance.interceptors.response.eject(id);
     }
-  }
-
-  /**
-   * Build URL with query parameters
-   */
-  private buildURL(url: string, params?: Record<string, any>): string {
-    const fullURL = url.startsWith("http") ? url : `${this.baseURL}${url}`;
-
-    if (!params || Object.keys(params).length === 0) {
-      return fullURL;
-    }
-
-    const searchParams = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
-      // Skip null, undefined, and empty strings
-      if (value !== null && value !== undefined && value !== "") {
-        let stringValue = value;
-        // Automatically stringify 'filter' if it's an object
-        if (key === "filter" && typeof value === "object") {
-          const cleanedFilter = Object.entries(value).reduce((acc, [k, v]) => {
-            if (v !== null && v !== undefined && v !== "") {
-              acc[k] = v;
-            }
-            return acc;
-          }, {} as Record<string, any>);
-
-          if (Object.keys(cleanedFilter).length === 0) return;
-          stringValue = JSON.stringify(cleanedFilter);
-        }
-        searchParams.append(key, String(stringValue));
-      }
-    });
-
-    const queryString = searchParams.toString();
-    return queryString ? `${fullURL}?${queryString}` : fullURL;
-  }
-
-  /**
-   * Execute request interceptors
-   */
-  private async executeRequestInterceptors(
-    config: RequestConfig
-  ): Promise<RequestConfig> {
-    let modifiedConfig = config;
-
-    for (const interceptor of this.requestInterceptors) {
-      modifiedConfig = await interceptor(modifiedConfig);
-    }
-
-    return modifiedConfig;
-  }
-
-  /**
-   * Execute response interceptors
-   */
-  private async executeResponseInterceptors<T>(
-    response: HttpResponse<T>
-  ): Promise<HttpResponse<T>> {
-    let modifiedResponse = response;
-
-    for (const interceptor of this.responseInterceptors) {
-      modifiedResponse = await interceptor(modifiedResponse);
-    }
-
-    return modifiedResponse;
-  }
-
-  /**
-   * Execute error interceptors
-   */
-  private async executeErrorInterceptors(error: any): Promise<any> {
-    let modifiedError = error;
-
-    for (const interceptor of this.errorInterceptors) {
-      try {
-        modifiedError = await interceptor(modifiedError);
-      } catch (e) {
-        modifiedError = e;
-      }
-    }
-
-    return modifiedError;
   }
 
   /**
@@ -205,107 +155,31 @@ class HttpService {
    */
   async request<T = any>(config: RequestConfig): Promise<HttpResponse<T>> {
     try {
-      // Execute request interceptors
-      const modifiedConfig = await this.executeRequestInterceptors(config);
+      const response = await this.instance.request<T>(config);
 
-      // Build full URL with params
-      const url = this.buildURL(modifiedConfig.url, modifiedConfig.params);
-
-      // // --- Security Check ---
-      // // Block mutations (POST, PUT, PATCH, DELETE) if user is not logged in,
-      // // except for authentication routes (login, register).
-      // // Also block /auth/refresh if no auth_hint is present.
-      // const method = (modifiedConfig.method || "GET").toUpperCase();
-      // const isMutation = ["POST", "PUT", "PATCH", "DELETE"].includes(method);
-      // const isAuthRoute = modifiedConfig.url.includes("/auth/");
-      // const isRefresh = modifiedConfig.url.includes("/auth/refresh");
-
-      // if ((isMutation && !isAuthRoute) || isRefresh) {
-      //   // We use dynamic import to avoid circular dependency with authSlice -> httpService
-      //   const { store } = await import("../../redux/store");
-      //   const state = store.getState();
-      //   const hasAuthHint =
-      //     typeof window !== "undefined" &&
-      //     localStorage.getItem("auth_hint") === "true";
-
-      //   if (!state.auth.isAuthenticated && (isRefresh ? !hasAuthHint : true)) {
-      //     return {
-      //       data: {} as T,
-      //       status: 200,
-      //       statusText: "OK",
-      //       headers: new Headers(),
-      //     };
-      //   }
-      // }
-
-      // Make the request
-      const response = await fetch(url, {
-        method: modifiedConfig.method || "GET",
-        headers: modifiedConfig.headers,
-        body: modifiedConfig.body,
-        credentials: modifiedConfig.credentials,
-        signal: modifiedConfig.signal,
-      });
-
-      // Parse response
-      let data: T;
-      const contentType = response.headers.get("content-type");
-
-      if (contentType && contentType.includes("application/json")) {
-        data = await response.json();
-      } else {
-        data = (await response.text()) as any;
-      }
-
-      // Check if response is ok
-      if (!response.ok) {
-        // Handle 401 Unauthorized for token refresh
-        if (
-          response.status === 401 &&
-          !config.url.includes("/auth/refresh") &&
-          !config.url.includes("/auth/login")
-        ) {
-          return await this.handle401Error(config);
-        }
-
-        const error: any = new Error(
-          (data as any)?.message || response.statusText
-        );
-        error.status = response.status;
-        error.statusText = response.statusText;
-        error.data = data;
-        throw error;
-      }
-
-      // Build response object
-      const httpResponse: HttpResponse<T> = {
-        data,
+      return {
+        data: response.data,
         status: response.status,
         statusText: response.statusText,
         headers: response.headers,
       };
-
-      // Execute response interceptors
-      return await this.executeResponseInterceptors(httpResponse);
     } catch (error: any) {
-      // Handle potential 401 error that might be thrown (e.g. from fetch directly in some envs)
-      if (
-        error.status === 401 &&
-        !config.url.includes("/auth/refresh") &&
-        !config.url.includes("/auth/login")
-      ) {
-        return await this.handle401Error(config);
+      if (axios.isAxiosError(error)) {
+        // Enhance error object to ensure compatibility with callers expecting typical error props
+        if (error.response) {
+          (error as any).status = error.response.status;
+          (error as any).statusText = error.response.statusText;
+          (error as any).data = error.response.data;
+        }
       }
-      // Execute error interceptors
-      await this.executeErrorInterceptors(error);
-      throw error; // Re-throw after interceptors
+      throw error;
     }
   }
 
   /**
    * Handle 401 error by attempting to refresh token
    */
-  private async handle401Error(config: RequestConfig): Promise<any> {
+  private async handle401Error(originalRequest: RequestConfig): Promise<any> {
     if (!this.isRefreshing) {
       this.isRefreshing = true;
       this.refreshPromise = this.post("/auth/refresh", {})
@@ -329,8 +203,13 @@ class HttpService {
     }
 
     if (this.refreshPromise) {
-      await this.refreshPromise;
-      return this.request(config); // Retry original request
+      try {
+        await this.refreshPromise;
+        // Retry original request
+        return this.request(originalRequest);
+      } catch (err) {
+        throw err;
+      }
     }
   }
 
@@ -340,13 +219,13 @@ class HttpService {
   async get<T = any>(
     url: string,
     params?: Record<string, any>,
-    config?: Partial<RequestConfig>
+    config?: Partial<RequestConfig>,
   ): Promise<HttpResponse<T>> {
     return this.request<T>({
+      ...config,
+      method: "GET",
       url,
       params,
-      method: "GET",
-      ...config,
     });
   }
 
@@ -356,13 +235,13 @@ class HttpService {
   async post<T = any>(
     url: string,
     data?: any,
-    config?: Partial<RequestConfig>
+    config?: Partial<RequestConfig>,
   ): Promise<HttpResponse<T>> {
     return this.request<T>({
-      url,
-      method: "POST",
-      body: data ? JSON.stringify(data) : undefined,
       ...config,
+      method: "POST",
+      url,
+      data,
     });
   }
 
@@ -372,13 +251,13 @@ class HttpService {
   async put<T = any>(
     url: string,
     data?: any,
-    config?: Partial<RequestConfig>
+    config?: Partial<RequestConfig>,
   ): Promise<HttpResponse<T>> {
     return this.request<T>({
-      url,
-      method: "PUT",
-      body: data ? JSON.stringify(data) : undefined,
       ...config,
+      method: "PUT",
+      url,
+      data,
     });
   }
 
@@ -388,13 +267,13 @@ class HttpService {
   async patch<T = any>(
     url: string,
     data?: any,
-    config?: Partial<RequestConfig>
+    config?: Partial<RequestConfig>,
   ): Promise<HttpResponse<T>> {
     return this.request<T>({
-      url,
-      method: "PATCH",
-      body: data ? JSON.stringify(data) : undefined,
       ...config,
+      method: "PATCH",
+      url,
+      data,
     });
   }
 
@@ -403,12 +282,12 @@ class HttpService {
    */
   async delete<T = any>(
     url: string,
-    config?: Partial<RequestConfig>
+    config?: Partial<RequestConfig>,
   ): Promise<HttpResponse<T>> {
     return this.request<T>({
-      url,
-      method: "DELETE",
       ...config,
+      method: "DELETE",
+      url,
     });
   }
 
@@ -417,6 +296,7 @@ class HttpService {
    */
   setBaseURL(baseURL: string) {
     this.baseURL = baseURL;
+    this.instance.defaults.baseURL = baseURL;
   }
 
   /**

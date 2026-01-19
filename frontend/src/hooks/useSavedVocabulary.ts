@@ -20,7 +20,7 @@ export const useSavedVocabulary = (initialPage = 1) => {
   const loadSavedData = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetchSavedIdioms(page, 12);
+      const response = await fetchSavedIdioms({ page, limit: 12 });
       setSavedItems(response.data);
       setTotalPages(response.meta.lastPage);
       setTotalItems(response.meta.total);
@@ -55,7 +55,7 @@ export const useSavedVocabulary = (initialPage = 1) => {
 
     const confirmed = await modalService.danger(
       `Bạn có chắc chắn muốn bỏ lưu ${selectedIds.length} từ vựng đã chọn không?`,
-      "Xác nhận bỏ lưu?"
+      "Xác nhận bỏ lưu?",
     );
 
     if (!confirmed) return;
@@ -74,7 +74,7 @@ export const useSavedVocabulary = (initialPage = 1) => {
     return savedItems.filter(
       (item) =>
         item.hanzi.includes(filter) ||
-        item.vietnameseMeaning.toLowerCase().includes(filter.toLowerCase())
+        item.vietnameseMeaning.toLowerCase().includes(filter.toLowerCase()),
     );
   }, [savedItems, filter]);
 
@@ -91,19 +91,19 @@ export const useSavedVocabulary = (initialPage = 1) => {
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   }, []);
 
   const isAllSelected = useMemo(
     () =>
       filteredItems.length > 0 && selectedIds.length === filteredItems.length,
-    [filteredItems, selectedIds]
+    [filteredItems, selectedIds],
   );
 
   const isSomeSelected = useMemo(
     () => selectedIds.length > 0 && selectedIds.length < filteredItems.length,
-    [filteredItems, selectedIds]
+    [filteredItems, selectedIds],
   );
 
   return {
